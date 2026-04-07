@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "GymLink"
+version = "1.0.0"
+id = "artifacts/gymlink"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25079
+
+[services.development]
+run = "pnpm --filter @workspace/gymlink run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/gymlink", "run", "build" ]
+publicDir = "artifacts/gymlink/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25079"
+BASE_PATH = "/"

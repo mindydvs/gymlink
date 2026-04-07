@@ -3,13 +3,22 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: GymLink API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: users
+    description: Gym member profiles
+  - name: connections
+    description: Connection requests between users
+  - name: notifications
+    description: Incoming connection notifications
+  - name: stats
+    description: Gym activity stats
+
 paths:
   /healthz:
     get:
@@ -24,6 +33,199 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List gym members
+      parameters:
+        - name: gym
+          in: query
+          schema:
+            type: string
+        - name: interest
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /users/me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get current user's profile
+      responses:
+        "200":
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateMe
+      tags: [users]
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileBody"
+      responses:
+        "200":
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get a user profile by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Not found
+
+  /connections:
+    post:
+      operationId: createConnection
+      tags: [connections]
+      summary: Send a connection request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateConnectionBody"
+      responses:
+        "201":
+          description: Connection created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+    get:
+      operationId: listConnections
+      tags: [connections]
+      summary: List all connections for current user
+      parameters:
+        - name: type
+          in: query
+          schema:
+            $ref: "#/components/schemas/ConnectionType"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/ConnectionStatus"
+      responses:
+        "200":
+          description: List of connections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Connection"
+
+  /connections/{id}/respond:
+    post:
+      operationId: respondToConnection
+      tags: [connections]
+      summary: Accept or decline a connection
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RespondConnectionBody"
+      responses:
+        "200":
+          description: Connection updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications for current user
+      responses:
+        "200":
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Notification marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /stats:
+    get:
+      operationId: getGymStats
+      tags: [stats]
+      summary: Get gym activity stats for the current user's gym
+      responses:
+        "200":
+          description: Gym stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GymStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +236,179 @@ components:
       required:
         - status
 
+    ConnectionType:
+      type: string
+      enum: [crush, buddy, advisor, spotter]
+
+    ConnectionStatus:
+      type: string
+      enum: [pending, accepted, declined]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        age:
+          type: integer
+        avatar:
+          type: string
+          description: Emoji or image URL
+        bio:
+          type: string
+        gym:
+          type: string
+        schedule:
+          type: string
+        interests:
+          type: array
+          items:
+            type: string
+        verified:
+          type: boolean
+        distance:
+          type: string
+        isMe:
+          type: boolean
+        activeNow:
+          type: boolean
+      required:
+        - id
+        - name
+        - age
+        - avatar
+        - bio
+        - gym
+        - schedule
+        - interests
+        - verified
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
+        bio:
+          type: string
+        gym:
+          type: string
+        schedule:
+          type: string
+        interests:
+          type: array
+          items:
+            type: string
+
+    Connection:
+      type: object
+      properties:
+        id:
+          type: string
+        fromUserId:
+          type: string
+        toUserId:
+          type: string
+        type:
+          $ref: "#/components/schemas/ConnectionType"
+        status:
+          $ref: "#/components/schemas/ConnectionStatus"
+        anonymous:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        fromUser:
+          $ref: "#/components/schemas/User"
+        toUser:
+          $ref: "#/components/schemas/User"
+      required:
+        - id
+        - fromUserId
+        - toUserId
+        - type
+        - status
+        - anonymous
+        - createdAt
+
+    CreateConnectionBody:
+      type: object
+      properties:
+        toUserId:
+          type: string
+        type:
+          $ref: "#/components/schemas/ConnectionType"
+        anonymous:
+          type: boolean
+      required:
+        - toUserId
+        - type
+        - anonymous
+
+    RespondConnectionBody:
+      type: object
+      properties:
+        response:
+          type: string
+          enum: [accept, decline]
+      required:
+        - response
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        connectionId:
+          type: string
+        type:
+          $ref: "#/components/schemas/ConnectionType"
+        fromName:
+          type: string
+        anonymous:
+          type: boolean
+        read:
+          type: boolean
+        responded:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - connectionId
+        - type
+        - fromName
+        - anonymous
+        - read
+        - responded
+        - createdAt
+
+    GymStats:
+      type: object
+      properties:
+        activeNow:
+          type: integer
+        totalMembers:
+          type: integer
+        crushCount:
+          type: integer
+        buddyCount:
+          type: integer
+        advisorCount:
+          type: integer
+        spotterCount:
+          type: integer
+        gymName:
+          type: string
+      required:
+        - activeNow
+        - totalMembers
+        - crushCount
+        - buddyCount
+        - advisorCount
+        - spotterCount
+        - gymName
