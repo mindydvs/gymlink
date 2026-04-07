@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -66,85 +66,83 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --color-neon-crush: var(--neon-crush);
-  --color-neon-buddy: var(--neon-buddy);
-  --color-neon-advisor: var(--neon-advisor);
-  --color-neon-spotter: var(--neon-spotter);
+  --color-brand-red: var(--brand-red);
+  --color-brand-cyan: var(--brand-cyan);
+  --color-crush: var(--crush-color);
+  --color-buddy: var(--buddy-color);
+  --color-advisor: var(--advisor-color);
+  --color-spotter: var(--spotter-color);
 }
 
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
   --opaque-button-border-intensity: -8;
-  --elevate-1: rgba(0,0,0, .03);
-  --elevate-2: rgba(0,0,0, .08);
+  --elevate-1: rgba(255,255,255, .03);
+  --elevate-2: rgba(255,255,255, .06);
 
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
+  /* Deep navy brand background — inspired by the logo's dark navy */
+  --background: 229 45% 7%;
+  --foreground: 220 20% 97%;
 
-  --card: 240 10% 6%;
-  --card-foreground: 0 0% 98%;
-  --card-border: 240 10% 12%;
+  /* Cards slightly lifted from background */
+  --card: 229 40% 10%;
+  --card-foreground: 220 20% 97%;
+  --card-border: 229 35% 15%;
 
-  --sidebar: 240 10% 5%;
-  --sidebar-foreground: 0 0% 98%;
-  --sidebar-border: 240 10% 12%;
-  --sidebar-primary: 345 100% 60%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 240 10% 10%;
-  --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-ring: 345 100% 60%;
+  --sidebar: 229 50% 5%;
+  --sidebar-foreground: 220 20% 97%;
+  --sidebar-border: 229 35% 12%;
+  --sidebar-primary: 349 86% 52%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 229 40% 12%;
+  --sidebar-accent-foreground: 220 20% 97%;
+  --sidebar-ring: 349 86% 52%;
 
-  --popover: 240 10% 6%;
-  --popover-foreground: 0 0% 98%;
-  --popover-border: 240 10% 12%;
+  --popover: 229 40% 10%;
+  --popover-foreground: 220 20% 97%;
+  --popover-border: 229 35% 15%;
 
-  --primary: 345 100% 60%;
-  --primary-foreground: 0 0% 98%;
+  /* Brand red from logo: #E8193C */
+  --primary: 349 86% 52%;
+  --primary-foreground: 0 0% 100%;
 
-  --secondary: 240 10% 12%;
-  --secondary-foreground: 0 0% 98%;
+  --secondary: 229 35% 15%;
+  --secondary-foreground: 220 20% 97%;
 
-  --muted: 240 10% 12%;
-  --muted-foreground: 240 5% 64.9%;
+  --muted: 229 35% 14%;
+  --muted-foreground: 220 15% 55%;
 
-  --accent: 240 10% 12%;
-  --accent-foreground: 0 0% 98%;
+  --accent: 229 35% 15%;
+  --accent-foreground: 220 20% 97%;
 
   --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 98%;
+  --destructive-foreground: 0 0% 100%;
 
-  --border: 240 10% 14%;
-  --input: 240 10% 14%;
-  --ring: 345 100% 60%;
+  --border: 229 30% 16%;
+  --input: 229 30% 16%;
+  --ring: 349 86% 52%;
 
-  --chart-1: 345 100% 60%;
-  --chart-2: 217 91% 60%;
-  --chart-3: 160 84% 39%;
-  --chart-4: 38 92% 50%;
-  --chart-5: 271 81% 56%;
+  --chart-1: 349 86% 52%;
+  --chart-2: 195 90% 50%;
+  --chart-3: 152 76% 43%;
+  --chart-4: 38 92% 52%;
+  --chart-5: 271 75% 60%;
 
-  --app-font-sans: 'Outfit', sans-serif;
+  --app-font-sans: 'Inter', system-ui, sans-serif;
   --app-font-serif: Georgia, serif;
-  --app-font-mono: Menlo, monospace;
-  --radius: 0.75rem;
+  --app-font-mono: 'Menlo', monospace;
+  --radius: 0.625rem;
 
-  --neon-crush: #FF3366;
-  --neon-buddy: #3B82F6;
-  --neon-advisor: #10B981;
-  --neon-spotter: #F59E0B;
+  /* Brand palette from logo */
+  --brand-red: #E8193C;
+  --brand-cyan: #00C4E8;
 
-  --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0,0.3);
-  --shadow-xs: 0px 1px 3px 0px rgba(0,0,0,0.4);
-  --shadow-sm: 0px 2px 4px 0px rgba(0,0,0,0.5);
-  --shadow: 0px 4px 8px 0px rgba(0,0,0,0.5);
-  --shadow-md: 0px 6px 12px 0px rgba(0,0,0,0.6);
-  --shadow-lg: 0px 8px 24px 0px rgba(0,0,0,0.6);
-  --shadow-xl: 0px 12px 32px 0px rgba(0,0,0,0.7);
-  --shadow-2xl: 0px 24px 48px 0px rgba(0,0,0,0.8);
-
-  --tracking-normal: 0em;
-  --spacing: 0.25rem;
+  /* Connection type colors */
+  --crush-color: #E8193C;
+  --buddy-color: #0B9ED9;
+  --advisor-color: #12B76A;
+  --spotter-color: #F79009;
 
   --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --secondary-border: hsl(from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
@@ -156,56 +154,46 @@
 }
 
 .dark {
-  --button-outline: rgba(255,255,255, .10);
-  --badge-outline: rgba(255,255,255, .05);
+  --button-outline: rgba(255,255,255, .08);
+  --badge-outline: rgba(255,255,255, .04);
   --opaque-button-border-intensity: 9;
-  --elevate-1: rgba(255,255,255, .04);
-  --elevate-2: rgba(255,255,255, .09);
+  --elevate-1: rgba(255,255,255, .03);
+  --elevate-2: rgba(255,255,255, .06);
 
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-
-  --card: 240 10% 6%;
-  --card-foreground: 0 0% 98%;
-  --card-border: 240 10% 12%;
-
-  --sidebar: 240 10% 5%;
-  --sidebar-foreground: 0 0% 98%;
-  --sidebar-border: 240 10% 12%;
-  --sidebar-primary: 345 100% 60%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 240 10% 10%;
-  --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-ring: 345 100% 60%;
-
-  --popover: 240 10% 6%;
-  --popover-foreground: 0 0% 98%;
-  --popover-border: 240 10% 12%;
-
-  --primary: 345 100% 60%;
-  --primary-foreground: 0 0% 98%;
-
-  --secondary: 240 10% 12%;
-  --secondary-foreground: 0 0% 98%;
-
-  --muted: 240 10% 12%;
-  --muted-foreground: 240 5% 64.9%;
-
-  --accent: 240 10% 12%;
-  --accent-foreground: 0 0% 98%;
-
+  --background: 229 45% 7%;
+  --foreground: 220 20% 97%;
+  --card: 229 40% 10%;
+  --card-foreground: 220 20% 97%;
+  --card-border: 229 35% 15%;
+  --sidebar: 229 50% 5%;
+  --sidebar-foreground: 220 20% 97%;
+  --sidebar-border: 229 35% 12%;
+  --sidebar-primary: 349 86% 52%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 229 40% 12%;
+  --sidebar-accent-foreground: 220 20% 97%;
+  --sidebar-ring: 349 86% 52%;
+  --popover: 229 40% 10%;
+  --popover-foreground: 220 20% 97%;
+  --popover-border: 229 35% 15%;
+  --primary: 349 86% 52%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 229 35% 15%;
+  --secondary-foreground: 220 20% 97%;
+  --muted: 229 35% 14%;
+  --muted-foreground: 220 15% 55%;
+  --accent: 229 35% 15%;
+  --accent-foreground: 220 20% 97%;
   --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 98%;
-
-  --border: 240 10% 14%;
-  --input: 240 10% 14%;
-  --ring: 345 100% 60%;
-
-  --chart-1: 345 100% 60%;
-  --chart-2: 217 91% 60%;
-  --chart-3: 160 84% 39%;
-  --chart-4: 38 92% 50%;
-  --chart-5: 271 81% 56%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 229 30% 16%;
+  --input: 229 30% 16%;
+  --ring: 349 86% 52%;
+  --chart-1: 349 86% 52%;
+  --chart-2: 195 90% 50%;
+  --chart-3: 152 76% 43%;
+  --chart-4: 38 92% 52%;
+  --chart-5: 271 75% 60%;
 }
 
 @layer base {
@@ -214,5 +202,62 @@
   }
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer utilities {
+  .text-brand-red { color: var(--brand-red); }
+  .text-brand-cyan { color: var(--brand-cyan); }
+  .bg-brand-red { background-color: var(--brand-red); }
+  .bg-brand-cyan { background-color: var(--brand-cyan); }
+
+  .text-crush { color: var(--crush-color); }
+  .text-buddy { color: var(--buddy-color); }
+  .text-advisor { color: var(--advisor-color); }
+  .text-spotter { color: var(--spotter-color); }
+
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+
+  .section-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .card-surface {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--card-border));
+    border-radius: var(--radius);
+  }
+
+  .nav-item-active {
+    background: hsl(var(--primary) / 0.12);
+    color: hsl(var(--primary));
+  }
+
+  .nav-item-active .nav-icon {
+    color: hsl(var(--primary));
+  }
+
+  /* Subtle glow for active states */
+  .glow-red {
+    box-shadow: 0 0 20px rgba(232, 25, 60, 0.15);
+  }
+
+  .divider {
+    height: 1px;
+    background: hsl(var(--border));
   }
 }

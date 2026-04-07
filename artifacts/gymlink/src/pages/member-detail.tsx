@@ -2,145 +2,141 @@ import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useGetUser, useCreateConnection, getGetUserQueryKey, getListConnectionsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Heart, Dumbbell, Brain, HandHelpingIcon, MapPin, Clock, CheckCircle, EyeOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, MapPin, Clock, Heart, Dumbbell, Brain, HandHelpingIcon, CheckCircle2, EyeOff, Eye } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 
-const CONNECTION_TYPES = [
-  { type: "crush" as const, label: "Gym Crush", icon: Heart, color: "#FF3366", desc: "You find them attractive" },
-  { type: "buddy" as const, label: "Workout Buddy", icon: Dumbbell, color: "#3B82F6", desc: "Train together" },
-  { type: "advisor" as const, label: "Fitness Advisor", icon: Brain, color: "#10B981", desc: "Get tips & advice" },
-  { type: "spotter" as const, label: "Spotter", icon: HandHelpingIcon, color: "#F59E0B", desc: "Need a spot?" },
+const CONN_TYPES = [
+  { type: "crush"   as const, label: "Gym Crush",       Icon: Heart,           color: "#E8193C", desc: "You're interested in them" },
+  { type: "buddy"   as const, label: "Workout Buddy",   Icon: Dumbbell,        color: "#0B9ED9", desc: "Train together" },
+  { type: "advisor" as const, label: "Fitness Advisor", Icon: Brain,           color: "#12B76A", desc: "Get tips & guidance" },
+  { type: "spotter" as const, label: "Spotter",         Icon: HandHelpingIcon, color: "#F79009", desc: "Help each other lift" },
 ];
 
 export default function MemberDetail() {
   const [, params] = useRoute("/members/:id");
   const [, setLocation] = useLocation();
-  const { data: user, isLoading } = useGetUser(
-    params?.id ?? "",
-    { query: { enabled: !!params?.id, queryKey: getGetUserQueryKey(params?.id ?? "") } }
-  );
+  const { data: user, isLoading } = useGetUser(params?.id ?? "", {
+    query: { enabled: !!params?.id, queryKey: getGetUserQueryKey(params?.id ?? "") },
+  });
+
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [anonymous, setAnonymous] = useState(true);
   const [sent, setSent] = useState(false);
-  const createConnection = useCreateConnection();
+  const createConn = useCreateConnection();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const handleConnect = () => {
     if (!selectedType || !user) return;
-    createConnection.mutate(
-      {
-        data: {
-          toUserId: user.id,
-          type: selectedType as "crush" | "buddy" | "advisor" | "spotter",
-          anonymous: selectedType === "crush" ? anonymous : false,
-        },
-      },
+    createConn.mutate(
+      { data: { toUserId: user.id, type: selectedType as "crush" | "buddy" | "advisor" | "spotter", anonymous: selectedType === "crush" ? anonymous : false } },
       {
         onSuccess: () => {
           setSent(true);
           queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() });
-          toast({ title: "Connection sent!", description: `You connected with ${user.name}` });
+          toast({ title: "Request sent!", description: `Connected with ${user.name}` });
         },
-        onError: () => {
-          toast({ title: "Error", description: "Failed to send connection", variant: "destructive" });
-        },
+        onError: () => toast({ title: "Error", description: "Failed to send", variant: "destructive" }),
       }
     );
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-20 rounded-xl" />
-        <Skeleton className="h-48 rounded-2xl" />
-        <Skeleton className="h-32 rounded-2xl" />
-      </div>
-    );
-  }
+  if (isLoading) return (
+    <div className="space-y-5 max-w-xl">
+      <Skeleton className="h-8 w-16 rounded-lg" />
+      <Skeleton className="h-44 rounded-lg" />
+      <Skeleton className="h-28 rounded-lg" />
+    </div>
+  );
 
-  if (!user) {
-    return (
-      <div className="text-center py-16 text-muted-foreground">
-        <p className="font-semibold">Member not found</p>
-        <Button variant="ghost" onClick={() => setLocation("/members")} className="mt-4">Go back</Button>
-      </div>
-    );
-  }
+  if (!user) return (
+    <div className="text-center py-20">
+      <p className="font-bold">Member not found</p>
+      <button onClick={() => setLocation("/members")} className="mt-4 text-sm" style={{ color: "hsl(var(--primary))" }}>
+        Go back
+      </button>
+    </div>
+  );
+
+  const selected = CONN_TYPES.find((c) => c.type === selectedType);
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-5 max-w-xl">
       <button
         onClick={() => setLocation("/members")}
-        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm font-semibold"
+        className="flex items-center gap-2 text-sm font-semibold transition-colors"
+        style={{ color: "hsl(var(--muted-foreground))" }}
         data-testid="btn-back"
       >
-        <ArrowLeft className="w-4 h-4" />
-        Back
+        <ArrowLeft className="w-4 h-4" /> Back
       </button>
 
-      <div className="bg-card border border-border/50 rounded-3xl p-8 text-center">
-        <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-muted to-muted/30 flex items-center justify-center text-5xl mx-auto mb-4">
-          {user.avatar}
-        </div>
-        <div className="flex items-center justify-center gap-2">
-          <h1 className="text-2xl font-black">{user.name}</h1>
-          {user.verified && <span className="text-[#3B82F6] font-bold">✓</span>}
-          {user.activeNow && (
-            <span className="w-2.5 h-2.5 rounded-full bg-[#10B981] shadow-[0_0_8px_rgba(16,185,129,0.7)]" />
-          )}
-        </div>
-        <p className="text-muted-foreground mt-1">{user.age} years old</p>
-        <div className="flex items-center justify-center gap-4 mt-3 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5" />
-            <span>{user.distance} away</span>
+      {/* Profile hero */}
+      <div className="card-surface p-6">
+        <div className="flex items-start gap-4">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl shrink-0"
+            style={{ background: "hsl(var(--secondary))" }}>
+            {user.avatar}
           </div>
-          <div className="flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5" />
-            <span>{user.schedule}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl font-extrabold">{user.name}</h1>
+              {user.verified && <span className="text-xs font-bold" style={{ color: "#0B9ED9" }}>✓ Verified</span>}
+              {user.activeNow && (
+                <span className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{ background: "#12B76A18", color: "#12B76A" }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#12B76A" }} />
+                  Active
+                </span>
+              )}
+            </div>
+            <p className="text-sm mt-1 font-medium" style={{ color: "hsl(var(--muted-foreground))" }}>{user.age} years old</p>
+            <div className="flex items-center gap-4 mt-2 text-xs font-medium" style={{ color: "hsl(var(--muted-foreground))" }}>
+              <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{user.distance}</span>
+              <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{user.schedule}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="bg-card border border-border/50 rounded-2xl p-5">
-        <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3">About</h2>
-        <p className="text-foreground leading-relaxed">{user.bio}</p>
-      </div>
+        <div className="divider my-4" />
 
-      <div className="bg-card border border-border/50 rounded-2xl p-5">
-        <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3">Interests</h2>
-        <div className="flex flex-wrap gap-2">
-          {user.interests.map((interest) => (
-            <Badge key={interest} variant="outline" className="bg-muted/50 border-border text-foreground">
-              {interest}
-            </Badge>
+        <p className="text-sm leading-relaxed" style={{ color: "hsl(var(--muted-foreground))" }}>{user.bio}</p>
+
+        <div className="flex flex-wrap gap-2 mt-4">
+          {user.interests.map((i) => (
+            <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-md"
+              style={{ background: "hsl(var(--secondary))", color: "hsl(var(--foreground))" }}>
+              {i}
+            </span>
           ))}
         </div>
       </div>
 
+      {/* Connection section */}
       {!sent ? (
-        <div className="bg-card border border-border/50 rounded-2xl p-5 space-y-4">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
-            Connect with {user.name.split(" ")[0]}
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
-            {CONNECTION_TYPES.map(({ type, label, icon: Icon, color, desc }) => {
+        <div className="card-surface p-5 space-y-4">
+          <p className="section-label">Connect with {user.name.split(" ")[0]}</p>
+
+          <div className="grid grid-cols-2 gap-2.5">
+            {CONN_TYPES.map(({ type, label, Icon, color, desc }) => {
               const isSelected = selectedType === type;
               return (
                 <button
                   key={type}
                   onClick={() => setSelectedType(type)}
-                  className={`p-4 rounded-xl border text-left transition-all duration-200 ${isSelected ? "border-current" : "border-border/50 hover:border-white/20"}`}
-                  style={isSelected ? { borderColor: color, background: color + "11" } : undefined}
+                  className="p-4 rounded-lg border text-left transition-all duration-150"
+                  style={isSelected
+                    ? { borderColor: color, background: color + "12" }
+                    : { borderColor: "hsl(var(--border))", background: "transparent" }}
                   data-testid={`btn-connection-type-${type}`}
                 >
-                  <Icon className="w-5 h-5 mb-2" style={{ color }} />
-                  <p className="font-semibold text-sm" style={{ color: isSelected ? color : undefined }}>{label}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2.5"
+                    style={{ background: color + (isSelected ? "22" : "15") }}>
+                    <Icon className="w-4 h-4" style={{ color }} />
+                  </div>
+                  <p className="font-bold text-[13px]" style={isSelected ? { color } : undefined}>{label}</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>{desc}</p>
                 </button>
               );
             })}
@@ -149,38 +145,48 @@ export default function MemberDetail() {
           {selectedType === "crush" && (
             <button
               onClick={() => setAnonymous(!anonymous)}
-              className={`flex items-center gap-3 w-full p-3 rounded-xl border transition-all ${anonymous ? "border-[#FF3366]/50 bg-[#FF3366]/10" : "border-border/50"}`}
+              className="w-full flex items-center gap-3 p-3.5 rounded-lg border transition-all"
+              style={anonymous
+                ? { borderColor: "#E8193C44", background: "#E8193C0C" }
+                : { borderColor: "hsl(var(--border))", background: "transparent" }}
               data-testid="btn-anonymous-toggle"
             >
-              <div className={`w-5 h-5 rounded flex items-center justify-center transition-all ${anonymous ? "bg-[#FF3366]" : "border border-border"}`}>
-                {anonymous && <EyeOff className="w-3 h-3 text-white" />}
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: anonymous ? "#E8193C20" : "hsl(var(--secondary))" }}>
+                {anonymous ? <EyeOff className="w-4 h-4" style={{ color: "#E8193C" }} /> : <Eye className="w-4 h-4" style={{ color: "hsl(var(--muted-foreground))" }} />}
               </div>
               <div className="text-left">
-                <p className="text-sm font-semibold">{anonymous ? "Anonymous" : "Show your name"}</p>
-                <p className="text-xs text-muted-foreground">{anonymous ? "They won't see it's you" : "They'll know who you are"}</p>
+                <p className="text-sm font-semibold">{anonymous ? "Stay anonymous" : "Show your name"}</p>
+                <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+                  {anonymous ? "They won't know it's you" : "They'll see your name"}
+                </p>
+              </div>
+              <div className="ml-auto w-4 h-4 rounded-full border-2 flex items-center justify-center"
+                style={anonymous ? { borderColor: "#E8193C", background: "#E8193C" } : { borderColor: "hsl(var(--border))" }}>
+                {anonymous && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
               </div>
             </button>
           )}
 
-          <Button
+          <button
             onClick={handleConnect}
-            disabled={!selectedType || createConnection.isPending}
-            className="w-full font-bold rounded-xl h-12"
-            style={selectedType ? {
-              background: CONNECTION_TYPES.find(c => c.type === selectedType)?.color,
-              color: "white",
-            } : undefined}
+            disabled={!selectedType || createConn.isPending}
+            className="w-full py-3 rounded-lg font-bold text-sm text-white transition-all disabled:opacity-50"
+            style={{ background: selected ? selected.color : "hsl(var(--muted))" }}
             data-testid="btn-send-connection"
           >
-            {createConnection.isPending ? "Sending..." : "Send Connection"}
-          </Button>
+            {createConn.isPending ? "Sending..." : selected ? `Send as ${selected.label}` : "Choose a connection type"}
+          </button>
         </div>
       ) : (
-        <div className="bg-card border border-[#10B981]/30 rounded-2xl p-8 text-center">
-          <CheckCircle className="w-12 h-12 text-[#10B981] mx-auto mb-3" />
-          <p className="font-bold text-lg">Connection Sent!</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            You reached out as a {CONNECTION_TYPES.find(c => c.type === selectedType)?.label}
+        <div className="card-surface p-8 text-center">
+          <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+            style={{ background: "#12B76A18" }}>
+            <CheckCircle2 className="w-7 h-7" style={{ color: "#12B76A" }} />
+          </div>
+          <p className="font-extrabold text-lg">Request Sent!</p>
+          <p className="text-sm mt-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+            Sent as {selected?.label} to {user.name.split(" ")[0]}
           </p>
         </div>
       )}

@@ -1,58 +1,122 @@
 import { Link, useLocation } from "wouter";
-import { Dumbbell, Users, HeartPulse, Bell, UserCircle } from "lucide-react";
+import { LayoutGrid, Users, Link2, Bell, UserCircle } from "lucide-react";
 import { ReactNode } from "react";
-import { useGetMe, useListNotifications } from "@workspace/api-client-react";
+import { useListNotifications } from "@workspace/api-client-react";
+import logoImg from "/logo.png";
+
+const navItems = [
+  { href: "/", icon: LayoutGrid, label: "Dashboard" },
+  { href: "/members", icon: Users, label: "Members" },
+  { href: "/connections", icon: Link2, label: "Connections" },
+  { href: "/notifications", icon: Bell, label: "Alerts" },
+  { href: "/profile", icon: UserCircle, label: "Profile" },
+];
 
 export default function Layout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
-  const { data: user } = useGetMe();
   const { data: notifications = [] } = useListNotifications();
-  
-  const unreadCount = notifications.filter(n => !n.read && !n.responded).length;
-
-  const navItems = [
-    { href: "/", icon: Dumbbell, label: "Dashboard" },
-    { href: "/members", icon: Users, label: "Members" },
-    { href: "/connections", icon: HeartPulse, label: "Connections" },
-    { href: "/notifications", icon: Bell, label: "Alerts", badge: unreadCount },
-    { href: "/profile", icon: UserCircle, label: "Profile" },
-  ];
+  const unreadCount = notifications.filter((n) => !n.read && !n.responded).length;
 
   return (
-    <div className="flex min-h-screen w-full flex-col md:flex-row">
-      <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-border/50 bg-card/50 backdrop-blur-xl shrink-0 p-4 sticky top-0 z-50">
-        <div className="flex items-center gap-3 mb-8 px-2 mt-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-neon-crush to-neon-buddy flex items-center justify-center">
-            <Dumbbell className="w-6 h-6 text-white" />
-          </div>
-          <span className="font-black text-2xl tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
-            GymLink
-          </span>
+    <div className="flex min-h-screen w-full">
+      {/* Sidebar */}
+      <aside className="hidden md:flex w-[220px] xl:w-[240px] shrink-0 flex-col h-screen sticky top-0 overflow-y-auto"
+        style={{ background: "hsl(var(--sidebar))", borderRight: "1px solid hsl(var(--sidebar-border))" }}>
+
+        {/* Logo */}
+        <div className="px-5 py-6">
+          <img src={logoImg} alt="GymLink" className="h-10 w-auto object-contain" />
         </div>
 
-        <nav className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
+        <div className="h-px mx-5" style={{ background: "hsl(var(--sidebar-border))" }} />
+
+        {/* Nav */}
+        <nav className="flex flex-col gap-1 px-3 py-4 flex-1">
           {navItems.map((item) => {
             const isActive = location === item.href;
+            const showBadge = item.href === "/notifications" && unreadCount > 0;
             return (
-              <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group shrink-0 md:shrink relative ${isActive ? "bg-white/10 text-white" : "text-muted-foreground hover:bg-white/5 hover:text-white"}`}>
-                <item.icon className={`w-5 h-5 ${isActive ? "text-neon-crush" : "group-hover:text-neon-buddy transition-colors"}`} />
-                <span className="font-semibold hidden md:block">{item.label}</span>
-                {item.badge ? (
-                  <span className="absolute top-2 right-2 md:relative md:top-auto md:right-auto md:ml-auto w-5 h-5 rounded-full bg-neon-crush flex items-center justify-center text-[10px] font-bold text-white shadow-[0_0_10px_rgba(255,51,102,0.5)]">
-                    {item.badge}
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 relative group ${
+                  isActive
+                    ? "bg-[hsl(var(--primary)/0.12)] text-white"
+                    : "text-[hsl(var(--muted-foreground))] hover:text-white hover:bg-[hsl(var(--sidebar-accent))]"
+                }`}
+                data-testid={`nav-${item.href.replace("/", "") || "dashboard"}`}
+              >
+                <item.icon
+                  className={`w-[18px] h-[18px] shrink-0 transition-colors ${isActive ? "text-[hsl(var(--primary))]" : ""}`}
+                />
+                <span className="text-sm font-semibold">{item.label}</span>
+                {showBadge && (
+                  <span className="ml-auto w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                    style={{ background: "hsl(var(--primary))" }}>
+                    {unreadCount}
                   </span>
-                ) : null}
+                )}
+                {isActive && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full"
+                    style={{ background: "hsl(var(--primary))" }} />
+                )}
               </Link>
             );
           })}
         </nav>
+
+        {/* Bottom gym label */}
+        <div className="px-5 py-4">
+          <div className="h-px mb-4" style={{ background: "hsl(var(--sidebar-border))" }} />
+          <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "hsl(var(--muted-foreground))" }}>
+            Iron Temple Fitness
+          </p>
+        </div>
       </aside>
 
-      <main className="flex-1 overflow-auto bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-card/40 via-background to-background min-h-[100dvh]">
-        <div className="max-w-5xl mx-auto p-4 md:p-8">
+      {/* Mobile top bar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3"
+        style={{ background: "hsl(var(--sidebar))", borderBottom: "1px solid hsl(var(--sidebar-border))" }}>
+        <img src={logoImg} alt="GymLink" className="h-7 w-auto object-contain" />
+        {unreadCount > 0 && (
+          <Link href="/notifications">
+            <span className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+              style={{ background: "hsl(var(--primary))" }}>
+              {unreadCount}
+            </span>
+          </Link>
+        )}
+      </div>
+
+      {/* Main content */}
+      <main className="flex-1 min-h-screen overflow-x-hidden pt-[60px] md:pt-0"
+        style={{ background: "hsl(var(--background))" }}>
+        <div className="max-w-[900px] mx-auto px-5 py-8">
           {children}
         </div>
       </main>
+
+      {/* Mobile bottom nav */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-2 pb-safe"
+        style={{ background: "hsl(var(--sidebar))", borderTop: "1px solid hsl(var(--sidebar-border))", paddingBottom: "env(safe-area-inset-bottom, 12px)", paddingTop: "10px" }}>
+        {navItems.map((item) => {
+          const isActive = location === item.href;
+          const showBadge = item.href === "/notifications" && unreadCount > 0;
+          return (
+            <Link key={item.href} href={item.href}
+              className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors relative ${isActive ? "text-white" : "text-[hsl(var(--muted-foreground))]"}`}>
+              <item.icon className={`w-5 h-5 ${isActive ? "text-[hsl(var(--primary))]" : ""}`} />
+              <span className="text-[10px] font-semibold">{item.label}</span>
+              {showBadge && (
+                <span className="absolute -top-0.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                  style={{ background: "hsl(var(--primary))" }}>
+                  {unreadCount}
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }
