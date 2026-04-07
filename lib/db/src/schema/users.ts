@@ -9,12 +9,14 @@ export const usersTable = pgTable("users", {
   avatar: text("avatar").notNull().default("💪"),
   bio: text("bio").notNull().default(""),
   gym: text("gym").notNull().default(""),
+  gymId: text("gym_id"),
   schedule: text("schedule").notNull().default(""),
   interests: text("interests").array().notNull().default([]),
   verified: boolean("verified").notNull().default(false),
   distance: text("distance").notNull().default("0.0 mi"),
   isMe: boolean("is_me").notNull().default(false),
   activeNow: boolean("active_now").notNull().default(false),
+  checkedIn: boolean("checked_in").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

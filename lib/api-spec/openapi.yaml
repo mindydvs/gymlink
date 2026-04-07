@@ -18,6 +18,8 @@ tags:
     description: Incoming connection notifications
   - name: stats
     description: Gym activity stats
+  - name: gyms
+    description: Gym locations
 
 paths:
   /healthz:
@@ -87,6 +89,25 @@ paths:
       responses:
         "200":
           description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/me/checkin:
+    post:
+      operationId: checkIn
+      tags: [users]
+      summary: Check in or out of a gym
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckInBody"
+      responses:
+        "200":
+          description: Updated user profile with check-in status
           content:
             application/json:
               schema:
@@ -226,6 +247,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/GymStats"
 
+  /gyms:
+    get:
+      operationId: listGyms
+      tags: [gyms]
+      summary: List available gyms
+      responses:
+        "200":
+          description: List of gyms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Gym"
+
 components:
   schemas:
     HealthStatus:
@@ -244,6 +280,26 @@ components:
       type: string
       enum: [pending, accepted, declined]
 
+    Gym:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        memberCount:
+          type: integer
+      required:
+        - id
+        - name
+        - address
+        - city
+        - memberCount
+
     User:
       type: object
       properties:
@@ -260,6 +316,9 @@ components:
           type: string
         gym:
           type: string
+        gymId:
+          type: string
+          nullable: true
         schedule:
           type: string
         interests:
@@ -273,6 +332,8 @@ components:
         isMe:
           type: boolean
         activeNow:
+          type: boolean
+        checkedIn:
           type: boolean
       required:
         - id
@@ -296,12 +357,25 @@ components:
           type: string
         gym:
           type: string
+        gymId:
+          type: string
         schedule:
           type: string
         interests:
           type: array
           items:
             type: string
+
+    CheckInBody:
+      type: object
+      properties:
+        gymId:
+          type: string
+        gymName:
+          type: string
+      required:
+        - gymId
+        - gymName
 
     Connection:
       type: object

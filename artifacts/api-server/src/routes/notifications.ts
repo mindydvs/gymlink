@@ -3,18 +3,16 @@ import { eq } from "drizzle-orm";
 import { db, notificationsTable } from "@workspace/db";
 import {
   ListNotificationsResponse,
-  MarkNotificationReadParams,
   MarkNotificationReadResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
-const ME_USER_ID = "me";
 
 router.get("/notifications", async (req, res): Promise<void> => {
   const notifications = await db
     .select()
     .from(notificationsTable)
-    .where(eq(notificationsTable.userId, ME_USER_ID))
+    .where(eq(notificationsTable.userId, req.userId))
     .orderBy(notificationsTable.createdAt);
 
   res.json(ListNotificationsResponse.parse(notifications));

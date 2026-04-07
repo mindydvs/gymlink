@@ -31,12 +31,14 @@ export const ListUsersResponseItem = zod.object({
   avatar: zod.string().describe("Emoji or image URL"),
   bio: zod.string(),
   gym: zod.string(),
+  gymId: zod.string().nullable().optional(),
   schedule: zod.string(),
   interests: zod.array(zod.string()),
   verified: zod.boolean(),
   distance: zod.string().optional(),
   isMe: zod.boolean().optional(),
   activeNow: zod.boolean().optional(),
+  checkedIn: zod.boolean().optional(),
 });
 export const ListUsersResponse = zod.array(ListUsersResponseItem);
 
@@ -50,12 +52,14 @@ export const GetMeResponse = zod.object({
   avatar: zod.string().describe("Emoji or image URL"),
   bio: zod.string(),
   gym: zod.string(),
+  gymId: zod.string().nullable().optional(),
   schedule: zod.string(),
   interests: zod.array(zod.string()),
   verified: zod.boolean(),
   distance: zod.string().optional(),
   isMe: zod.boolean().optional(),
   activeNow: zod.boolean().optional(),
+  checkedIn: zod.boolean().optional(),
 });
 
 /**
@@ -66,6 +70,7 @@ export const UpdateMeBody = zod.object({
   age: zod.number().optional(),
   bio: zod.string().optional(),
   gym: zod.string().optional(),
+  gymId: zod.string().optional(),
   schedule: zod.string().optional(),
   interests: zod.array(zod.string()).optional(),
 });
@@ -77,12 +82,39 @@ export const UpdateMeResponse = zod.object({
   avatar: zod.string().describe("Emoji or image URL"),
   bio: zod.string(),
   gym: zod.string(),
+  gymId: zod.string().nullable().optional(),
   schedule: zod.string(),
   interests: zod.array(zod.string()),
   verified: zod.boolean(),
   distance: zod.string().optional(),
   isMe: zod.boolean().optional(),
   activeNow: zod.boolean().optional(),
+  checkedIn: zod.boolean().optional(),
+});
+
+/**
+ * @summary Check in or out of a gym
+ */
+export const CheckInBody = zod.object({
+  gymId: zod.string(),
+  gymName: zod.string(),
+});
+
+export const CheckInResponse = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  age: zod.number(),
+  avatar: zod.string(),
+  bio: zod.string(),
+  gym: zod.string(),
+  gymId: zod.string().nullable().optional(),
+  schedule: zod.string(),
+  interests: zod.array(zod.string()),
+  verified: zod.boolean(),
+  distance: zod.string().optional(),
+  isMe: zod.boolean().optional(),
+  activeNow: zod.boolean().optional(),
+  checkedIn: zod.boolean().optional(),
 });
 
 /**
@@ -99,12 +131,14 @@ export const GetUserResponse = zod.object({
   avatar: zod.string().describe("Emoji or image URL"),
   bio: zod.string(),
   gym: zod.string(),
+  gymId: zod.string().nullable().optional(),
   schedule: zod.string(),
   interests: zod.array(zod.string()),
   verified: zod.boolean(),
   distance: zod.string().optional(),
   isMe: zod.boolean().optional(),
   activeNow: zod.boolean().optional(),
+  checkedIn: zod.boolean().optional(),
 });
 
 /**
@@ -124,6 +158,23 @@ export const ListConnectionsQueryParams = zod.object({
   status: zod.enum(["pending", "accepted", "declined"]).optional(),
 });
 
+const UserShape = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  age: zod.number(),
+  avatar: zod.string().describe("Emoji or image URL"),
+  bio: zod.string(),
+  gym: zod.string(),
+  gymId: zod.string().nullable().optional(),
+  schedule: zod.string(),
+  interests: zod.array(zod.string()),
+  verified: zod.boolean(),
+  distance: zod.string().optional(),
+  isMe: zod.boolean().optional(),
+  activeNow: zod.boolean().optional(),
+  checkedIn: zod.boolean().optional(),
+});
+
 export const ListConnectionsResponseItem = zod.object({
   id: zod.string(),
   fromUserId: zod.string(),
@@ -132,38 +183,8 @@ export const ListConnectionsResponseItem = zod.object({
   status: zod.enum(["pending", "accepted", "declined"]),
   anonymous: zod.boolean(),
   createdAt: zod.coerce.date(),
-  fromUser: zod
-    .object({
-      id: zod.string(),
-      name: zod.string(),
-      age: zod.number(),
-      avatar: zod.string().describe("Emoji or image URL"),
-      bio: zod.string(),
-      gym: zod.string(),
-      schedule: zod.string(),
-      interests: zod.array(zod.string()),
-      verified: zod.boolean(),
-      distance: zod.string().optional(),
-      isMe: zod.boolean().optional(),
-      activeNow: zod.boolean().optional(),
-    })
-    .optional(),
-  toUser: zod
-    .object({
-      id: zod.string(),
-      name: zod.string(),
-      age: zod.number(),
-      avatar: zod.string().describe("Emoji or image URL"),
-      bio: zod.string(),
-      gym: zod.string(),
-      schedule: zod.string(),
-      interests: zod.array(zod.string()),
-      verified: zod.boolean(),
-      distance: zod.string().optional(),
-      isMe: zod.boolean().optional(),
-      activeNow: zod.boolean().optional(),
-    })
-    .optional(),
+  fromUser: UserShape.optional(),
+  toUser: UserShape.optional(),
 });
 export const ListConnectionsResponse = zod.array(ListConnectionsResponseItem);
 
@@ -186,38 +207,8 @@ export const RespondToConnectionResponse = zod.object({
   status: zod.enum(["pending", "accepted", "declined"]),
   anonymous: zod.boolean(),
   createdAt: zod.coerce.date(),
-  fromUser: zod
-    .object({
-      id: zod.string(),
-      name: zod.string(),
-      age: zod.number(),
-      avatar: zod.string().describe("Emoji or image URL"),
-      bio: zod.string(),
-      gym: zod.string(),
-      schedule: zod.string(),
-      interests: zod.array(zod.string()),
-      verified: zod.boolean(),
-      distance: zod.string().optional(),
-      isMe: zod.boolean().optional(),
-      activeNow: zod.boolean().optional(),
-    })
-    .optional(),
-  toUser: zod
-    .object({
-      id: zod.string(),
-      name: zod.string(),
-      age: zod.number(),
-      avatar: zod.string().describe("Emoji or image URL"),
-      bio: zod.string(),
-      gym: zod.string(),
-      schedule: zod.string(),
-      interests: zod.array(zod.string()),
-      verified: zod.boolean(),
-      distance: zod.string().optional(),
-      isMe: zod.boolean().optional(),
-      activeNow: zod.boolean().optional(),
-    })
-    .optional(),
+  fromUser: UserShape.optional(),
+  toUser: UserShape.optional(),
 });
 
 /**
@@ -267,3 +258,15 @@ export const GetGymStatsResponse = zod.object({
   spotterCount: zod.number(),
   gymName: zod.string(),
 });
+
+/**
+ * @summary List available gyms
+ */
+export const ListGymsResponseItem = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  address: zod.string(),
+  city: zod.string(),
+  memberCount: zod.number(),
+});
+export const ListGymsResponse = zod.array(ListGymsResponseItem);

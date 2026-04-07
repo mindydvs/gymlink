@@ -1,18 +1,16 @@
 import { Router, type IRouter } from "express";
-import { eq, or, and } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { db, connectionsTable, usersTable, notificationsTable } from "@workspace/db";
 import {
   CreateConnectionBody,
   ListConnectionsQueryParams,
   ListConnectionsResponse,
-  RespondToConnectionParams,
   RespondToConnectionBody,
   RespondToConnectionResponse,
 } from "@workspace/api-zod";
 import { randomUUID } from "crypto";
 
 const router: IRouter = Router();
-const ME_USER_ID = "me";
 
 router.post("/connections", async (req, res): Promise<void> => {
   const parsed = CreateConnectionBody.safeParse(req.body);
@@ -21,19 +19,18 @@ router.post("/connections", async (req, res): Promise<void> => {
     return;
   }
 
+  const meId = req.userId;
   const { toUserId, type, anonymous } = parsed.data;
 
   const id = randomUUID();
   const [connection] = await db
     .insert(connectionsTable)
-    .values({ id, fromUserId: ME_USER_ID, toUserId, type, status: "pending", anonymous })
+    .values({ id, fromUserId: meId, toUserId, type, status: "pending", anonymous })
     .returning();
 
-  // Get the "me" user for notification
-  const [meUser] = await db.select().from(usersTable).where(eq(usersTable.id, ME_USER_ID));
+  const [meUser] = await db.select().from(usersTable).where(eq(usersTable.id, meId));
   const fromName = meUser?.name ?? "Someone";
 
-  // Create a notification for the recipient
   await db.insert(notificationsTable).values({
     id: randomUUID(),
     connectionId: id,
@@ -45,7 +42,7 @@ router.post("/connections", async (req, res): Promise<void> => {
     responded: false,
   });
 
-  const [fromUser] = await db.select().from(usersTable).where(eq(usersTable.id, ME_USER_ID));
+  const [fromUser] = await db.select().from(usersTable).where(eq(usersTable.id, meId));
   const [toUser] = await db.select().from(usersTable).where(eq(usersTable.id, toUserId));
 
   res.status(201).json({
@@ -56,14 +53,15 @@ router.post("/connections", async (req, res): Promise<void> => {
 });
 
 router.get("/connections", async (req, res): Promise<void> => {
+  const meId = req.userId;
   const query = ListConnectionsQueryParams.safeParse(req.query);
   let rows = await db
     .select()
     .from(connectionsTable)
     .where(
       or(
-        eq(connectionsTable.fromUserId, ME_USER_ID),
-        eq(connectionsTable.toUserId, ME_USER_ID)
+        eq(connectionsTable.fromUserId, meId),
+        eq(connectionsTable.toUserId, meId)
       )
     );
 
@@ -77,6 +75,11 @@ router.get("/connections", async (req, res): Promise<void> => {
   }
 
   const allUserIds = [...new Set(rows.flatMap((c) => [c.fromUserId, c.toUserId]))];
+  if (allUserIds.length === 0) {
+    res.json([]);
+    return;
+  }
+
   const users = await db.select().from(usersTable).where(
     or(...allUserIds.map((uid) => eq(usersTable.id, uid)))
   );
@@ -113,7 +116,6 @@ router.post("/connections/:id/respond", async (req, res): Promise<void> => {
     return;
   }
 
-  // Mark related notifications as responded
   await db
     .update(notificationsTable)
     .set({ responded: true })

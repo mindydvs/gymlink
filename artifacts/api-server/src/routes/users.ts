@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, ilike, arrayContains } from "drizzle-orm";
+import { eq, ilike } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import {
   ListUsersQueryParams,
@@ -10,10 +10,9 @@ import {
   UpdateMeBody,
   UpdateMeResponse,
 } from "@workspace/api-zod";
+import { z } from "zod/v4";
 
 const router: IRouter = Router();
-
-const ME_USER_ID = "me";
 
 router.get("/users", async (req, res): Promise<void> => {
   const query = ListUsersQueryParams.safeParse(req.query);
@@ -33,7 +32,7 @@ router.get("/users", async (req, res): Promise<void> => {
 });
 
 router.get("/users/me", async (req, res): Promise<void> => {
-  const [me] = await db.select().from(usersTable).where(eq(usersTable.id, ME_USER_ID));
+  const [me] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId));
   if (!me) {
     res.status(404).json({ error: "Profile not found" });
     return;
@@ -51,7 +50,7 @@ router.patch("/users/me", async (req, res): Promise<void> => {
   const [me] = await db
     .update(usersTable)
     .set(parsed.data)
-    .where(eq(usersTable.id, ME_USER_ID))
+    .where(eq(usersTable.id, req.userId))
     .returning();
 
   if (!me) {
@@ -60,6 +59,34 @@ router.patch("/users/me", async (req, res): Promise<void> => {
   }
 
   res.json(UpdateMeResponse.parse(me));
+});
+
+router.post("/users/me/checkin", async (req, res): Promise<void> => {
+  const { gymId, gymName } = z.object({ gymId: z.string(), gymName: z.string() }).parse(req.body);
+
+  const [me] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, req.userId));
+
+  if (!me) {
+    res.status(404).json({ error: "Profile not found" });
+    return;
+  }
+
+  const alreadyCheckedIn = me.checkedIn && me.gymId === gymId;
+  const [updated] = await db
+    .update(usersTable)
+    .set({
+      checkedIn: !alreadyCheckedIn,
+      gymId: alreadyCheckedIn ? null : gymId,
+      gym: alreadyCheckedIn ? me.gym : gymName,
+      activeNow: !alreadyCheckedIn,
+    })
+    .where(eq(usersTable.id, req.userId))
+    .returning();
+
+  res.json(GetMeResponse.parse(updated));
 });
 
 router.get("/users/:id", async (req, res): Promise<void> => {
