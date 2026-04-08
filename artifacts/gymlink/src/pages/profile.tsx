@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Edit2, Check, X, Building, Clock, ShieldCheck, LogOut } from "lucide-react";
+import { Edit2, Check, X, Building, Clock, ShieldCheck, LogOut, Video } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -12,6 +12,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { InterestPicker } from "@/components/interest-picker";
 import { GymPicker } from "@/components/gym-picker";
+import { AvatarUploader } from "@/components/avatar-uploader";
+import { VideoUploader } from "@/components/video-uploader";
 import { useAuth } from "@/context/auth";
 
 const profileSchema = z.object({
@@ -103,9 +105,18 @@ export default function Profile() {
           {/* Hero */}
           <div className="card-surface p-6">
             <div className="flex items-start gap-4">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl shrink-0"
-                style={{ background: "hsl(var(--secondary))" }}>
-                {me.avatar}
+              <div className="shrink-0">
+                <AvatarUploader
+                  currentAvatarUrl={me.avatarUrl}
+                  emoji={me.avatar}
+                  onUploaded={(objectPath) => {
+                    updateMe.mutate(
+                      { data: { avatarUrl: objectPath } },
+                      { onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() }) }
+                    );
+                  }}
+                  size="lg"
+                />
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -146,6 +157,15 @@ export default function Profile() {
                 : <span className="text-sm italic" style={{ color: "hsl(var(--muted-foreground))" }}>No interests added yet — tap Edit to add some</span>
               }
             </div>
+          </div>
+
+          {/* Workout Videos */}
+          <div className="card-surface p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Video className="w-4 h-4" style={{ color: "hsl(var(--muted-foreground))" }} />
+              <p className="section-label">Workout Videos</p>
+            </div>
+            <VideoUploader userId={me.id} isOwner={true} />
           </div>
 
           {/* Sign out */}

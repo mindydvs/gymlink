@@ -2,9 +2,10 @@ import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useGetUser, useCreateConnection, getGetUserQueryKey, getListConnectionsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, MapPin, Clock, Heart, Dumbbell, Brain, HandHelpingIcon, CheckCircle2, EyeOff, Eye } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Heart, Dumbbell, Brain, HandHelpingIcon, CheckCircle2, EyeOff, Eye, Video } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { VideoUploader } from "@/components/video-uploader";
 
 const CONN_TYPES = [
   { type: "crush"   as const, label: "Gym Crush",       Icon: Heart,           color: "#E8193C", desc: "You're interested in them" },
@@ -75,9 +76,12 @@ export default function MemberDetail() {
       {/* Profile hero */}
       <div className="card-surface p-6">
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl shrink-0"
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl shrink-0 overflow-hidden"
             style={{ background: "hsl(var(--secondary))" }}>
-            {user.avatar}
+            {user.avatarUrl
+              ? <img src={`/api/storage${user.avatarUrl}`} alt={user.name} className="w-full h-full object-cover" />
+              : user.avatar
+            }
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
@@ -190,6 +194,15 @@ export default function MemberDetail() {
           </p>
         </div>
       )}
+
+      {/* Workout videos */}
+      <div className="card-surface p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Video className="w-4 h-4" style={{ color: "hsl(var(--muted-foreground))" }} />
+          <p className="section-label">Workout Videos</p>
+        </div>
+        <VideoUploader userId={user.id} isOwner={false} />
+      </div>
     </div>
   );
 }

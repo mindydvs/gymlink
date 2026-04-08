@@ -42,10 +42,11 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 
 ## Database Schema
 
-- `users` — gym member profiles (id, name, age, avatar, bio, gym, gymId, schedule, interests, verified, distance, isMe, activeNow, checkedIn)
+- `users` — gym member profiles (id, name, age, avatar, avatarUrl, bio, gym, gymId, schedule, interests, verified, distance, isMe, activeNow, checkedIn)
 - `gyms` — gym locations (id, name, address, city, memberCount); seeded with 10 Austin gyms
 - `connections` — connection requests between users (crush/buddy/advisor/spotter)
 - `notifications` — incoming connection alerts for current user
+- `workout_videos` — uploaded workout form videos (id, userId, objectPath, title, description, createdAt)
 
 ## Frontend Components
 
@@ -53,8 +54,11 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `pages/welcome.tsx` — multi-step join flow + sign-in; shows when no userId in localStorage
 - `components/gym-picker.tsx` — searchable gym dropdown using `/api/gyms`
 - `components/interest-picker.tsx` — preset chip + custom interest input
+- `components/avatar-uploader.tsx` — profile photo upload via presigned URL; shows image or emoji fallback
+- `components/video-uploader.tsx` — workout video upload (max 2 min, client-side duration validation), list/delete; uses `useUpload` from `@workspace/object-storage-web`
 - `pages/home.tsx` — Dashboard with check-in card, stats, notifications, member discovery
-- `pages/profile.tsx` — Profile view/edit with GymPicker + InterestPicker integration
+- `pages/profile.tsx` — Profile view/edit with GymPicker + InterestPicker + AvatarUploader + VideoUploader
+- `pages/member-detail.tsx` — Member profile with avatar photo, connection picker, VideoUploader (view-only)
 
 ## Auth Pattern
 

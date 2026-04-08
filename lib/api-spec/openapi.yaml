@@ -458,6 +458,9 @@ components:
           type: array
           items:
             type: string
+        avatarUrl:
+          type: string
+          nullable: true
 
     CheckInBody:
       type: object

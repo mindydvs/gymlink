@@ -14,10 +14,13 @@ export interface User {
   avatar: string;
   bio: string;
   gym: string;
+  gymId?: string | null;
   schedule: string;
   interests: string[];
   verified: boolean;
   distance?: string;
   isMe?: boolean;
   activeNow?: boolean;
+  checkedIn?: boolean;
+  avatarUrl?: string | null;
 }

@@ -17,16 +17,23 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  CheckInBody,
   Connection,
   CreateConnectionBody,
+  CreateWorkoutVideoBody,
+  Gym,
   GymStats,
   HealthStatus,
   ListConnectionsParams,
   ListUsersParams,
+  ListWorkoutVideosParams,
   Notification,
   RespondConnectionBody,
   UpdateProfileBody,
+  UploadUrlRequest,
+  UploadUrlResponse,
   User,
+  WorkoutVideo,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -355,6 +362,92 @@ export const useUpdateMe = <
   TContext
 > => {
   return useMutation(getUpdateMeMutationOptions(options));
+};
+
+/**
+ * @summary Check in or out of a gym
+ */
+export const getCheckInUrl = () => {
+  return `/api/users/me/checkin`;
+};
+
+export const checkIn = async (
+  checkInBody: CheckInBody,
+  options?: RequestInit,
+): Promise<User> => {
+  return customFetch<User>(getCheckInUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(checkInBody),
+  });
+};
+
+export const getCheckInMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof checkIn>>,
+    TError,
+    { data: BodyType<CheckInBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof checkIn>>,
+  TError,
+  { data: BodyType<CheckInBody> },
+  TContext
+> => {
+  const mutationKey = ["checkIn"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof checkIn>>,
+    { data: BodyType<CheckInBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return checkIn(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CheckInMutationResult = NonNullable<
+  Awaited<ReturnType<typeof checkIn>>
+>;
+export type CheckInMutationBody = BodyType<CheckInBody>;
+export type CheckInMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Check in or out of a gym
+ */
+export const useCheckIn = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof checkIn>>,
+    TError,
+    { data: BodyType<CheckInBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof checkIn>>,
+  TError,
+  { data: BodyType<CheckInBody> },
+  TContext
+> => {
+  return useMutation(getCheckInMutationOptions(options));
 };
 
 /**
@@ -940,8 +1033,8 @@ export const getListGymsUrl = () => {
   return `/api/gyms`;
 };
 
-export const listGyms = async (options?: RequestInit): Promise<import("./api.schemas").Gym[]> => {
-  return customFetch<import("./api.schemas").Gym[]>(getListGymsUrl(), {
+export const listGyms = async (options?: RequestInit): Promise<Gym[]> => {
+  return customFetch<Gym[]>(getListGymsUrl(), {
     ...options,
     method: "GET",
   });
@@ -959,15 +1052,28 @@ export const getListGymsQueryOptions = <
   request?: SecondParameter<typeof customFetch>;
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
+
   const queryKey = queryOptions?.queryKey ?? getListGymsQueryKey();
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof listGyms>>> = ({ signal }) =>
-    listGyms({ signal, ...requestOptions });
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listGyms>>> = ({
+    signal,
+  }) => listGyms({ signal, ...requestOptions });
+
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof listGyms>>,
     TError,
     TData
   > & { queryKey: QueryKey };
 };
+
+export type ListGymsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listGyms>>
+>;
+export type ListGymsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List available gyms
+ */
 
 export function useListGyms<
   TData = Awaited<ReturnType<typeof listGyms>>,
@@ -977,68 +1083,452 @@ export function useListGyms<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getListGymsQueryOptions(options);
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
- * @summary Check in or out of a gym
+ * @summary Request a presigned URL for file upload
  */
-export const getCheckInUrl = () => {
-  return `/api/users/me/checkin`;
+export const getRequestUploadUrlUrl = () => {
+  return `/api/storage/uploads/request-url`;
 };
 
-export const checkIn = async (
-  checkInBody: import("./api.schemas").CheckInBody,
+export const requestUploadUrl = async (
+  uploadUrlRequest: UploadUrlRequest,
   options?: RequestInit,
-): Promise<User> => {
-  return customFetch<User>(getCheckInUrl(), {
+): Promise<UploadUrlResponse> => {
+  return customFetch<UploadUrlResponse>(getRequestUploadUrlUrl(), {
     ...options,
     method: "POST",
-    body: JSON.stringify(checkInBody),
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(uploadUrlRequest),
   });
 };
 
-export const getCheckInMutationOptions = <
+export const getRequestUploadUrlMutationOptions = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof checkIn>>,
+    Awaited<ReturnType<typeof requestUploadUrl>>,
     TError,
-    { data: import("./api.schemas").CheckInBody },
+    { data: BodyType<UploadUrlRequest> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof checkIn>>,
+  Awaited<ReturnType<typeof requestUploadUrl>>,
   TError,
-  { data: import("./api.schemas").CheckInBody },
+  { data: BodyType<UploadUrlRequest> },
   TContext
 > => {
-  const mutationFn = async (variables: { data: import("./api.schemas").CheckInBody }) => {
-    const { data } = variables;
-    return checkIn(data);
+  const mutationKey = ["requestUploadUrl"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof requestUploadUrl>>,
+    { data: BodyType<UploadUrlRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return requestUploadUrl(data, requestOptions);
   };
-  return { mutationFn, ...options?.mutation };
+
+  return { mutationFn, ...mutationOptions };
 };
 
-export type CheckInMutationResult = NonNullable<Awaited<ReturnType<typeof checkIn>>>;
-export type CheckInMutationError = ErrorType<unknown>;
+export type RequestUploadUrlMutationResult = NonNullable<
+  Awaited<ReturnType<typeof requestUploadUrl>>
+>;
+export type RequestUploadUrlMutationBody = BodyType<UploadUrlRequest>;
+export type RequestUploadUrlMutationError = ErrorType<unknown>;
 
-export const useCheckIn = <TError = ErrorType<unknown>, TContext = unknown>(options?: {
+/**
+ * @summary Request a presigned URL for file upload
+ */
+export const useRequestUploadUrl = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof checkIn>>,
+    Awaited<ReturnType<typeof requestUploadUrl>>,
     TError,
-    { data: import("./api.schemas").CheckInBody },
+    { data: BodyType<UploadUrlRequest> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
-  Awaited<ReturnType<typeof checkIn>>,
+  Awaited<ReturnType<typeof requestUploadUrl>>,
   TError,
-  { data: import("./api.schemas").CheckInBody },
+  { data: BodyType<UploadUrlRequest> },
   TContext
 > => {
-  return useMutation(getCheckInMutationOptions(options));
+  return useMutation(getRequestUploadUrlMutationOptions(options));
+};
+
+/**
+ * @summary Serve an uploaded object
+ */
+export const getGetStorageObjectUrl = (objectPath: string) => {
+  return `/api/storage/objects/${objectPath}`;
+};
+
+export const getStorageObject = async (
+  objectPath: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getGetStorageObjectUrl(objectPath), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetStorageObjectQueryKey = (objectPath: string) => {
+  return [`/api/storage/objects/${objectPath}`] as const;
+};
+
+export const getGetStorageObjectQueryOptions = <
+  TData = Awaited<ReturnType<typeof getStorageObject>>,
+  TError = ErrorType<unknown>,
+>(
+  objectPath: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getStorageObject>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetStorageObjectQueryKey(objectPath);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getStorageObject>>
+  > = ({ signal }) =>
+    getStorageObject(objectPath, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!objectPath,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getStorageObject>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetStorageObjectQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getStorageObject>>
+>;
+export type GetStorageObjectQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Serve an uploaded object
+ */
+
+export function useGetStorageObject<
+  TData = Awaited<ReturnType<typeof getStorageObject>>,
+  TError = ErrorType<unknown>,
+>(
+  objectPath: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getStorageObject>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetStorageObjectQueryOptions(objectPath, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List workout form videos for a user
+ */
+export const getListWorkoutVideosUrl = (params?: ListWorkoutVideosParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/videos?${stringifiedParams}`
+    : `/api/videos`;
+};
+
+export const listWorkoutVideos = async (
+  params?: ListWorkoutVideosParams,
+  options?: RequestInit,
+): Promise<WorkoutVideo[]> => {
+  return customFetch<WorkoutVideo[]>(getListWorkoutVideosUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListWorkoutVideosQueryKey = (
+  params?: ListWorkoutVideosParams,
+) => {
+  return [`/api/videos`, ...(params ? [params] : [])] as const;
+};
+
+export const getListWorkoutVideosQueryOptions = <
+  TData = Awaited<ReturnType<typeof listWorkoutVideos>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListWorkoutVideosParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listWorkoutVideos>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListWorkoutVideosQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listWorkoutVideos>>
+  > = ({ signal }) => listWorkoutVideos(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listWorkoutVideos>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListWorkoutVideosQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listWorkoutVideos>>
+>;
+export type ListWorkoutVideosQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List workout form videos for a user
+ */
+
+export function useListWorkoutVideos<
+  TData = Awaited<ReturnType<typeof listWorkoutVideos>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListWorkoutVideosParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listWorkoutVideos>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListWorkoutVideosQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Upload a workout form video
+ */
+export const getCreateWorkoutVideoUrl = () => {
+  return `/api/videos`;
+};
+
+export const createWorkoutVideo = async (
+  createWorkoutVideoBody: CreateWorkoutVideoBody,
+  options?: RequestInit,
+): Promise<WorkoutVideo> => {
+  return customFetch<WorkoutVideo>(getCreateWorkoutVideoUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createWorkoutVideoBody),
+  });
+};
+
+export const getCreateWorkoutVideoMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createWorkoutVideo>>,
+    TError,
+    { data: BodyType<CreateWorkoutVideoBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createWorkoutVideo>>,
+  TError,
+  { data: BodyType<CreateWorkoutVideoBody> },
+  TContext
+> => {
+  const mutationKey = ["createWorkoutVideo"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createWorkoutVideo>>,
+    { data: BodyType<CreateWorkoutVideoBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createWorkoutVideo(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateWorkoutVideoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createWorkoutVideo>>
+>;
+export type CreateWorkoutVideoMutationBody = BodyType<CreateWorkoutVideoBody>;
+export type CreateWorkoutVideoMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Upload a workout form video
+ */
+export const useCreateWorkoutVideo = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createWorkoutVideo>>,
+    TError,
+    { data: BodyType<CreateWorkoutVideoBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createWorkoutVideo>>,
+  TError,
+  { data: BodyType<CreateWorkoutVideoBody> },
+  TContext
+> => {
+  return useMutation(getCreateWorkoutVideoMutationOptions(options));
+};
+
+/**
+ * @summary Delete a workout video
+ */
+export const getDeleteWorkoutVideoUrl = (id: string) => {
+  return `/api/videos/${id}`;
+};
+
+export const deleteWorkoutVideo = async (
+  id: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteWorkoutVideoUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteWorkoutVideoMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteWorkoutVideo>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteWorkoutVideo>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteWorkoutVideo"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteWorkoutVideo>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteWorkoutVideo(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteWorkoutVideoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteWorkoutVideo>>
+>;
+
+export type DeleteWorkoutVideoMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a workout video
+ */
+export const useDeleteWorkoutVideo = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteWorkoutVideo>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteWorkoutVideo>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDeleteWorkoutVideoMutationOptions(options));
 };

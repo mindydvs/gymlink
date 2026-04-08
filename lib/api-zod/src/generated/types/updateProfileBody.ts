@@ -11,6 +11,8 @@ export interface UpdateProfileBody {
   age?: number;
   bio?: string;
   gym?: string;
+  gymId?: string;
   schedule?: string;
   interests?: string[];
+  avatarUrl?: string | null;
 }

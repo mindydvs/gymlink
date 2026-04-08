@@ -28,6 +28,14 @@ export const ConnectionStatus = {
   declined: "declined",
 } as const;
 
+export interface Gym {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  memberCount: number;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -44,14 +52,7 @@ export interface User {
   isMe?: boolean;
   activeNow?: boolean;
   checkedIn?: boolean;
-}
-
-export interface Gym {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  memberCount: number;
+  avatarUrl?: string | null;
 }
 
 export interface UpdateProfileBody {
@@ -62,6 +63,7 @@ export interface UpdateProfileBody {
   gymId?: string;
   schedule?: string;
   interests?: string[];
+  avatarUrl?: string | null;
 }
 
 export interface CheckInBody {
@@ -120,6 +122,32 @@ export interface GymStats {
   gymName: string;
 }
 
+export interface UploadUrlRequest {
+  name: string;
+  size: number;
+  contentType: string;
+}
+
+export interface UploadUrlResponse {
+  uploadURL: string;
+  objectPath: string;
+}
+
+export interface WorkoutVideo {
+  id: string;
+  userId: string;
+  objectPath: string;
+  title: string;
+  description?: string | null;
+  createdAt: string;
+}
+
+export interface CreateWorkoutVideoBody {
+  objectPath: string;
+  title: string;
+  description?: string;
+}
+
 export type ListUsersParams = {
   gym?: string;
   interest?: string;
@@ -129,4 +157,8 @@ export type ListUsersParams = {
 export type ListConnectionsParams = {
   type?: ConnectionType;
   status?: ConnectionStatus;
+};
+
+export type ListWorkoutVideosParams = {
+  userId?: string;
 };

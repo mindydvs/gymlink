@@ -31,7 +31,7 @@ export const ListUsersResponseItem = zod.object({
   avatar: zod.string().describe("Emoji or image URL"),
   bio: zod.string(),
   gym: zod.string(),
-  gymId: zod.string().nullable().optional(),
+  gymId: zod.string().nullish(),
   schedule: zod.string(),
   interests: zod.array(zod.string()),
   verified: zod.boolean(),
@@ -39,6 +39,7 @@ export const ListUsersResponseItem = zod.object({
   isMe: zod.boolean().optional(),
   activeNow: zod.boolean().optional(),
   checkedIn: zod.boolean().optional(),
+  avatarUrl: zod.string().nullish(),
 });
 export const ListUsersResponse = zod.array(ListUsersResponseItem);
 
@@ -52,7 +53,7 @@ export const GetMeResponse = zod.object({
   avatar: zod.string().describe("Emoji or image URL"),
   bio: zod.string(),
   gym: zod.string(),
-  gymId: zod.string().nullable().optional(),
+  gymId: zod.string().nullish(),
   schedule: zod.string(),
   interests: zod.array(zod.string()),
   verified: zod.boolean(),
@@ -60,6 +61,7 @@ export const GetMeResponse = zod.object({
   isMe: zod.boolean().optional(),
   activeNow: zod.boolean().optional(),
   checkedIn: zod.boolean().optional(),
+  avatarUrl: zod.string().nullish(),
 });
 
 /**
@@ -73,6 +75,7 @@ export const UpdateMeBody = zod.object({
   gymId: zod.string().optional(),
   schedule: zod.string().optional(),
   interests: zod.array(zod.string()).optional(),
+  avatarUrl: zod.string().nullish(),
 });
 
 export const UpdateMeResponse = zod.object({
@@ -82,7 +85,7 @@ export const UpdateMeResponse = zod.object({
   avatar: zod.string().describe("Emoji or image URL"),
   bio: zod.string(),
   gym: zod.string(),
-  gymId: zod.string().nullable().optional(),
+  gymId: zod.string().nullish(),
   schedule: zod.string(),
   interests: zod.array(zod.string()),
   verified: zod.boolean(),
@@ -90,6 +93,7 @@ export const UpdateMeResponse = zod.object({
   isMe: zod.boolean().optional(),
   activeNow: zod.boolean().optional(),
   checkedIn: zod.boolean().optional(),
+  avatarUrl: zod.string().nullish(),
 });
 
 /**
@@ -104,10 +108,10 @@ export const CheckInResponse = zod.object({
   id: zod.string(),
   name: zod.string(),
   age: zod.number(),
-  avatar: zod.string(),
+  avatar: zod.string().describe("Emoji or image URL"),
   bio: zod.string(),
   gym: zod.string(),
-  gymId: zod.string().nullable().optional(),
+  gymId: zod.string().nullish(),
   schedule: zod.string(),
   interests: zod.array(zod.string()),
   verified: zod.boolean(),
@@ -115,6 +119,7 @@ export const CheckInResponse = zod.object({
   isMe: zod.boolean().optional(),
   activeNow: zod.boolean().optional(),
   checkedIn: zod.boolean().optional(),
+  avatarUrl: zod.string().nullish(),
 });
 
 /**
@@ -131,7 +136,7 @@ export const GetUserResponse = zod.object({
   avatar: zod.string().describe("Emoji or image URL"),
   bio: zod.string(),
   gym: zod.string(),
-  gymId: zod.string().nullable().optional(),
+  gymId: zod.string().nullish(),
   schedule: zod.string(),
   interests: zod.array(zod.string()),
   verified: zod.boolean(),
@@ -139,6 +144,7 @@ export const GetUserResponse = zod.object({
   isMe: zod.boolean().optional(),
   activeNow: zod.boolean().optional(),
   checkedIn: zod.boolean().optional(),
+  avatarUrl: zod.string().nullish(),
 });
 
 /**
@@ -158,23 +164,6 @@ export const ListConnectionsQueryParams = zod.object({
   status: zod.enum(["pending", "accepted", "declined"]).optional(),
 });
 
-const UserShape = zod.object({
-  id: zod.string(),
-  name: zod.string(),
-  age: zod.number(),
-  avatar: zod.string().describe("Emoji or image URL"),
-  bio: zod.string(),
-  gym: zod.string(),
-  gymId: zod.string().nullable().optional(),
-  schedule: zod.string(),
-  interests: zod.array(zod.string()),
-  verified: zod.boolean(),
-  distance: zod.string().optional(),
-  isMe: zod.boolean().optional(),
-  activeNow: zod.boolean().optional(),
-  checkedIn: zod.boolean().optional(),
-});
-
 export const ListConnectionsResponseItem = zod.object({
   id: zod.string(),
   fromUserId: zod.string(),
@@ -183,8 +172,44 @@ export const ListConnectionsResponseItem = zod.object({
   status: zod.enum(["pending", "accepted", "declined"]),
   anonymous: zod.boolean(),
   createdAt: zod.coerce.date(),
-  fromUser: UserShape.optional(),
-  toUser: UserShape.optional(),
+  fromUser: zod
+    .object({
+      id: zod.string(),
+      name: zod.string(),
+      age: zod.number(),
+      avatar: zod.string().describe("Emoji or image URL"),
+      bio: zod.string(),
+      gym: zod.string(),
+      gymId: zod.string().nullish(),
+      schedule: zod.string(),
+      interests: zod.array(zod.string()),
+      verified: zod.boolean(),
+      distance: zod.string().optional(),
+      isMe: zod.boolean().optional(),
+      activeNow: zod.boolean().optional(),
+      checkedIn: zod.boolean().optional(),
+      avatarUrl: zod.string().nullish(),
+    })
+    .optional(),
+  toUser: zod
+    .object({
+      id: zod.string(),
+      name: zod.string(),
+      age: zod.number(),
+      avatar: zod.string().describe("Emoji or image URL"),
+      bio: zod.string(),
+      gym: zod.string(),
+      gymId: zod.string().nullish(),
+      schedule: zod.string(),
+      interests: zod.array(zod.string()),
+      verified: zod.boolean(),
+      distance: zod.string().optional(),
+      isMe: zod.boolean().optional(),
+      activeNow: zod.boolean().optional(),
+      checkedIn: zod.boolean().optional(),
+      avatarUrl: zod.string().nullish(),
+    })
+    .optional(),
 });
 export const ListConnectionsResponse = zod.array(ListConnectionsResponseItem);
 
@@ -207,8 +232,44 @@ export const RespondToConnectionResponse = zod.object({
   status: zod.enum(["pending", "accepted", "declined"]),
   anonymous: zod.boolean(),
   createdAt: zod.coerce.date(),
-  fromUser: UserShape.optional(),
-  toUser: UserShape.optional(),
+  fromUser: zod
+    .object({
+      id: zod.string(),
+      name: zod.string(),
+      age: zod.number(),
+      avatar: zod.string().describe("Emoji or image URL"),
+      bio: zod.string(),
+      gym: zod.string(),
+      gymId: zod.string().nullish(),
+      schedule: zod.string(),
+      interests: zod.array(zod.string()),
+      verified: zod.boolean(),
+      distance: zod.string().optional(),
+      isMe: zod.boolean().optional(),
+      activeNow: zod.boolean().optional(),
+      checkedIn: zod.boolean().optional(),
+      avatarUrl: zod.string().nullish(),
+    })
+    .optional(),
+  toUser: zod
+    .object({
+      id: zod.string(),
+      name: zod.string(),
+      age: zod.number(),
+      avatar: zod.string().describe("Emoji or image URL"),
+      bio: zod.string(),
+      gym: zod.string(),
+      gymId: zod.string().nullish(),
+      schedule: zod.string(),
+      interests: zod.array(zod.string()),
+      verified: zod.boolean(),
+      distance: zod.string().optional(),
+      isMe: zod.boolean().optional(),
+      activeNow: zod.boolean().optional(),
+      checkedIn: zod.boolean().optional(),
+      avatarUrl: zod.string().nullish(),
+    })
+    .optional(),
 });
 
 /**
@@ -270,3 +331,59 @@ export const ListGymsResponseItem = zod.object({
   memberCount: zod.number(),
 });
 export const ListGymsResponse = zod.array(ListGymsResponseItem);
+
+/**
+ * @summary Request a presigned URL for file upload
+ */
+export const RequestUploadUrlBody = zod.object({
+  name: zod.string(),
+  size: zod.number(),
+  contentType: zod.string(),
+});
+
+export const RequestUploadUrlResponse = zod.object({
+  uploadURL: zod.string(),
+  objectPath: zod.string(),
+});
+
+/**
+ * @summary Serve an uploaded object
+ */
+export const GetStorageObjectParams = zod.object({
+  objectPath: zod.coerce.string(),
+});
+
+/**
+ * @summary List workout form videos for a user
+ */
+export const ListWorkoutVideosQueryParams = zod.object({
+  userId: zod.coerce.string().optional(),
+});
+
+export const ListWorkoutVideosResponseItem = zod.object({
+  id: zod.string(),
+  userId: zod.string(),
+  objectPath: zod.string(),
+  title: zod.string(),
+  description: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+export const ListWorkoutVideosResponse = zod.array(
+  ListWorkoutVideosResponseItem,
+);
+
+/**
+ * @summary Upload a workout form video
+ */
+export const CreateWorkoutVideoBody = zod.object({
+  objectPath: zod.string(),
+  title: zod.string(),
+  description: zod.string().optional(),
+});
+
+/**
+ * @summary Delete a workout video
+ */
+export const DeleteWorkoutVideoParams = zod.object({
+  id: zod.coerce.string(),
+});

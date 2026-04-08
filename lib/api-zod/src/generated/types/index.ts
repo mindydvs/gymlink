@@ -6,16 +6,23 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./checkInBody";
 export * from "./connection";
 export * from "./connectionStatus";
 export * from "./connectionType";
 export * from "./createConnectionBody";
+export * from "./createWorkoutVideoBody";
+export * from "./gym";
 export * from "./gymStats";
 export * from "./healthStatus";
 export * from "./listConnectionsParams";
 export * from "./listUsersParams";
+export * from "./listWorkoutVideosParams";
 export * from "./notification";
 export * from "./respondConnectionBody";
 export * from "./respondConnectionBodyResponse";
 export * from "./updateProfileBody";
+export * from "./uploadUrlRequest";
+export * from "./uploadUrlResponse";
 export * from "./user";
+export * from "./workoutVideo";
