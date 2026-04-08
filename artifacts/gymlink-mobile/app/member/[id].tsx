@@ -24,6 +24,7 @@ import {
   useListWorkoutVideos,
   useListConnections,
   useCreateConnection,
+  getListConnectionsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -75,7 +76,7 @@ export default function MemberDetailScreen() {
       { data: { toUserId: id, type, anonymous } },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ["listConnections"] });
+          queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() });
           Alert.alert("Request Sent", `Your ${type} request has been sent!`);
         },
         onError: () => {

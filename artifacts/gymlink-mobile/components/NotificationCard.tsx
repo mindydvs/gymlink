@@ -6,6 +6,8 @@ import { ConnectionBadge } from "@/components/ConnectionBadge";
 import { useColors } from "@/hooks/useColors";
 import {
   useRespondToConnection,
+  getListNotificationsQueryKey,
+  getListConnectionsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -48,8 +50,8 @@ export function NotificationCard({
       { id: connectionId, data: { response } },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ["listNotifications"] });
-          queryClient.invalidateQueries({ queryKey: ["listConnections"] });
+          queryClient.invalidateQueries({ queryKey: getListNotificationsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() });
         },
       }
     );
