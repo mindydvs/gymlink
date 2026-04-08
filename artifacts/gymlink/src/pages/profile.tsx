@@ -1,23 +1,27 @@
 import { useState } from "react";
 import { useGetMe, useUpdateMe, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Edit2, Check, X, Building, Clock, ShieldCheck } from "lucide-react";
+import { Edit2, Check, X, Building, Clock, ShieldCheck, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { InterestPicker } from "@/components/interest-picker";
+import { GymPicker } from "@/components/gym-picker";
+import { useAuth } from "@/context/auth";
 
 const profileSchema = z.object({
   name: z.string().min(1, "Name required"),
   age: z.coerce.number().int().min(13).max(120),
   bio: z.string().max(300),
-  gym: z.string().min(1, "Gym required"),
+  gymId: z.string().default(""),
+  gymName: z.string().default(""),
   schedule: z.string(),
-  interestsRaw: z.string(),
+  interests: z.array(z.string()),
 });
 type ProfileForm = z.infer<typeof profileSchema>;
 
@@ -27,6 +31,7 @@ export default function Profile() {
   const updateMe = useUpdateMe();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { logout } = useAuth();
 
   const form = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -34,25 +39,25 @@ export default function Profile() {
       name: me?.name ?? "",
       age: me?.age ?? 25,
       bio: me?.bio ?? "",
-      gym: me?.gym ?? "",
+      gymId: me?.gymId ?? "",
+      gymName: me?.gym ?? "",
       schedule: me?.schedule ?? "",
-      interestsRaw: me?.interests?.join(", ") ?? "",
+      interests: me?.interests ?? [],
     },
   });
 
   const handleEdit = () => {
     form.reset({
       name: me?.name ?? "", age: me?.age ?? 25, bio: me?.bio ?? "",
-      gym: me?.gym ?? "", schedule: me?.schedule ?? "",
-      interestsRaw: me?.interests?.join(", ") ?? "",
+      gymId: me?.gymId ?? "", gymName: me?.gym ?? "",
+      schedule: me?.schedule ?? "", interests: me?.interests ?? [],
     });
     setEditing(true);
   };
 
   const onSubmit = (data: ProfileForm) => {
-    const interests = data.interestsRaw.split(",").map((s) => s.trim()).filter(Boolean);
     updateMe.mutate(
-      { data: { name: data.name, age: data.age, bio: data.bio, gym: data.gym, schedule: data.schedule, interests } },
+      { data: { name: data.name, age: data.age, bio: data.bio, gym: data.gymName, gymId: data.gymId || undefined, schedule: data.schedule, interests: data.interests } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
@@ -113,8 +118,8 @@ export default function Profile() {
                 </div>
                 <p className="text-sm mt-0.5 font-medium" style={{ color: "hsl(var(--muted-foreground))" }}>{me.age} years old</p>
                 <div className="flex flex-col gap-1 mt-3 text-xs font-medium" style={{ color: "hsl(var(--muted-foreground))" }}>
-                  <span className="flex items-center gap-1.5"><Building className="w-3 h-3" />{me.gym}</span>
-                  <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" />{me.schedule}</span>
+                  <span className="flex items-center gap-1.5"><Building className="w-3 h-3" />{me.gym || "No gym set"}</span>
+                  <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" />{me.schedule || "No schedule set"}</span>
                 </div>
               </div>
             </div>
@@ -138,10 +143,19 @@ export default function Profile() {
                       {i}
                     </span>
                   ))
-                : <span className="text-sm italic" style={{ color: "hsl(var(--muted-foreground))" }}>No interests added yet</span>
+                : <span className="text-sm italic" style={{ color: "hsl(var(--muted-foreground))" }}>No interests added yet — tap Edit to add some</span>
               }
             </div>
           </div>
+
+          {/* Sign out */}
+          <button
+            onClick={logout}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all"
+            style={{ background: "hsl(var(--secondary))", color: "hsl(var(--muted-foreground))" }}
+          >
+            <LogOut className="w-4 h-4" /> Sign Out
+          </button>
         </div>
       ) : (
         <Form {...form}>
@@ -167,6 +181,7 @@ export default function Profile() {
                   </FormItem>
                 )} />
               </div>
+
               <FormField control={form.control} name="bio" render={({ field }) => (
                 <FormItem>
                   <FormLabel className="section-label">Bio</FormLabel>
@@ -176,15 +191,25 @@ export default function Profile() {
                   <FormMessage />
                 </FormItem>
               )} />
-              <FormField control={form.control} name="gym" render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="section-label">Gym</FormLabel>
-                  <FormControl>
-                    <Input {...field} className="h-10 text-sm" data-testid="input-gym" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
+
+              <div>
+                <p className="section-label mb-2">Gym</p>
+                <Controller
+                  control={form.control}
+                  name="gymId"
+                  render={() => (
+                    <GymPicker
+                      value={form.watch("gymId")}
+                      selectedGymName={form.watch("gymName")}
+                      onChange={(gymId, gymName) => {
+                        form.setValue("gymId", gymId);
+                        form.setValue("gymName", gymName);
+                      }}
+                    />
+                  )}
+                />
+              </div>
+
               <FormField control={form.control} name="schedule" render={({ field }) => (
                 <FormItem>
                   <FormLabel className="section-label">Schedule</FormLabel>
@@ -194,15 +219,17 @@ export default function Profile() {
                   <FormMessage />
                 </FormItem>
               )} />
-              <FormField control={form.control} name="interestsRaw" render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="section-label">Interests (comma separated)</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Powerlifting, Running, Yoga" className="h-10 text-sm" data-testid="input-interests" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
+
+              <div>
+                <p className="section-label mb-3">Interests</p>
+                <Controller
+                  control={form.control}
+                  name="interests"
+                  render={({ field }) => (
+                    <InterestPicker value={field.value} onChange={field.onChange} />
+                  )}
+                />
+              </div>
             </div>
 
             <div className="flex gap-3">

@@ -2,7 +2,9 @@ import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider, useAuth } from "@/context/auth";
 import NotFound from "@/pages/not-found";
+import Welcome from "@/pages/welcome";
 import Home from "./pages/home";
 import Members from "./pages/members";
 import MemberDetail from "./pages/member-detail";
@@ -14,6 +16,21 @@ import Layout from "./components/layout";
 const queryClient = new QueryClient();
 
 function Router() {
+  const { userId, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
+          style={{ borderColor: "hsl(var(--primary))", borderTopColor: "transparent" }} />
+      </div>
+    );
+  }
+
+  if (!userId) {
+    return <Welcome />;
+  }
+
   return (
     <Layout>
       <Switch>
@@ -32,14 +49,16 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <div className="dark bg-background text-foreground min-h-screen">
-            <Router />
-          </div>
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <div className="dark bg-background text-foreground min-h-screen">
+              <Router />
+            </div>
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

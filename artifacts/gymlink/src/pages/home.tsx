@@ -1,10 +1,11 @@
-import { useGetGymStats, useListNotifications, useListUsers, useRespondToConnection, getListNotificationsQueryKey } from "@workspace/api-client-react";
+import { useGetGymStats, useListNotifications, useListUsers, useRespondToConnection, useGetMe, useCheckIn, getListNotificationsQueryKey, getGetMeQueryKey, getGetGymStatsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Bell, TrendingUp, ChevronRight, Heart, Dumbbell, Brain, HandHelpingIcon, Check, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Bell, TrendingUp, ChevronRight, Heart, Dumbbell, Brain, HandHelpingIcon, Check, X, MapPin } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { GymPicker } from "@/components/gym-picker";
+import { useState } from "react";
 
 const CONN_CONFIG = {
   crush:   { label: "Gym Crush",       icon: Heart,          color: "#E8193C" },
@@ -93,9 +94,34 @@ export default function Home() {
   const { data: stats, isLoading: statsLoading } = useGetGymStats();
   const { data: notifications = [] } = useListNotifications();
   const { data: users = [], isLoading: usersLoading } = useListUsers();
+  const { data: me } = useGetMe();
   const respond = useRespondToConnection();
+  const checkInMutation = useCheckIn();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [showGymPicker, setShowGymPicker] = useState(false);
+
+  const handleCheckIn = (gymId: string, gymName: string) => {
+    checkInMutation.mutate({ data: { gymId, gymName } }, {
+      onSuccess: (updated) => {
+        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetGymStatsQueryKey() });
+        setShowGymPicker(false);
+        toast({ title: updated.checkedIn ? `Checked in at ${updated.gym}!` : "Checked out" });
+      },
+    });
+  };
+
+  const handleCheckOut = () => {
+    if (!me?.gymId || !me?.gym) return;
+    checkInMutation.mutate({ data: { gymId: me.gymId, gymName: me.gym } }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetGymStatsQueryKey() });
+        toast({ title: "Checked out" });
+      },
+    });
+  };
 
   const unread = notifications.filter((n) => !n.read && !n.responded);
   const otherUsers = users.filter((u) => !u.isMe).slice(0, 6);
@@ -115,6 +141,58 @@ export default function Home() {
       <div>
         <p className="section-label mb-1">{stats?.gymName ?? "Your Gym"}</p>
         <h1 className="text-3xl font-extrabold tracking-tight">Dashboard</h1>
+      </div>
+
+      {/* Check-in card */}
+      <div className="card-surface p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: me?.checkedIn ? "#12B76A18" : "hsl(var(--secondary))" }}>
+            <MapPin className="w-4 h-4" style={{ color: me?.checkedIn ? "#12B76A" : "hsl(var(--muted-foreground))" }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            {me?.checkedIn ? (
+              <>
+                <p className="text-sm font-bold">Checked in</p>
+                <p className="text-[11px] font-medium" style={{ color: "#12B76A" }}>{me.gym}</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-bold">Not checked in</p>
+                <p className="text-[11px]" style={{ color: "hsl(var(--muted-foreground))" }}>Let people know you're at the gym</p>
+              </>
+            )}
+          </div>
+          {me?.checkedIn ? (
+            <button
+              onClick={handleCheckOut}
+              disabled={checkInMutation.isPending}
+              className="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all"
+              style={{ background: "hsl(var(--secondary))", color: "hsl(var(--foreground))" }}
+            >
+              Check Out
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowGymPicker(!showGymPicker)}
+              disabled={checkInMutation.isPending}
+              className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white transition-all"
+              style={{ background: "#12B76A" }}
+            >
+              Check In
+            </button>
+          )}
+        </div>
+        {showGymPicker && !me?.checkedIn && (
+          <div className="mt-3 pt-3" style={{ borderTop: "1px solid hsl(var(--border))" }}>
+            <p className="section-label mb-2">Select gym</p>
+            <GymPicker
+              value={me?.gymId ?? ""}
+              selectedGymName={me?.gym}
+              onChange={handleCheckIn}
+            />
+          </div>
+        )}
       </div>
 
       {/* Stats */}

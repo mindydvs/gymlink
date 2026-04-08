@@ -36,12 +36,22 @@ export interface User {
   avatar: string;
   bio: string;
   gym: string;
+  gymId?: string | null;
   schedule: string;
   interests: string[];
   verified: boolean;
   distance?: string;
   isMe?: boolean;
   activeNow?: boolean;
+  checkedIn?: boolean;
+}
+
+export interface Gym {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  memberCount: number;
 }
 
 export interface UpdateProfileBody {
@@ -49,8 +59,14 @@ export interface UpdateProfileBody {
   age?: number;
   bio?: string;
   gym?: string;
+  gymId?: string;
   schedule?: string;
   interests?: string[];
+}
+
+export interface CheckInBody {
+  gymId: string;
+  gymName: string;
 }
 
 export interface Connection {

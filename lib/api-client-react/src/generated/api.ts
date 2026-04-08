@@ -932,3 +932,113 @@ export function useGetGymStats<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary List available gyms
+ */
+export const getListGymsUrl = () => {
+  return `/api/gyms`;
+};
+
+export const listGyms = async (options?: RequestInit): Promise<import("./api.schemas").Gym[]> => {
+  return customFetch<import("./api.schemas").Gym[]>(getListGymsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListGymsQueryKey = () => {
+  return [`/api/gyms`] as const;
+};
+
+export const getListGymsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listGyms>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listGyms>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getListGymsQueryKey();
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listGyms>>> = ({ signal }) =>
+    listGyms({ signal, ...requestOptions });
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listGyms>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export function useListGyms<
+  TData = Awaited<ReturnType<typeof listGyms>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listGyms>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListGymsQueryOptions(options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Check in or out of a gym
+ */
+export const getCheckInUrl = () => {
+  return `/api/users/me/checkin`;
+};
+
+export const checkIn = async (
+  checkInBody: import("./api.schemas").CheckInBody,
+  options?: RequestInit,
+): Promise<User> => {
+  return customFetch<User>(getCheckInUrl(), {
+    ...options,
+    method: "POST",
+    body: JSON.stringify(checkInBody),
+  });
+};
+
+export const getCheckInMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof checkIn>>,
+    TError,
+    { data: import("./api.schemas").CheckInBody },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof checkIn>>,
+  TError,
+  { data: import("./api.schemas").CheckInBody },
+  TContext
+> => {
+  const mutationFn = async (variables: { data: import("./api.schemas").CheckInBody }) => {
+    const { data } = variables;
+    return checkIn(data);
+  };
+  return { mutationFn, ...options?.mutation };
+};
+
+export type CheckInMutationResult = NonNullable<Awaited<ReturnType<typeof checkIn>>>;
+export type CheckInMutationError = ErrorType<unknown>;
+
+export const useCheckIn = <TError = ErrorType<unknown>, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof checkIn>>,
+    TError,
+    { data: import("./api.schemas").CheckInBody },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof checkIn>>,
+  TError,
+  { data: import("./api.schemas").CheckInBody },
+  TContext
+> => {
+  return useMutation(getCheckInMutationOptions(options));
+};

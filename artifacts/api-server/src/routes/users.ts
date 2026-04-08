@@ -10,7 +10,7 @@ import {
   UpdateMeBody,
   UpdateMeResponse,
 } from "@workspace/api-zod";
-import { z } from "zod/v4";
+import { z } from "zod";
 
 const router: IRouter = Router();
 

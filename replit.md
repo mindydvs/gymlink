@@ -28,19 +28,39 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 
 ### GymLink (`artifacts/gymlink`)
 - React + Vite web app at `/`
-- Dark-themed gym social networking platform
-- Pages: Dashboard, Members, Member Detail, Connections, Notifications, Profile
-- Connection types: crush (pink), buddy (blue), advisor (green), spotter (amber)
+- Deep navy Nike Training Club/Shred-inspired design (`--background: 229 45% 7%`, brand red `#E8193C`, cyan `#00C4E8`)
+- Pages: Welcome (onboarding), Dashboard, Members, Member Detail, Connections, Notifications, Profile
+- Connection types: crush `#E8193C`, buddy `#0B9ED9`, advisor `#12B76A`, spotter `#F79009`
+- Auth: `AuthContext` persists `userId` to `localStorage:gymlink_user_id`; sent via `Authorization: Bearer <userId>` header
+- Logo: `/logo.png` in `artifacts/gymlink/public/`
 
 ### API Server (`artifacts/api-server`)
 - Express 5 server at `/api`
-- Routes: /users, /connections, /notifications, /stats
+- Auth middleware reads `Authorization: Bearer <userId>` header; defaults to `"me"` if absent
+- Routes: `/api/users`, `/api/connections`, `/api/notifications`, `/api/stats`, `/api/gyms`, `/api/users/me/checkin`, `/api/auth/register`, `/api/auth/login`, `/api/auth/users`
 - Seeded with 7 demo users at Iron Temple Fitness
 
 ## Database Schema
 
-- `users` — gym member profiles (id, name, age, avatar, bio, gym, schedule, interests, verified, distance, isMe, activeNow)
+- `users` — gym member profiles (id, name, age, avatar, bio, gym, gymId, schedule, interests, verified, distance, isMe, activeNow, checkedIn)
+- `gyms` — gym locations (id, name, address, city, memberCount); seeded with 10 Austin gyms
 - `connections` — connection requests between users (crush/buddy/advisor/spotter)
-- `notifications` — incoming connection alerts for current user ("me")
+- `notifications` — incoming connection alerts for current user
+
+## Frontend Components
+
+- `context/auth.tsx` — AuthContext with login/logout/register; localStorage persistence
+- `pages/welcome.tsx` — multi-step join flow + sign-in; shows when no userId in localStorage
+- `components/gym-picker.tsx` — searchable gym dropdown using `/api/gyms`
+- `components/interest-picker.tsx` — preset chip + custom interest input
+- `pages/home.tsx` — Dashboard with check-in card, stats, notifications, member discovery
+- `pages/profile.tsx` — Profile view/edit with GymPicker + InterestPicker integration
+
+## Auth Pattern
+
+- User ID stored in `localStorage` key `gymlink_user_id`
+- Sent on every API request via `Authorization: Bearer <userId>` header
+- Backend `authMiddleware` extracts userId from header, defaults to `"me"`
+- All user routes use `req.userId` (dynamic, not hardcoded)
 
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
