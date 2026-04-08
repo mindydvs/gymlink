@@ -3,6 +3,7 @@ import React from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Platform,
   Pressable,
   RefreshControl,
@@ -142,11 +143,11 @@ export default function FeedScreen() {
           },
         ]}
       >
-        <View style={styles.logoRow}>
-          <Text style={[styles.logoGym, { color: colors.primary }]}>GYM</Text>
-          <Ionicons name="link" size={18} color={colors.brandCyan} style={styles.logoIcon} />
-          <Text style={[styles.logoLink, { color: colors.brandCyan }]}>LINK</Text>
-        </View>
+        <Image
+          source={require("@/assets/images/logo.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
 
         <Pressable
           onPress={() => router.push(`/member/${me?.id ?? userId}`)}
@@ -178,23 +179,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderBottomWidth: 1,
   },
-  logoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 2,
-  },
-  logoGym: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 20,
-    letterSpacing: 1,
-  },
-  logoIcon: {
-    marginHorizontal: 1,
-  },
-  logoLink: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 20,
-    letterSpacing: 1,
+  logo: {
+    height: 36,
+    width: 120,
   },
   avatarBtn: {},
   list: {
