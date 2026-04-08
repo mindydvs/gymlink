@@ -25,7 +25,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
         {/* Logo */}
         <div className="px-5 py-6">
-          <img src={logoImg} alt="GymLink" className="h-10 w-auto object-contain" />
+          <img src={logoImg} alt="GymLink" className="h-16 w-auto object-contain" />
         </div>
 
         <div className="h-px mx-5" style={{ background: "hsl(var(--sidebar-border))" }} />

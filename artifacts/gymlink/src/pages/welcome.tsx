@@ -104,29 +104,52 @@ export default function Welcome() {
 
       {/* Landing screen */}
       {screen === "landing" && (
-        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-          <img src={logoImg} alt="GymLink" className="w-44 mb-8 object-contain" />
-          <h1 className="text-3xl font-extrabold tracking-tight mb-2">Find your gym crew</h1>
-          <p className="text-base mb-12 max-w-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
-            Connect with gym crushes, workout buddies, advisors, and spotters at your gym.
-          </p>
-          <div className="w-full max-w-xs space-y-3">
-            <button
-              onClick={() => setScreen("join-name")}
-              className="w-full py-3.5 rounded-xl font-bold text-base text-white flex items-center justify-center gap-2 transition-all"
-              style={{ background: "hsl(var(--primary))" }}
-            >
-              <UserPlus className="w-4 h-4" />
-              Join GymLink
-            </button>
-            <button
-              onClick={() => setScreen("sign-in")}
-              className="w-full py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all"
-              style={{ background: "hsl(var(--secondary))", color: "hsl(var(--foreground))" }}
-            >
-              <LogIn className="w-4 h-4" />
-              Sign In
-            </button>
+        <div className="flex-1 relative flex flex-col overflow-hidden">
+          {/* Hero background image */}
+          <div className="absolute inset-0">
+            <img
+              src="/hero-lunge.jpeg"
+              alt=""
+              className="w-full h-full object-cover object-center"
+            />
+            {/* Dark gradient overlay — heavy at bottom, light at top */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: "linear-gradient(to bottom, rgba(10,13,26,0.45) 0%, rgba(10,13,26,0.65) 45%, rgba(10,13,26,0.95) 78%, rgba(10,13,26,1) 100%)",
+              }}
+            />
+          </div>
+
+          {/* Content */}
+          <div className="relative flex flex-col items-center justify-end flex-1 px-6 pb-14 text-center">
+            <img src={logoImg} alt="GymLink" className="w-52 mb-6 object-contain drop-shadow-lg" />
+
+            <h1 className="text-4xl font-extrabold tracking-tight mb-3 text-white leading-tight">
+              Find your<br />gym crew
+            </h1>
+            <p className="text-base mb-10 max-w-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
+              Connect with gym crushes, workout buddies, advisors, and spotters at your gym.
+            </p>
+
+            <div className="w-full max-w-xs space-y-3">
+              <button
+                onClick={() => setScreen("join-name")}
+                className="w-full py-3.5 rounded-xl font-bold text-base text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98]"
+                style={{ background: "hsl(var(--primary))" }}
+              >
+                <UserPlus className="w-4 h-4" />
+                Join GymLink
+              </button>
+              <button
+                onClick={() => setScreen("sign-in")}
+                className="w-full py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98]"
+                style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}
+              >
+                <LogIn className="w-4 h-4" />
+                Sign In
+              </button>
+            </div>
           </div>
         </div>
       )}
