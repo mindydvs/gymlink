@@ -15,4 +15,5 @@ export interface UpdateProfileBody {
   schedule?: string;
   interests?: string[];
   avatarUrl?: string | null;
+  hidden?: boolean;
 }

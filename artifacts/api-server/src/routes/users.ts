@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, ilike } from "drizzle-orm";
+import { eq, ilike, and } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import {
   ListUsersQueryParams,
@@ -16,18 +16,18 @@ const router: IRouter = Router();
 
 router.get("/users", async (req, res): Promise<void> => {
   const query = ListUsersQueryParams.safeParse(req.query);
-  let dbQuery = db.select().from(usersTable).$dynamic();
+  const conditions: ReturnType<typeof eq>[] = [eq(usersTable.hidden, false)];
 
   if (query.success) {
     if (query.data.gym) {
-      dbQuery = dbQuery.where(eq(usersTable.gym, query.data.gym));
+      conditions.push(eq(usersTable.gym, query.data.gym));
     }
     if (query.data.search) {
-      dbQuery = dbQuery.where(ilike(usersTable.name, `%${query.data.search}%`));
+      conditions.push(ilike(usersTable.name, `%${query.data.search}%`) as ReturnType<typeof eq>);
     }
   }
 
-  const users = await dbQuery;
+  const users = await db.select().from(usersTable).where(and(...conditions));
   res.json(ListUsersResponse.parse(users));
 });
 
@@ -59,6 +59,11 @@ router.patch("/users/me", async (req, res): Promise<void> => {
   }
 
   res.json(UpdateMeResponse.parse(me));
+});
+
+router.delete("/users/me", async (req, res): Promise<void> => {
+  await db.delete(usersTable).where(eq(usersTable.id, req.userId));
+  res.status(204).end();
 });
 
 router.post("/users/me/checkin", async (req, res): Promise<void> => {

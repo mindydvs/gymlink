@@ -40,6 +40,7 @@ export const ListUsersResponseItem = zod.object({
   activeNow: zod.boolean().optional(),
   checkedIn: zod.boolean().optional(),
   avatarUrl: zod.string().nullish(),
+  hidden: zod.boolean().optional(),
 });
 export const ListUsersResponse = zod.array(ListUsersResponseItem);
 
@@ -62,6 +63,7 @@ export const GetMeResponse = zod.object({
   activeNow: zod.boolean().optional(),
   checkedIn: zod.boolean().optional(),
   avatarUrl: zod.string().nullish(),
+  hidden: zod.boolean().optional(),
 });
 
 /**
@@ -76,6 +78,7 @@ export const UpdateMeBody = zod.object({
   schedule: zod.string().optional(),
   interests: zod.array(zod.string()).optional(),
   avatarUrl: zod.string().nullish(),
+  hidden: zod.boolean().optional(),
 });
 
 export const UpdateMeResponse = zod.object({
@@ -94,6 +97,7 @@ export const UpdateMeResponse = zod.object({
   activeNow: zod.boolean().optional(),
   checkedIn: zod.boolean().optional(),
   avatarUrl: zod.string().nullish(),
+  hidden: zod.boolean().optional(),
 });
 
 /**
@@ -120,6 +124,7 @@ export const CheckInResponse = zod.object({
   activeNow: zod.boolean().optional(),
   checkedIn: zod.boolean().optional(),
   avatarUrl: zod.string().nullish(),
+  hidden: zod.boolean().optional(),
 });
 
 /**
@@ -145,6 +150,7 @@ export const GetUserResponse = zod.object({
   activeNow: zod.boolean().optional(),
   checkedIn: zod.boolean().optional(),
   avatarUrl: zod.string().nullish(),
+  hidden: zod.boolean().optional(),
 });
 
 /**
@@ -189,6 +195,7 @@ export const ListConnectionsResponseItem = zod.object({
       activeNow: zod.boolean().optional(),
       checkedIn: zod.boolean().optional(),
       avatarUrl: zod.string().nullish(),
+      hidden: zod.boolean().optional(),
     })
     .optional(),
   toUser: zod
@@ -208,6 +215,7 @@ export const ListConnectionsResponseItem = zod.object({
       activeNow: zod.boolean().optional(),
       checkedIn: zod.boolean().optional(),
       avatarUrl: zod.string().nullish(),
+      hidden: zod.boolean().optional(),
     })
     .optional(),
 });
@@ -249,6 +257,7 @@ export const RespondToConnectionResponse = zod.object({
       activeNow: zod.boolean().optional(),
       checkedIn: zod.boolean().optional(),
       avatarUrl: zod.string().nullish(),
+      hidden: zod.boolean().optional(),
     })
     .optional(),
   toUser: zod
@@ -268,6 +277,7 @@ export const RespondToConnectionResponse = zod.object({
       activeNow: zod.boolean().optional(),
       checkedIn: zod.boolean().optional(),
       avatarUrl: zod.string().nullish(),
+      hidden: zod.boolean().optional(),
     })
     .optional(),
 });

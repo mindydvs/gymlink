@@ -23,4 +23,5 @@ export interface User {
   activeNow?: boolean;
   checkedIn?: boolean;
   avatarUrl?: string | null;
+  hidden?: boolean;
 }

@@ -18,6 +18,7 @@ export const usersTable = pgTable("users", {
   activeNow: boolean("active_now").notNull().default(false),
   checkedIn: boolean("checked_in").notNull().default(false),
   avatarUrl: text("avatar_url"),
+  hidden: boolean("hidden").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

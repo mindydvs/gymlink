@@ -9,6 +9,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
@@ -19,6 +20,7 @@ import { useColors } from "@/hooks/useColors";
 import {
   useGetMe,
   useUpdateMe,
+  useDeleteMe,
   useRequestUploadUrl,
   getGetMeQueryKey,
   getListUsersQueryKey,
@@ -41,12 +43,14 @@ export default function EditProfileScreen() {
   const queryClient = useQueryClient();
   const { data: me, isLoading } = useGetMe();
   const { mutateAsync: updateMe, isPending: isSaving } = useUpdateMe();
+  const { mutateAsync: deleteMe, isPending: isDeleting } = useDeleteMe();
   const { mutateAsync: requestUploadUrl } = useRequestUploadUrl();
 
   const [bio, setBio] = useState("");
   const [schedule, setSchedule] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [hidden, setHidden] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const initialized = useRef(false);
 
@@ -57,6 +61,7 @@ export default function EditProfileScreen() {
       setSchedule(me.schedule ?? "");
       setInterests(me.interests ?? []);
       setAvatarUrl(me.avatarUrl ?? null);
+      setHidden(me.hidden ?? false);
     }
   }, [me]);
 
@@ -116,13 +121,49 @@ export default function EditProfileScreen() {
 
   const handleSave = async () => {
     try {
-      await updateMe({ data: { bio, schedule, interests, avatarUrl: avatarUrl ?? undefined } });
+      await updateMe({ data: { bio, schedule, interests, avatarUrl: avatarUrl ?? undefined, hidden } });
       await queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
       await queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
       router.back();
     } catch {
       Alert.alert("Save failed", "Could not save your profile. Please try again.");
     }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "This will permanently delete your profile, videos, and all connections. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete Forever",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "Are you absolutely sure?",
+              "Your account will be gone forever.",
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Yes, Delete",
+                  style: "destructive",
+                  onPress: async () => {
+                    try {
+                      await deleteMe();
+                      await queryClient.clear();
+                      router.replace("/");
+                    } catch {
+                      Alert.alert("Error", "Could not delete your account. Please try again.");
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
   };
 
   const topPad = Platform.OS === "web" ? 16 : insets.top;
@@ -253,6 +294,49 @@ export default function EditProfileScreen() {
             })}
           </View>
         </View>
+
+        <View style={[styles.dangerZone, { borderColor: "rgba(232,25,60,0.25)", backgroundColor: "rgba(232,25,60,0.04)" }]}>
+          <Text style={[styles.dangerTitle, { color: colors.primary }]}>Privacy & Account</Text>
+
+          <View style={[styles.dangerRow, { borderBottomColor: colors.border }]}>
+            <View style={styles.dangerRowText}>
+              <Ionicons name="eye-off-outline" size={18} color={colors.mutedForeground} style={{ marginRight: 10, marginTop: 1 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.dangerRowTitle, { color: colors.foreground }]}>Hide my profile</Text>
+                <Text style={[styles.dangerRowSub, { color: colors.mutedForeground }]}>
+                  You won't appear in member searches or the feed
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={hidden}
+              onValueChange={setHidden}
+              trackColor={{ false: colors.border, true: "rgba(232,25,60,0.4)" }}
+              thumbColor={hidden ? colors.primary : colors.mutedForeground}
+              ios_backgroundColor={colors.border}
+            />
+          </View>
+
+          <Pressable
+            onPress={handleDeleteAccount}
+            disabled={isDeleting}
+            style={({ pressed }) => [
+              styles.deleteBtn,
+              { opacity: pressed || isDeleting ? 0.7 : 1 },
+            ]}
+          >
+            {isDeleting ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <>
+                <Ionicons name="trash-outline" size={16} color={colors.primary} />
+                <Text style={[styles.deleteBtnText, { color: colors.primary }]}>
+                  Delete Account
+                </Text>
+              </>
+            )}
+          </Pressable>
+        </View>
       </ScrollView>
     </View>
   );
@@ -357,5 +441,50 @@ const styles = StyleSheet.create({
   chipText: {
     fontFamily: "Inter_500Medium",
     fontSize: 13,
+  },
+  dangerZone: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 16,
+    gap: 14,
+  },
+  dangerTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 13,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  dangerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    gap: 12,
+  },
+  dangerRowText: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  dangerRowTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+    marginBottom: 2,
+  },
+  dangerRowSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  deleteBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 4,
+  },
+  deleteBtnText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
   },
 });

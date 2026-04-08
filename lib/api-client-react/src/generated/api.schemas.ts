@@ -53,6 +53,7 @@ export interface User {
   activeNow?: boolean;
   checkedIn?: boolean;
   avatarUrl?: string | null;
+  hidden?: boolean;
 }
 
 export interface UpdateProfileBody {
@@ -64,6 +65,7 @@ export interface UpdateProfileBody {
   schedule?: string;
   interests?: string[];
   avatarUrl?: string | null;
+  hidden?: boolean;
 }
 
 export interface CheckInBody {

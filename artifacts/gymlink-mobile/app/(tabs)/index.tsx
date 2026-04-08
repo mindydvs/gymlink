@@ -58,7 +58,7 @@ export default function FeedScreen() {
         scrollEnabled={!!otherMembers.length}
         contentContainerStyle={[
           styles.list,
-          { paddingTop: topPad + 70, paddingBottom: Platform.OS === "web" ? 34 : 0 },
+          { paddingTop: topPad + 134, paddingBottom: Platform.OS === "web" ? 34 : 0 },
         ]}
         refreshControl={
           <RefreshControl
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    height: 56,
+    height: 120,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -180,8 +180,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   logo: {
-    height: 36,
-    width: 120,
+    height: 108,
+    width: 220,
   },
   avatarBtn: {},
   list: {
