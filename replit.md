@@ -34,6 +34,16 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Auth: `AuthContext` persists `userId` to `localStorage:gymlink_user_id`; sent via `Authorization: Bearer <userId>` header
 - Logo: `/logo.png` in `artifacts/gymlink/public/`
 
+### GymLink Mobile (`artifacts/gymlink-mobile`)
+- Expo (React Native) mobile app at `/gymlink-mobile/`
+- Same deep navy brand palette as the web app (synced from index.css to `constants/colors.ts`)
+- 4 tabs: Feed (gym stats + member list), Members (search), Connections (requests + accepted), Profile
+- Stack route: `app/member/[id].tsx` — member detail with connect sheet
+- Auth: AsyncStorage `gymlink_user_id`, sent via `Authorization: Bearer <userId>` (default: `"me"`)
+- Uses `@workspace/api-client-react` generated hooks with `setBaseUrl` + `setAuthTokenGetter`
+- `context/UserContext.tsx` — manages current user ID via AsyncStorage
+- Components: AvatarImage, ConnectionBadge, VideoCard (with like button), MemberCard, NotificationCard
+
 ### API Server (`artifacts/api-server`)
 - Express 5 server at `/api`
 - Auth middleware reads `Authorization: Bearer <userId>` header; defaults to `"me"` if absent

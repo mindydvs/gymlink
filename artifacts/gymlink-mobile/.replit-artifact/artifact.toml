@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/gymlink-mobile/"
+title = "GymLink Mobile"
+version = "1.0.0"
+id = "artifacts/gymlink-mobile"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/gymlink-mobile/" ]
+localPort = 23227
+
+[services.development]
+run = "pnpm --filter @workspace/gymlink-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/gymlink-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/gymlink-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "23227"
+BASE_PATH = "/gymlink-mobile/"
