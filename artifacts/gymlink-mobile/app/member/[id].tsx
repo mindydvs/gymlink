@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -43,7 +43,6 @@ export default function MemberDetailScreen() {
   const { userId } = useUser();
   const queryClient = useQueryClient();
 
-  const [showConnectMenu, setShowConnectMenu] = useState(false);
 
   const cachedUsers = queryClient.getQueryData<{ id: string; name: string; [key: string]: unknown }[]>(
     getListUsersQueryKey()
@@ -82,7 +81,6 @@ export default function MemberDetailScreen() {
   const handleConnect = (type: "crush" | "buddy" | "advisor" | "spotter", anonymous: boolean) => {
     if (!id) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setShowConnectMenu(false);
     createConnection(
       { data: { toUserId: id, type, anonymous } },
       {
@@ -124,30 +122,18 @@ export default function MemberDetailScreen() {
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={24} color={colors.foreground} />
         </Pressable>
-        <Text style={[styles.topBarTitle, { color: colors.foreground }]} numberOfLines={1}>
-          {member.name}
-        </Text>
-        {!isMe && !existingConn && (
-          <Pressable
-            onPress={() => setShowConnectMenu(true)}
-            style={[styles.connectBtn, { backgroundColor: colors.primary }]}
-          >
-            {connecting ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Ionicons name="person-add-outline" size={16} color="#fff" />
-            )}
-          </Pressable>
-        )}
-        {existingConn && (
-          <View style={styles.connectedBadge}>
+        <View style={styles.topBarCenter}>
+          <Text style={[styles.topBarTitle, { color: colors.foreground }]} numberOfLines={1}>
+            {member.name}
+          </Text>
+          {existingConn && (
             <ConnectionBadge
               type={existingConn.type as "crush" | "buddy" | "advisor" | "spotter"}
               small
             />
-          </View>
-        )}
-        {isMe && <View style={{ width: 36 }} />}
+          )}
+        </View>
+        <View style={{ width: 32 }} />
       </View>
 
       <FlatList
@@ -236,10 +222,53 @@ export default function MemberDetailScreen() {
               </View>
             )}
 
+            {!isMe && !existingConn && (
+              <View style={styles.connectSection}>
+                <Text style={[styles.connectLabel, { color: colors.mutedForeground }]}>
+                  Connect as...
+                </Text>
+                <View style={styles.connectGrid}>
+                  {CONNECTION_TYPES.map((ct) => (
+                    <Pressable
+                      key={ct.type}
+                      onPress={() => handleConnect(ct.type, ct.anonymous)}
+                      disabled={connecting}
+                      style={({ pressed }) => [
+                        styles.connectTile,
+                        {
+                          backgroundColor: `${colors[ct.type]}18`,
+                          borderColor: `${colors[ct.type]}55`,
+                          opacity: pressed ? 0.75 : 1,
+                        },
+                      ]}
+                    >
+                      <Ionicons name={ct.icon} size={22} color={colors[ct.type] as string} />
+                      <Text style={[styles.connectTileLabel, { color: colors[ct.type] as string }]}>
+                        {ct.label}
+                      </Text>
+                      {ct.anonymous && (
+                        <Text style={[styles.connectTileAnon, { color: colors.mutedForeground }]}>
+                          Anonymous
+                        </Text>
+                      )}
+                    </Pressable>
+                  ))}
+                </View>
+                {connecting && (
+                  <ActivityIndicator color={colors.primary} style={{ marginTop: 4 }} />
+                )}
+              </View>
+            )}
+
             {existingConn && (
-              <View style={styles.connBadgeSection}>
+              <View style={[styles.connectedRow, { borderColor: colors.border }]}>
+                <Ionicons name="checkmark-circle" size={16} color={colors.advisor} />
+                <Text style={[styles.connectedText, { color: colors.mutedForeground }]}>
+                  Connected as
+                </Text>
                 <ConnectionBadge
                   type={existingConn.type as "crush" | "buddy" | "advisor" | "spotter"}
+                  small
                 />
               </View>
             )}
@@ -270,43 +299,6 @@ export default function MemberDetailScreen() {
         )}
       />
 
-      {showConnectMenu && (
-        <Pressable
-          style={styles.overlay}
-          onPress={() => setShowConnectMenu(false)}
-        >
-          <View
-            style={[styles.menu, { backgroundColor: colors.card, borderColor: colors.border }]}
-          >
-            <Text style={[styles.menuTitle, { color: colors.foreground }]}>
-              Connect as...
-            </Text>
-            {CONNECTION_TYPES.map((ct) => (
-              <Pressable
-                key={ct.type}
-                style={({ pressed }) => [
-                  styles.menuItem,
-                  { borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
-                ]}
-                onPress={() => handleConnect(ct.type, ct.anonymous)}
-              >
-                <Ionicons name={ct.icon} size={20} color={colors[ct.type] as string} />
-                <View style={styles.menuItemText}>
-                  <Text style={[styles.menuItemLabel, { color: colors.foreground }]}>
-                    {ct.label}
-                  </Text>
-                  {ct.anonymous && (
-                    <Text style={[styles.menuItemSub, { color: colors.mutedForeground }]}>
-                      Anonymous
-                    </Text>
-                  )}
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.border} />
-              </Pressable>
-            ))}
-          </View>
-        </Pressable>
-      )}
     </View>
   );
 }
@@ -329,19 +321,17 @@ const styles = StyleSheet.create({
   backBtn: {
     padding: 4,
   },
-  topBarTitle: {
+  topBarCenter: {
     flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  topBarTitle: {
     fontFamily: "Inter_700Bold",
     fontSize: 18,
+    flexShrink: 1,
   },
-  connectBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  connectedBadge: {},
   list: {
     paddingHorizontal: 16,
   },
@@ -435,8 +425,50 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     fontSize: 13,
   },
-  connBadgeSection: {
+  connectSection: {
+    gap: 10,
+  },
+  connectLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  connectGrid: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  connectTile: {
+    width: "48%",
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    gap: 4,
+    alignItems: "flex-start",
+  },
+  connectTileLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+  },
+  connectTileAnon: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+  },
+  connectedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    alignSelf: "flex-start",
+  },
+  connectedText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
   },
   separator: {
     height: 1,
@@ -455,43 +487,5 @@ const styles = StyleSheet.create({
   emptyText: {
     fontFamily: "Inter_400Regular",
     fontSize: 14,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "flex-end",
-  },
-  menu: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    borderWidth: 1,
-    borderBottomWidth: 0,
-    padding: 20,
-    gap: 4,
-  },
-  menuTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 18,
-    marginBottom: 8,
-  },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 4,
-    borderBottomWidth: 1,
-    gap: 12,
-  },
-  menuItemText: {
-    flex: 1,
-    gap: 2,
-  },
-  menuItemLabel: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 15,
-  },
-  menuItemSub: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
   },
 });
