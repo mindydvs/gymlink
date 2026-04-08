@@ -6,6 +6,8 @@ import notificationsRouter from "./notifications";
 import statsRouter from "./stats";
 import gymsRouter from "./gyms";
 import authRouter from "./auth";
+import storageRouter from "./storage";
+import videosRouter from "./videos";
 
 const router: IRouter = Router();
 
@@ -16,5 +18,7 @@ router.use(usersRouter);
 router.use(connectionsRouter);
 router.use(notificationsRouter);
 router.use(statsRouter);
+router.use(storageRouter);
+router.use(videosRouter);
 
 export default router;

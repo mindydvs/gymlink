@@ -20,6 +20,10 @@ tags:
     description: Gym activity stats
   - name: gyms
     description: Gym locations
+  - name: storage
+    description: File upload and serving
+  - name: videos
+    description: Workout form videos
 
 paths:
   /healthz:
@@ -262,6 +266,92 @@ paths:
                 items:
                   $ref: "#/components/schemas/Gym"
 
+  /storage/uploads/request-url:
+    post:
+      tags: [storage]
+      operationId: requestUploadUrl
+      summary: Request a presigned URL for file upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlRequest"
+      responses:
+        "200":
+          description: Presigned upload URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+
+  /storage/objects/{objectPath}:
+    get:
+      tags: [storage]
+      operationId: getStorageObject
+      summary: Serve an uploaded object
+      parameters:
+        - name: objectPath
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Object content
+
+  /videos:
+    get:
+      operationId: listWorkoutVideos
+      tags: [videos]
+      summary: List workout form videos for a user
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of videos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkoutVideo"
+    post:
+      operationId: createWorkoutVideo
+      tags: [videos]
+      summary: Upload a workout form video
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkoutVideoBody"
+      responses:
+        "201":
+          description: Video created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkoutVideo"
+
+  /videos/{id}:
+    delete:
+      operationId: deleteWorkoutVideo
+      tags: [videos]
+      summary: Delete a workout video
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
@@ -335,6 +425,9 @@ components:
           type: boolean
         checkedIn:
           type: boolean
+        avatarUrl:
+          type: string
+          nullable: true
       required:
         - id
         - name
@@ -486,3 +579,53 @@ components:
         - advisorCount
         - spotterCount
         - gymName
+
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name:
+          type: string
+        size:
+          type: integer
+        contentType:
+          type: string
+
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL:
+          type: string
+        objectPath:
+          type: string
+
+    WorkoutVideo:
+      type: object
+      required: [id, userId, objectPath, title, createdAt]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        objectPath:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateWorkoutVideoBody:
+      type: object
+      required: [objectPath, title]
+      properties:
+        objectPath:
+          type: string
+        title:
+          type: string
+        description:
+          type: string

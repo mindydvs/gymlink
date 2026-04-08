@@ -17,6 +17,7 @@ export const usersTable = pgTable("users", {
   isMe: boolean("is_me").notNull().default(false),
   activeNow: boolean("active_now").notNull().default(false),
   checkedIn: boolean("checked_in").notNull().default(false),
+  avatarUrl: text("avatar_url"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
