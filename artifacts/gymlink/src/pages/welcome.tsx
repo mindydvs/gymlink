@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { useAuth, registerUser, fetchAuthUsers } from "@/context/auth";
+import { useState } from "react";
+import { useAuth, registerUser, loginUser } from "@/context/auth";
 import { useListGyms } from "@workspace/api-client-react";
-import { ArrowLeft, ArrowRight, Check, LogIn, UserPlus, Search } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, LogIn, UserPlus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import logoImg from "/logo.png";
@@ -13,7 +13,7 @@ const INTEREST_OPTIONS = [
   "Meal Prep", "Posing", "Jump Rope", "Functional Training", "Beginner Lifting",
 ];
 
-type Screen = "landing" | "sign-in" | "join-name" | "join-gym" | "join-interests" | "join-done";
+type Screen = "landing" | "sign-in" | "join-name" | "join-gym" | "join-interests";
 
 interface JoinData {
   name: string;
@@ -23,6 +23,8 @@ interface JoinData {
   gymName: string;
   schedule: string;
   interests: string[];
+  password: string;
+  confirmPassword: string;
 }
 
 export default function Welcome() {
@@ -30,19 +32,22 @@ export default function Welcome() {
   const { toast } = useToast();
   const [screen, setScreen] = useState<Screen>("landing");
   const [joinData, setJoinData] = useState<JoinData>({
-    name: "", age: "", bio: "", gymId: "", gymName: "", schedule: "", interests: [],
+    name: "", age: "", bio: "", gymId: "", gymName: "", schedule: "",
+    interests: [], password: "", confirmPassword: "",
   });
   const [gymSearch, setGymSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [existingUsers, setExistingUsers] = useState<Array<{ id: string; name: string; avatar: string; gym: string }>>([]);
+
+  // Sign-in state
+  const [signInName, setSignInName] = useState("");
+  const [signInPassword, setSignInPassword] = useState("");
+  const [showSignInPw, setShowSignInPw] = useState(false);
+
+  // Show/hide password on join
+  const [showJoinPw, setShowJoinPw] = useState(false);
+  const [showJoinConfirm, setShowJoinConfirm] = useState(false);
 
   const { data: gyms = [] } = useListGyms();
-
-  useEffect(() => {
-    if (screen === "sign-in") {
-      fetchAuthUsers().then(setExistingUsers).catch(() => {});
-    }
-  }, [screen]);
 
   const filteredGyms = gymSearch
     ? gyms.filter((g) => g.name.toLowerCase().includes(gymSearch.toLowerCase()))
@@ -57,11 +62,26 @@ export default function Welcome() {
     }));
   };
 
-  const handleJoin = async () => {
-    if (!joinData.name.trim() || !joinData.age) {
-      toast({ title: "Please fill in your name and age", variant: "destructive" });
+  const handleSignIn = async () => {
+    if (!signInName.trim() || !signInPassword) {
+      toast({ title: "Please enter your name and password", variant: "destructive" });
       return;
     }
+    setIsSubmitting(true);
+    try {
+      const { userId } = await loginUser(signInName.trim(), signInPassword);
+      login(userId);
+    } catch (err: unknown) {
+      toast({
+        title: err instanceof Error ? err.message : "Sign in failed",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleJoin = async () => {
     setIsSubmitting(true);
     try {
       const { userId } = await registerUser({
@@ -72,29 +92,30 @@ export default function Welcome() {
         gymName: joinData.gymName || undefined,
         schedule: joinData.schedule,
         interests: joinData.interests,
+        password: joinData.password,
       });
       login(userId);
-    } catch {
-      toast({ title: "Failed to create account", variant: "destructive" });
+    } catch (err: unknown) {
+      toast({
+        title: err instanceof Error ? err.message : "Failed to create account",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleSignIn = (userId: string) => {
-    login(userId);
+  const goBack = () => {
+    if (screen === "join-gym") setScreen("join-name");
+    else if (screen === "join-interests") setScreen("join-gym");
+    else setScreen("landing");
   };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "hsl(var(--background))" }}>
-      {/* Back button for sub-screens */}
       {screen !== "landing" && (
         <button
-          onClick={() => {
-            if (screen === "join-gym") setScreen("join-name");
-            else if (screen === "join-interests") setScreen("join-gym");
-            else setScreen("landing");
-          }}
+          onClick={goBack}
           className="absolute top-5 left-5 flex items-center gap-2 text-sm font-semibold z-10"
           style={{ color: "hsl(var(--muted-foreground))" }}
         >
@@ -102,17 +123,15 @@ export default function Welcome() {
         </button>
       )}
 
-      {/* Landing screen */}
+      {/* Landing */}
       {screen === "landing" && (
         <div className="flex-1 relative flex flex-col overflow-hidden">
-          {/* Hero background image */}
           <div className="absolute inset-0">
             <img
               src="/hero-lunge.jpeg"
               alt=""
               className="w-full h-full object-cover object-center"
             />
-            {/* Dark gradient overlay — heavy at bottom, light at top */}
             <div
               className="absolute inset-0"
               style={{
@@ -121,17 +140,14 @@ export default function Welcome() {
             />
           </div>
 
-          {/* Content */}
           <div className="relative flex flex-col items-center justify-end flex-1 px-6 pb-14 text-center">
             <img src={logoImg} alt="GymLink" className="w-52 mb-6 object-contain drop-shadow-lg" />
-
             <h1 className="text-4xl font-extrabold tracking-tight mb-3 text-white leading-tight">
               Find your<br />gym crew
             </h1>
             <p className="text-base mb-10 max-w-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
               Connect with gym crushes, workout buddies, advisors, and spotters at your gym.
             </p>
-
             <div className="w-full max-w-xs space-y-3">
               <button
                 onClick={() => setScreen("join-name")}
@@ -154,38 +170,68 @@ export default function Welcome() {
         </div>
       )}
 
-      {/* Sign-in screen */}
+      {/* Sign-in */}
       {screen === "sign-in" && (
         <div className="flex-1 flex flex-col px-6 pt-20 max-w-md mx-auto w-full">
-          <h2 className="text-2xl font-extrabold tracking-tight mb-2">Welcome back</h2>
-          <p className="text-sm mb-8" style={{ color: "hsl(var(--muted-foreground))" }}>Select your profile to continue</p>
-          <div className="space-y-2">
-            {existingUsers.map((u) => (
-              <button
-                key={u.id}
-                onClick={() => handleSignIn(u.id)}
-                className="w-full card-surface px-4 py-3.5 flex items-center gap-3 hover:border-white/20 transition-all text-left"
-              >
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl shrink-0"
-                  style={{ background: "hsl(var(--secondary))" }}>
-                  {u.avatar}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm">{u.name}</p>
-                  <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{u.gym || "No gym set"}</p>
-                </div>
-                <ArrowRight className="w-4 h-4 shrink-0" style={{ color: "hsl(var(--muted-foreground))" }} />
-              </button>
-            ))}
+          <h2 className="text-2xl font-extrabold tracking-tight mb-1">Welcome back</h2>
+          <p className="text-sm mb-8" style={{ color: "hsl(var(--muted-foreground))" }}>
+            Enter your name and password to sign in
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <label className="section-label block mb-2">Name</label>
+              <Input
+                placeholder="Your name"
+                value={signInName}
+                onChange={(e) => setSignInName(e.target.value)}
+                className="h-11 text-sm"
+                onKeyDown={(e) => e.key === "Enter" && handleSignIn()}
+              />
+            </div>
+            <div>
+              <label className="section-label block mb-2">Password</label>
+              <div className="relative">
+                <Input
+                  type={showSignInPw ? "text" : "password"}
+                  placeholder="Your password"
+                  value={signInPassword}
+                  onChange={(e) => setSignInPassword(e.target.value)}
+                  className="h-11 text-sm pr-10"
+                  onKeyDown={(e) => e.key === "Enter" && handleSignIn()}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSignInPw((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-80"
+                >
+                  {showSignInPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
           </div>
-          <button onClick={() => setScreen("join-name")} className="mt-6 text-sm font-semibold text-center w-full"
-            style={{ color: "hsl(var(--primary))" }}>
+
+          <button
+            onClick={handleSignIn}
+            disabled={isSubmitting}
+            className="mt-8 w-full py-3.5 rounded-xl font-bold text-base text-white flex items-center justify-center gap-2 disabled:opacity-60"
+            style={{ background: "hsl(var(--primary))" }}
+          >
+            <LogIn className="w-4 h-4" />
+            {isSubmitting ? "Signing in…" : "Sign In"}
+          </button>
+
+          <button
+            onClick={() => setScreen("join-name")}
+            className="mt-4 text-sm font-semibold text-center w-full"
+            style={{ color: "hsl(var(--primary))" }}
+          >
             New here? Join GymLink
           </button>
         </div>
       )}
 
-      {/* Join: Name + Age + Bio */}
+      {/* Join: Name + Age + Bio + Password */}
       {screen === "join-name" && (
         <div className="flex-1 flex flex-col px-6 pt-20 max-w-md mx-auto w-full">
           <div className="mb-8">
@@ -224,6 +270,44 @@ export default function Welcome() {
               />
             </div>
             <div>
+              <label className="section-label block mb-2">Password</label>
+              <div className="relative">
+                <Input
+                  type={showJoinPw ? "text" : "password"}
+                  placeholder="Min 6 characters"
+                  value={joinData.password}
+                  onChange={(e) => setJoinData((p) => ({ ...p, password: e.target.value }))}
+                  className="h-11 text-sm pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowJoinPw((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-80"
+                >
+                  {showJoinPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="section-label block mb-2">Confirm Password</label>
+              <div className="relative">
+                <Input
+                  type={showJoinConfirm ? "text" : "password"}
+                  placeholder="Repeat password"
+                  value={joinData.confirmPassword}
+                  onChange={(e) => setJoinData((p) => ({ ...p, confirmPassword: e.target.value }))}
+                  className="h-11 text-sm pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowJoinConfirm((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-80"
+                >
+                  {showJoinConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
               <label className="section-label block mb-2">Schedule (optional)</label>
               <Input
                 placeholder="Mon-Fri 6PM"
@@ -237,6 +321,14 @@ export default function Welcome() {
             onClick={() => {
               if (!joinData.name.trim() || !joinData.age) {
                 toast({ title: "Name and age are required", variant: "destructive" });
+                return;
+              }
+              if (joinData.password.length < 6) {
+                toast({ title: "Password must be at least 6 characters", variant: "destructive" });
+                return;
+              }
+              if (joinData.password !== joinData.confirmPassword) {
+                toast({ title: "Passwords don't match", variant: "destructive" });
                 return;
               }
               setScreen("join-gym");
@@ -342,7 +434,7 @@ export default function Welcome() {
               className="w-full py-3.5 rounded-xl font-bold text-base text-white flex items-center justify-center gap-2 disabled:opacity-60"
               style={{ background: "hsl(var(--primary))" }}
             >
-              {isSubmitting ? "Creating account..." : (
+              {isSubmitting ? "Creating account…" : (
                 <><Check className="w-4 h-4" /> Create my profile</>
               )}
             </button>

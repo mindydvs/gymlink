@@ -2,34 +2,44 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 const USER_ID_KEY = "gymlink_user_id";
-const DEFAULT_USER_ID = "me";
 
 interface UserContextValue {
-  userId: string;
-  setUserId: (id: string) => Promise<void>;
+  userId: string | null;
+  isLoading: boolean;
+  login: (id: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextValue>({
-  userId: DEFAULT_USER_ID,
-  setUserId: async () => {},
+  userId: null,
+  isLoading: true,
+  login: async () => {},
+  logout: async () => {},
 });
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [userId, setUserIdState] = useState<string>(DEFAULT_USER_ID);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     AsyncStorage.getItem(USER_ID_KEY).then((stored) => {
-      if (stored) setUserIdState(stored);
+      setUserId(stored ?? null);
+      setIsLoading(false);
     });
   }, []);
 
-  const setUserId = useCallback(async (id: string) => {
+  const login = useCallback(async (id: string) => {
     await AsyncStorage.setItem(USER_ID_KEY, id);
-    setUserIdState(id);
+    setUserId(id);
+  }, []);
+
+  const logout = useCallback(async () => {
+    await AsyncStorage.removeItem(USER_ID_KEY);
+    setUserId(null);
   }, []);
 
   return (
-    <UserContext.Provider value={{ userId, setUserId }}>
+    <UserContext.Provider value={{ userId, isLoading, login, logout }}>
       {children}
     </UserContext.Provider>
   );

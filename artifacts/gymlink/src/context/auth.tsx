@@ -62,18 +62,25 @@ export async function registerUser(data: {
   gymName?: string;
   schedule: string;
   interests: string[];
+  password: string;
 }): Promise<{ userId: string }> {
   const res = await fetch(`${BASE}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Registration failed");
-  return res.json();
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error ?? "Registration failed");
+  return json;
 }
 
-export async function fetchAuthUsers(): Promise<Array<{ id: string; name: string; avatar: string; gym: string }>> {
-  const res = await fetch(`${BASE}/api/auth/users`);
-  if (!res.ok) throw new Error("Failed to load users");
-  return res.json();
+export async function loginUser(name: string, password: string): Promise<{ userId: string }> {
+  const res = await fetch(`${BASE}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, password }),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error ?? "Login failed");
+  return json;
 }

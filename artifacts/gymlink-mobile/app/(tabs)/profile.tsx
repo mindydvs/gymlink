@@ -29,12 +29,12 @@ import { setPendingVideo } from "@/store/videoStore";
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { userId } = useUser();
+  const { userId, logout } = useUser();
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [picking, setPicking] = useState(false);
 
   const { data: me, isLoading, refetch, isRefetching } = useGetMe();
-  const { data: videos, refetch: refetchVideos } = useListWorkoutVideos({ userId });
+  const { data: videos, refetch: refetchVideos } = useListWorkoutVideos({ userId: userId ?? "" });
   const { data: connections } = useListConnections({ status: "accepted" });
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
@@ -278,6 +278,18 @@ export default function ProfileScreen() {
             <Feather name="edit-2" size={14} color={colors.foreground} />
             <Text style={[styles.editBtnText, { color: colors.foreground }]}>Edit</Text>
           </Pressable>
+          <Pressable
+            onPress={() => {
+              Alert.alert("Sign out", "Are you sure you want to sign out?", [
+                { text: "Cancel", style: "cancel" },
+                { text: "Sign Out", style: "destructive", onPress: logout },
+              ]);
+            }}
+            style={[styles.logoutBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+            hitSlop={8}
+          >
+            <Ionicons name="log-out-outline" size={16} color="#E8193C" />
+          </Pressable>
         </View>
       </View>
 
@@ -383,6 +395,14 @@ const styles = StyleSheet.create({
   editBtnText: {
     fontFamily: "Inter_500Medium",
     fontSize: 13,
+  },
+  logoutBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
   },
   list: {
     paddingHorizontal: 16,

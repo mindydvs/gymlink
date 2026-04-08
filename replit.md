@@ -31,7 +31,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Deep navy Nike Training Club/Shred-inspired design (`--background: 229 45% 7%`, brand red `#E8193C`, cyan `#00C4E8`)
 - Pages: Welcome (onboarding), Dashboard, Members, Member Detail, Connections, Notifications, Profile
 - Connection types: crush `#E8193C`, buddy `#0B9ED9`, advisor `#12B76A`, spotter `#F79009`
-- Auth: `AuthContext` persists `userId` to `localStorage:gymlink_user_id`; sent via `Authorization: Bearer <userId>` header
+- Auth: Password-based (bcrypt). `AuthContext` persists `userId` to `localStorage:gymlink_user_id`; sent via `Authorization: Bearer <userId>` header. Welcome page has 3-step join (name/age/password → gym → interests) and sign-in (name + password) screens
 - Logo: `/logo.png` in `artifacts/gymlink/public/`
 
 ### GymLink Mobile (`artifacts/gymlink-mobile`)
@@ -39,16 +39,18 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Same deep navy brand palette as the web app (synced from index.css to `constants/colors.ts`)
 - 4 tabs: Feed (gym stats + member list), Members (search), Connections (requests + accepted), Profile
 - Stack route: `app/member/[id].tsx` — member detail with connect sheet
-- Auth: AsyncStorage `gymlink_user_id`, sent via `Authorization: Bearer <userId>` (default: `"me"`)
+- Auth: Password-based. AsyncStorage `gymlink_user_id`, sent via `Authorization: Bearer <userId>`
+- Unauthenticated users see `app/welcome.tsx` (hero lunge background, Join/Sign-In forms)
 - Uses `@workspace/api-client-react` generated hooks with `setBaseUrl` + `setAuthTokenGetter`
-- `context/UserContext.tsx` — manages current user ID via AsyncStorage
+- `context/UserContext.tsx` — manages `userId: string | null`, `login()`, `logout()`, `isLoading` via AsyncStorage
+- Logout button in profile tab header (red icon, confirms before signing out)
 - Components: AvatarImage, ConnectionBadge, VideoCard (with like button), MemberCard, NotificationCard
 
 ### API Server (`artifacts/api-server`)
 - Express 5 server at `/api`
 - Auth middleware reads `Authorization: Bearer <userId>` header; defaults to `"me"` if absent
-- Routes: `/api/users`, `/api/connections`, `/api/notifications`, `/api/stats`, `/api/gyms`, `/api/users/me/checkin`, `/api/auth/register`, `/api/auth/login`, `/api/auth/users`
-- Seeded with 7 demo users at Iron Temple Fitness
+- Routes: `/api/users`, `/api/connections`, `/api/notifications`, `/api/stats`, `/api/gyms`, `/api/users/me/checkin`, `/api/auth/register` (name+age+password+bio+gym+interests), `/api/auth/login` (name+password → userId)
+- Seeded with 8 demo users (all have default password: `gymlink123`)
 
 ## Database Schema
 

@@ -1,12 +1,14 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, ilike } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import { z } from "zod";
 import { nanoid } from "nanoid";
+import bcrypt from "bcrypt";
 
 const router: IRouter = Router();
 
 const AVATARS = ["💪", "🏋️", "🤸", "🧘", "🏃", "🚴", "🥊", "⚡", "🔥", "🦾", "🎯", "🏅"];
+const SALT_ROUNDS = 10;
 
 const RegisterBody = z.object({
   name: z.string().min(1).max(100),
@@ -16,6 +18,7 @@ const RegisterBody = z.object({
   gymName: z.string().optional(),
   schedule: z.string().default(""),
   interests: z.array(z.string()).default([]),
+  password: z.string().min(6).max(128),
 });
 
 router.post("/auth/register", async (req, res): Promise<void> => {
@@ -25,9 +28,20 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     return;
   }
 
-  const { name, age, bio, gymId, gymName, schedule, interests } = parsed.data;
+  const { name, age, bio, gymId, gymName, schedule, interests, password } = parsed.data;
+
+  const existing = await db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .where(ilike(usersTable.name, name));
+  if (existing.length > 0) {
+    res.status(409).json({ error: "That name is already taken. Please choose another." });
+    return;
+  }
+
   const id = nanoid(12);
   const avatar = AVATARS[Math.floor(Math.random() * AVATARS.length)];
+  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
   const [user] = await db
     .insert(usersTable)
@@ -46,29 +60,38 @@ router.post("/auth/register", async (req, res): Promise<void> => {
       isMe: false,
       activeNow: false,
       checkedIn: false,
+      passwordHash,
     })
     .returning();
 
-  res.status(201).json({ userId: user.id, user });
+  res.status(201).json({ userId: user.id });
 });
 
 router.post("/auth/login", async (req, res): Promise<void> => {
-  const { userId } = z.object({ userId: z.string() }).parse(req.body);
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
-
-  if (!user) {
-    res.status(404).json({ error: "User not found" });
+  const parsed = z.object({ name: z.string(), password: z.string() }).safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Name and password are required" });
     return;
   }
 
-  res.json({ userId: user.id, user });
-});
+  const { name, password } = parsed.data;
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(ilike(usersTable.name, name));
 
-router.get("/auth/users", async (_req, res): Promise<void> => {
-  const users = await db
-    .select({ id: usersTable.id, name: usersTable.name, avatar: usersTable.avatar, gym: usersTable.gym })
-    .from(usersTable);
-  res.json(users);
+  if (!user || !user.passwordHash) {
+    res.status(401).json({ error: "Incorrect name or password" });
+    return;
+  }
+
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) {
+    res.status(401).json({ error: "Incorrect name or password" });
+    return;
+  }
+
+  res.json({ userId: user.id });
 });
 
 export default router;
