@@ -1,4 +1,5 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React from "react";
 import {
   ActivityIndicator,
@@ -6,7 +7,6 @@ import {
   Platform,
   Pressable,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -21,20 +21,13 @@ import {
   useListWorkoutVideos,
   useListConnections,
 } from "@workspace/api-client-react";
-import { router } from "expo-router";
 
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { userId } = useUser();
 
-  const {
-    data: me,
-    isLoading,
-    refetch,
-    isRefetching,
-  } = useGetMe();
-
+  const { data: me, isLoading, refetch, isRefetching } = useGetMe();
   const { data: videos, refetch: refetchVideos } = useListWorkoutVideos({ userId });
   const { data: connections } = useListConnections({ status: "accepted" });
 
@@ -42,141 +35,186 @@ export default function ProfileScreen() {
   const connectionCount = connections?.length ?? 0;
 
   return (
-    <FlatList
-      data={videos ?? []}
-      keyExtractor={(item) => item.id}
-      scrollEnabled={!!(videos?.length)}
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={[
-        styles.list,
-        { paddingTop: topPad, paddingBottom: Platform.OS === "web" ? 34 : 0 },
-      ]}
-      refreshControl={
-        <RefreshControl
-          refreshing={isRefetching}
-          onRefresh={() => {
-            refetch();
-            refetchVideos();
-          }}
-          tintColor={colors.primary}
-        />
-      }
-      ListHeaderComponent={
-        isLoading ? (
-          <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />
-        ) : me ? (
-          <View style={styles.profileHeader}>
-            <View style={styles.heroRow}>
-              <AvatarImage
-                avatarUrl={me.avatarUrl}
-                avatarEmoji={me.avatar}
-                size={80}
-              />
-              <View style={styles.heroStats}>
-                <View style={styles.statItem}>
-                  <Text style={[styles.statNum, { color: colors.foreground }]}>
-                    {videos?.length ?? 0}
-                  </Text>
-                  <Text style={[styles.statLbl, { color: colors.mutedForeground }]}>
-                    Videos
-                  </Text>
-                </View>
-                <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                <View style={styles.statItem}>
-                  <Text style={[styles.statNum, { color: colors.foreground }]}>
-                    {connectionCount}
-                  </Text>
-                  <Text style={[styles.statLbl, { color: colors.mutedForeground }]}>
-                    Connections
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.nameSection}>
-              <View style={styles.nameRow}>
-                <Text style={[styles.name, { color: colors.foreground }]}>
-                  {me.name}
-                </Text>
-                {me.verified && (
-                  <Ionicons name="checkmark-circle" size={18} color={colors.buddy} />
-                )}
-                <Text style={[styles.age, { color: colors.mutedForeground }]}>
-                  {me.age}
-                </Text>
-              </View>
-
-              <View style={styles.gymRow}>
-                <Ionicons name="location-outline" size={13} color={colors.mutedForeground} />
-                <Text style={[styles.gym, { color: colors.mutedForeground }]}>
-                  {me.gym}
-                </Text>
-                {me.checkedIn && (
-                  <View style={[styles.checkinPill, { backgroundColor: `${colors.advisor}22`, borderColor: `${colors.advisor}55` }]}>
-                    <View style={[styles.checkinDot, { backgroundColor: colors.advisor }]} />
-                    <Text style={[styles.checkinText, { color: colors.advisor }]}>
-                      Here now
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <FlatList
+        data={videos ?? []}
+        keyExtractor={(item) => item.id}
+        scrollEnabled={!!(videos?.length)}
+        style={{ backgroundColor: colors.background }}
+        contentContainerStyle={[
+          styles.list,
+          { paddingTop: topPad + 56, paddingBottom: Platform.OS === "web" ? 34 : 0 },
+        ]}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => {
+              refetch();
+              refetchVideos();
+            }}
+            tintColor={colors.primary}
+          />
+        }
+        ListHeaderComponent={
+          isLoading ? (
+            <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />
+          ) : me ? (
+            <View style={styles.profileHeader}>
+              <View style={styles.heroRow}>
+                <AvatarImage
+                  avatarUrl={me.avatarUrl}
+                  avatarEmoji={me.avatar}
+                  size={80}
+                />
+                <View style={styles.heroStats}>
+                  <View style={styles.statItem}>
+                    <Text style={[styles.statNum, { color: colors.foreground }]}>
+                      {videos?.length ?? 0}
                     </Text>
+                    <Text style={[styles.statLbl, { color: colors.mutedForeground }]}>
+                      Videos
+                    </Text>
+                  </View>
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                  <View style={styles.statItem}>
+                    <Text style={[styles.statNum, { color: colors.foreground }]}>
+                      {connectionCount}
+                    </Text>
+                    <Text style={[styles.statLbl, { color: colors.mutedForeground }]}>
+                      Connections
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.nameSection}>
+                <View style={styles.nameRow}>
+                  <Text style={[styles.name, { color: colors.foreground }]}>
+                    {me.name}
+                  </Text>
+                  {me.verified && (
+                    <Ionicons name="checkmark-circle" size={18} color={colors.buddy} />
+                  )}
+                  <Text style={[styles.age, { color: colors.mutedForeground }]}>
+                    {me.age}
+                  </Text>
+                </View>
+
+                <View style={styles.gymRow}>
+                  <Ionicons name="location-outline" size={13} color={colors.mutedForeground} />
+                  <Text style={[styles.gym, { color: colors.mutedForeground }]}>
+                    {me.gym}
+                  </Text>
+                  {me.checkedIn && (
+                    <View style={[styles.checkinPill, { backgroundColor: `${colors.advisor}22`, borderColor: `${colors.advisor}55` }]}>
+                      <View style={[styles.checkinDot, { backgroundColor: colors.advisor }]} />
+                      <Text style={[styles.checkinText, { color: colors.advisor }]}>
+                        Here now
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {me.bio ? (
+                  <Text style={[styles.bio, { color: colors.mutedForeground }]}>
+                    {me.bio}
+                  </Text>
+                ) : null}
+
+                {me.interests.length > 0 && (
+                  <View style={styles.tags}>
+                    {me.interests.map((tag) => (
+                      <View
+                        key={tag}
+                        style={[styles.tag, { backgroundColor: colors.muted, borderColor: colors.border }]}
+                      >
+                        <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
+                          {tag}
+                        </Text>
+                      </View>
+                    ))}
                   </View>
                 )}
               </View>
 
-              {me.bio ? (
-                <Text style={[styles.bio, { color: colors.mutedForeground }]}>
-                  {me.bio}
-                </Text>
-              ) : null}
+              <View style={[styles.separator, { backgroundColor: colors.border }]} />
 
-              {me.interests.length > 0 && (
-                <View style={styles.tags}>
-                  {me.interests.map((tag) => (
-                    <View
-                      key={tag}
-                      style={[styles.tag, { backgroundColor: colors.muted, borderColor: colors.border }]}
-                    >
-                      <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
-                        {tag}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+                My Videos
+              </Text>
             </View>
+          ) : null
+        }
+        ListEmptyComponent={
+          !isLoading ? (
+            <View style={styles.empty}>
+              <Ionicons name="videocam-outline" size={40} color={colors.mutedForeground} />
+              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+                No videos yet
+              </Text>
+            </View>
+          ) : null
+        }
+        renderItem={({ item }) => (
+          <VideoCard
+            id={item.id}
+            title={item.title}
+            uploaderName={me?.name ?? "You"}
+            createdAt={item.createdAt}
+          />
+        )}
+      />
 
-            <View style={[styles.separator, { backgroundColor: colors.border }]} />
-
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-              My Videos
-            </Text>
-          </View>
-        ) : null
-      }
-      ListEmptyComponent={
-        !isLoading ? (
-          <View style={styles.empty}>
-            <Ionicons name="videocam-outline" size={40} color={colors.mutedForeground} />
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-              No videos yet
-            </Text>
-            <Text style={[styles.emptySubtext, { color: colors.mutedForeground }]}>
-              Upload your first workout video from the web app
-            </Text>
-          </View>
-        ) : null
-      }
-      renderItem={({ item }) => (
-        <VideoCard
-          id={item.id}
-          title={item.title}
-          uploaderName={me?.name ?? "You"}
-          createdAt={item.createdAt}
-        />
-      )}
-    />
+      <View
+        style={[
+          styles.header,
+          { top: topPad, backgroundColor: colors.background, borderBottomColor: colors.border },
+        ]}
+      >
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Profile</Text>
+        <Pressable
+          onPress={() => router.push("/edit-profile")}
+          style={[styles.editBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+          hitSlop={8}
+        >
+          <Feather name="edit-2" size={14} color={colors.foreground} />
+          <Text style={[styles.editBtnText, { color: colors.foreground }]}>Edit</Text>
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
+  header: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 56,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+  },
+  headerTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 18,
+  },
+  editBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  editBtnText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 13,
+  },
   list: {
     paddingHorizontal: 16,
   },
@@ -292,15 +330,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     marginTop: 40,
-    paddingHorizontal: 30,
   },
   emptyText: {
     fontFamily: "Inter_500Medium",
     fontSize: 15,
-  },
-  emptySubtext: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 13,
-    textAlign: "center",
   },
 });
