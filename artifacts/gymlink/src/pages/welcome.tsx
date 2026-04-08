@@ -125,7 +125,7 @@ export default function Welcome() {
 
       {/* Landing */}
       {screen === "landing" && (
-        <div className="flex-1 relative flex flex-col overflow-hidden">
+        <div className="flex-1 relative flex flex-col" style={{ minHeight: "100dvh" }}>
           <div className="absolute inset-0">
             <img
               src="/hero-lunge.jpeg"
@@ -140,8 +140,8 @@ export default function Welcome() {
             />
           </div>
 
-          <div className="relative flex flex-col items-center justify-end flex-1 px-6 pb-14 text-center">
-            <img src={logoImg} alt="GymLink" className="w-52 mb-6 object-contain drop-shadow-lg" />
+          <div className="relative flex flex-col items-center justify-end flex-1 px-6 pb-8 text-center">
+            <img src={logoImg} alt="GymLink" className="mb-4 drop-shadow-lg" style={{ width: "clamp(260px, 35vw, 560px)", height: "auto", maxHeight: "55vh" }} />
             <h1 className="text-4xl font-extrabold tracking-tight mb-3 text-white leading-tight">
               Find your<br />gym crew
             </h1>
