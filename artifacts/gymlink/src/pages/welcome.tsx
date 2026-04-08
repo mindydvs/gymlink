@@ -127,16 +127,16 @@ export default function Welcome() {
       {screen === "landing" && (
         <div style={{ position: "relative", minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
           {/* Fixed background — always covers the full viewport */}
-          <div style={{ position: "fixed", inset: 0, zIndex: 0 }}>
+          <div style={{ position: "fixed", inset: 0, zIndex: 0, backgroundColor: "#0A0D1A", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <img
               src="/hero-gym.jpeg"
               alt=""
-              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", display: "block" }}
+              style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center center", display: "block" }}
             />
             <div
               style={{
                 position: "absolute", inset: 0,
-                background: "linear-gradient(to bottom, rgba(10,13,26,0.25) 0%, rgba(10,13,26,0.55) 50%, rgba(10,13,26,0.97) 80%, rgba(10,13,26,1) 100%)",
+                background: "linear-gradient(to bottom, rgba(10,13,26,0.15) 0%, rgba(10,13,26,0.45) 50%, rgba(10,13,26,0.97) 80%, rgba(10,13,26,1) 100%)",
               }}
             />
           </div>
