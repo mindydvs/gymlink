@@ -129,43 +129,56 @@ export default function Welcome() {
           {/* Fixed background — always covers the full viewport */}
           <div style={{ position: "fixed", inset: 0, zIndex: 0 }}>
             <img
-              src="/hero-lunge.jpeg"
+              src="/hero-gym.jpeg"
               alt=""
-              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
+              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", display: "block" }}
             />
             <div
               style={{
                 position: "absolute", inset: 0,
-                background: "linear-gradient(to bottom, rgba(10,13,26,0.45) 0%, rgba(10,13,26,0.65) 45%, rgba(10,13,26,0.95) 78%, rgba(10,13,26,1) 100%)",
+                background: "linear-gradient(to bottom, rgba(10,13,26,0.25) 0%, rgba(10,13,26,0.55) 50%, rgba(10,13,26,0.97) 80%, rgba(10,13,26,1) 100%)",
               }}
             />
           </div>
 
-          <div className="relative flex flex-col items-center justify-end flex-1 px-6 pb-8 text-center" style={{ zIndex: 1, minHeight: "100dvh" }}>
-            <img src={logoImg} alt="GymLink" className="mb-4 drop-shadow-lg" style={{ width: "clamp(280px, 70vw, 900px)", maxWidth: "95vw", height: "auto", maxHeight: "55vh" }} />
-            <h1 className="text-4xl font-extrabold tracking-tight mb-3 text-white leading-tight">
-              Find your<br />gym crew
-            </h1>
-            <p className="text-base mb-6 max-w-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
-              Connect with gym crushes, workout buddies, advisors, and spotters at your gym.
-            </p>
-            <div className="w-full max-w-xs space-y-3">
-              <button
-                onClick={() => setScreen("join-name")}
-                className="w-full py-3.5 rounded-xl font-bold text-base text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98]"
-                style={{ background: "hsl(var(--primary))" }}
-              >
-                <UserPlus className="w-4 h-4" />
-                Join GymLink
-              </button>
-              <button
-                onClick={() => setScreen("sign-in")}
-                className="w-full py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98]"
-                style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}
-              >
-                <LogIn className="w-4 h-4" />
-                Sign In
-              </button>
+          {/* Content: logo fills top, cta anchored bottom */}
+          <div style={{ position: "relative", zIndex: 1, minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
+            {/* Logo — upper half */}
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "12px 16px 0" }}>
+              <img
+                src={logoImg}
+                alt="GymLink"
+                className="drop-shadow-2xl"
+                style={{ width: "min(95vw, 95vh)", height: "auto", maxWidth: "95vw" }}
+              />
+            </div>
+
+            {/* CTA — lower section */}
+            <div className="px-6 pb-8 text-center" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
+              <h1 className="text-4xl font-extrabold tracking-tight mb-2 text-white leading-tight">
+                Find your<br />gym crew
+              </h1>
+              <p className="text-base mb-6 max-w-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
+                Connect with gym crushes, workout buddies, advisors, and spotters at your gym.
+              </p>
+              <div className="w-full max-w-xs space-y-3">
+                <button
+                  onClick={() => setScreen("join-name")}
+                  className="w-full py-3.5 rounded-xl font-bold text-base text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98]"
+                  style={{ background: "hsl(var(--primary))" }}
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Join GymLink
+                </button>
+                <button
+                  onClick={() => setScreen("sign-in")}
+                  className="w-full py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98]"
+                  style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}
+                >
+                  <LogIn className="w-4 h-4" />
+                  Sign In
+                </button>
+              </div>
             </div>
           </div>
         </div>

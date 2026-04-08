@@ -98,7 +98,7 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.root}>
       <Image
-        source={require("@/assets/images/hero-lunge.jpeg")}
+        source={require("@/assets/images/hero-gym.jpeg")}
         style={StyleSheet.absoluteFillObject}
         resizeMode="cover"
       />
@@ -328,8 +328,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   logo: {
-    width: "92%",
-    height: 160,
+    width: "96%",
+    height: 320,
     alignSelf: "center" as const,
   },
   card: {
