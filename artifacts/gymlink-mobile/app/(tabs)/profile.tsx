@@ -1,9 +1,12 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
+  Modal,
   Platform,
   Pressable,
   RefreshControl,
@@ -21,11 +24,14 @@ import {
   useListWorkoutVideos,
   useListConnections,
 } from "@workspace/api-client-react";
+import { setPendingVideo } from "@/store/videoStore";
 
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { userId } = useUser();
+  const [showAddSheet, setShowAddSheet] = useState(false);
+  const [picking, setPicking] = useState(false);
 
   const { data: me, isLoading, refetch, isRefetching } = useGetMe();
   const { data: videos, refetch: refetchVideos } = useListWorkoutVideos({ userId });
@@ -33,6 +39,62 @@ export default function ProfileScreen() {
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const connectionCount = connections?.length ?? 0;
+
+  const pickVideo = async (source: "library" | "camera") => {
+    setPicking(true);
+    setShowAddSheet(false);
+
+    try {
+      let result;
+
+      if (source === "camera") {
+        const perm = await ImagePicker.requestCameraPermissionsAsync();
+        if (!perm.granted) {
+          Alert.alert("Permission needed", "Camera access is required to record a video.");
+          setPicking(false);
+          return;
+        }
+        result = await ImagePicker.launchCameraAsync({
+          mediaTypes: "videos",
+          videoMaxDuration: 180,
+          quality: 0.8,
+          allowsEditing: false,
+        });
+      } else {
+        const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!perm.granted) {
+          Alert.alert("Permission needed", "Photo library access is required to pick a video.");
+          setPicking(false);
+          return;
+        }
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: "videos",
+          quality: 1,
+          allowsEditing: false,
+        });
+      }
+
+      if (result.canceled || !result.assets?.[0]) {
+        setPicking(false);
+        return;
+      }
+
+      const asset = result.assets[0];
+      const uri = asset.uri;
+      const mimeType = asset.mimeType ?? "video/mp4";
+      const fileSize = asset.fileSize ?? 0;
+      const duration = asset.duration ?? undefined;
+      const uriParts = uri.split("/");
+      const fileName = uriParts[uriParts.length - 1] ?? `video-${Date.now()}.mp4`;
+
+      setPendingVideo({ uri, mimeType, fileSize, duration, fileName });
+      router.push("/upload-video");
+    } catch {
+      Alert.alert("Error", "Could not open video picker.");
+    } finally {
+      setPicking(false);
+    }
+  };
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -139,20 +201,41 @@ export default function ProfileScreen() {
 
               <View style={[styles.separator, { backgroundColor: colors.border }]} />
 
-              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-                My Videos
-              </Text>
+              <View style={styles.videosSectionHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+                  My Videos
+                </Text>
+                <Pressable
+                  onPress={() => setShowAddSheet(true)}
+                  style={[styles.addVideoBtn, { backgroundColor: colors.primary }]}
+                  hitSlop={8}
+                >
+                  <Ionicons name="add" size={18} color="#fff" />
+                </Pressable>
+              </View>
             </View>
           ) : null
         }
         ListEmptyComponent={
           !isLoading ? (
-            <View style={styles.empty}>
-              <Ionicons name="videocam-outline" size={40} color={colors.mutedForeground} />
-              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                No videos yet
+            <Pressable
+              style={[styles.emptyAddCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => setShowAddSheet(true)}
+            >
+              <View style={[styles.emptyAddCircle, { backgroundColor: `${colors.primary}18`, borderColor: `${colors.primary}40` }]}>
+                <Ionicons name="videocam-outline" size={32} color={colors.primary} />
+              </View>
+              <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
+                Share your first workout
               </Text>
-            </View>
+              <Text style={[styles.emptySubtitle, { color: colors.mutedForeground }]}>
+                Tap to upload a video and inspire your gym community
+              </Text>
+              <View style={[styles.emptyBtn, { backgroundColor: colors.primary }]}>
+                <Ionicons name="add" size={16} color="#fff" />
+                <Text style={styles.emptyBtnText}>Add Video</Text>
+              </View>
+            </Pressable>
           ) : null
         }
         renderItem={({ item }) => (
@@ -161,6 +244,8 @@ export default function ProfileScreen() {
             title={item.title}
             uploaderName={me?.name ?? "You"}
             createdAt={item.createdAt}
+            likeCount={item.likeCount}
+            likedByMe={item.likedByMe}
           />
         )}
       />
@@ -172,15 +257,86 @@ export default function ProfileScreen() {
         ]}
       >
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Profile</Text>
-        <Pressable
-          onPress={() => router.push("/edit-profile")}
-          style={[styles.editBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-          hitSlop={8}
-        >
-          <Feather name="edit-2" size={14} color={colors.foreground} />
-          <Text style={[styles.editBtnText, { color: colors.foreground }]}>Edit</Text>
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            onPress={() => setShowAddSheet(true)}
+            style={[styles.headerIconBtn, { backgroundColor: colors.primary }]}
+            hitSlop={8}
+          >
+            {picking ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Ionicons name="videocam-outline" size={16} color="#fff" />
+            )}
+          </Pressable>
+          <Pressable
+            onPress={() => router.push("/edit-profile")}
+            style={[styles.editBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+            hitSlop={8}
+          >
+            <Feather name="edit-2" size={14} color={colors.foreground} />
+            <Text style={[styles.editBtnText, { color: colors.foreground }]}>Edit</Text>
+          </Pressable>
+        </View>
       </View>
+
+      <Modal
+        visible={showAddSheet}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAddSheet(false)}
+      >
+        <Pressable style={styles.sheetOverlay} onPress={() => setShowAddSheet(false)}>
+          <Pressable style={[styles.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 12 }]}>
+            <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
+            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
+              Add a Workout Video
+            </Text>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.sheetOption,
+                { borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
+              ]}
+              onPress={() => pickVideo("camera")}
+            >
+              <View style={[styles.sheetOptionIcon, { backgroundColor: `${colors.primary}18` }]}>
+                <Ionicons name="camera-outline" size={26} color={colors.primary} />
+              </View>
+              <View style={styles.sheetOptionText}>
+                <Text style={[styles.sheetOptionTitle, { color: colors.foreground }]}>
+                  Record Video
+                </Text>
+                <Text style={[styles.sheetOptionSub, { color: colors.mutedForeground }]}>
+                  Film your workout right now
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.border} />
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.sheetOption,
+                { borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
+              ]}
+              onPress={() => pickVideo("library")}
+            >
+              <View style={[styles.sheetOptionIcon, { backgroundColor: `${colors.buddy}18` }]}>
+                <Ionicons name="images-outline" size={26} color={colors.buddy} />
+              </View>
+              <View style={styles.sheetOptionText}>
+                <Text style={[styles.sheetOptionTitle, { color: colors.foreground }]}>
+                  Choose from Library
+                </Text>
+                <Text style={[styles.sheetOptionSub, { color: colors.mutedForeground }]}>
+                  Pick an existing video
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.border} />
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -201,6 +357,18 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: "Inter_700Bold",
     fontSize: 18,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  headerIconBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
   },
   editBtn: {
     flexDirection: "row",
@@ -321,18 +489,115 @@ const styles = StyleSheet.create({
     height: 1,
     marginVertical: 8,
   },
+  videosSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 2,
+  },
   sectionTitle: {
     fontFamily: "Inter_700Bold",
     fontSize: 18,
-    marginBottom: 2,
   },
-  empty: {
+  addVideoBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: "center",
-    gap: 8,
-    marginTop: 40,
+    justifyContent: "center",
   },
-  emptyText: {
-    fontFamily: "Inter_500Medium",
+  emptyAddCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    padding: 28,
+    marginTop: 12,
+    alignItems: "center",
+    gap: 12,
+  },
+  emptyAddCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 17,
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 20,
+    paddingHorizontal: 16,
+  },
+  emptyBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginTop: 4,
+  },
+  emptyBtnText: {
+    fontFamily: "Inter_700Bold",
     fontSize: 15,
+    color: "#fff",
+  },
+  sheetOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  sheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    gap: 12,
+  },
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 8,
+  },
+  sheetTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 18,
+    marginBottom: 4,
+  },
+  sheetOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 16,
+  },
+  sheetOptionIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sheetOptionText: {
+    flex: 1,
+    gap: 3,
+  },
+  sheetOptionTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+  },
+  sheetOptionSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
   },
 });
