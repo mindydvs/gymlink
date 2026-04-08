@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, and } from "drizzle-orm";
-import { db, workoutVideosTable } from "@workspace/db";
+import { eq, and, count } from "drizzle-orm";
+import { db, workoutVideosTable, videoLikesTable } from "@workspace/db";
 import { nanoid } from "nanoid";
 
 const router: IRouter = Router();
@@ -44,6 +44,50 @@ router.delete("/videos/:id", async (req, res): Promise<void> => {
       )
     );
   res.status(204).end();
+});
+
+async function getLikeStatus(videoId: string, userId: string) {
+  const [countRow] = await db
+    .select({ likeCount: count() })
+    .from(videoLikesTable)
+    .where(eq(videoLikesTable.videoId, videoId));
+
+  const [myLike] = await db
+    .select()
+    .from(videoLikesTable)
+    .where(and(eq(videoLikesTable.videoId, videoId), eq(videoLikesTable.userId, userId)));
+
+  return {
+    videoId,
+    likeCount: Number(countRow?.likeCount ?? 0),
+    likedByMe: !!myLike,
+  };
+}
+
+router.get("/videos/:id/likes", async (req, res): Promise<void> => {
+  const status = await getLikeStatus(req.params.id, req.userId);
+  res.json(status);
+});
+
+router.post("/videos/:id/like", async (req, res): Promise<void> => {
+  const videoId = req.params.id;
+  const userId = req.userId;
+
+  const [existing] = await db
+    .select()
+    .from(videoLikesTable)
+    .where(and(eq(videoLikesTable.videoId, videoId), eq(videoLikesTable.userId, userId)));
+
+  if (existing) {
+    await db
+      .delete(videoLikesTable)
+      .where(and(eq(videoLikesTable.videoId, videoId), eq(videoLikesTable.userId, userId)));
+  } else {
+    await db.insert(videoLikesTable).values({ videoId, userId });
+  }
+
+  const status = await getLikeStatus(videoId, userId);
+  res.json(status);
 });
 
 export default router;

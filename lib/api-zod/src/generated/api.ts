@@ -387,3 +387,29 @@ export const CreateWorkoutVideoBody = zod.object({
 export const DeleteWorkoutVideoParams = zod.object({
   id: zod.coerce.string(),
 });
+
+/**
+ * @summary Toggle like on a workout video
+ */
+export const ToggleVideoLikeParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const ToggleVideoLikeResponse = zod.object({
+  videoId: zod.string(),
+  likeCount: zod.number(),
+  likedByMe: zod.boolean(),
+});
+
+/**
+ * @summary Get like count and whether the current user liked a video
+ */
+export const GetVideoLikesParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetVideoLikesResponse = zod.object({
+  videoId: zod.string(),
+  likeCount: zod.number(),
+  likedByMe: zod.boolean(),
+});

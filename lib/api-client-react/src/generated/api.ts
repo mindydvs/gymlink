@@ -33,6 +33,7 @@ import type {
   UploadUrlRequest,
   UploadUrlResponse,
   User,
+  VideoLikeStatus,
   WorkoutVideo,
 } from "./api.schemas";
 
@@ -1532,3 +1533,174 @@ export const useDeleteWorkoutVideo = <
 > => {
   return useMutation(getDeleteWorkoutVideoMutationOptions(options));
 };
+
+/**
+ * @summary Toggle like on a workout video
+ */
+export const getToggleVideoLikeUrl = (id: string) => {
+  return `/api/videos/${id}/like`;
+};
+
+export const toggleVideoLike = async (
+  id: string,
+  options?: RequestInit,
+): Promise<VideoLikeStatus> => {
+  return customFetch<VideoLikeStatus>(getToggleVideoLikeUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getToggleVideoLikeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof toggleVideoLike>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof toggleVideoLike>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["toggleVideoLike"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof toggleVideoLike>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return toggleVideoLike(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ToggleVideoLikeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof toggleVideoLike>>
+>;
+
+export type ToggleVideoLikeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Toggle like on a workout video
+ */
+export const useToggleVideoLike = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof toggleVideoLike>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof toggleVideoLike>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getToggleVideoLikeMutationOptions(options));
+};
+
+/**
+ * @summary Get like count and whether the current user liked a video
+ */
+export const getGetVideoLikesUrl = (id: string) => {
+  return `/api/videos/${id}/likes`;
+};
+
+export const getVideoLikes = async (
+  id: string,
+  options?: RequestInit,
+): Promise<VideoLikeStatus> => {
+  return customFetch<VideoLikeStatus>(getGetVideoLikesUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetVideoLikesQueryKey = (id: string) => {
+  return [`/api/videos/${id}/likes`] as const;
+};
+
+export const getGetVideoLikesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getVideoLikes>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getVideoLikes>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetVideoLikesQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getVideoLikes>>> = ({
+    signal,
+  }) => getVideoLikes(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getVideoLikes>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetVideoLikesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getVideoLikes>>
+>;
+export type GetVideoLikesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get like count and whether the current user liked a video
+ */
+
+export function useGetVideoLikes<
+  TData = Awaited<ReturnType<typeof getVideoLikes>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getVideoLikes>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetVideoLikesQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}

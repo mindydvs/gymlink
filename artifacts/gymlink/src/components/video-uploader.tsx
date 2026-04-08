@@ -1,12 +1,49 @@
 import { useRef, useState } from "react";
-import { Video, Upload, Loader2, Trash2, Play } from "lucide-react";
+import { Video, Upload, Loader2, Trash2, Play, Heart } from "lucide-react";
 import { useUpload } from "@workspace/object-storage-web";
 import { useToast } from "@/hooks/use-toast";
-import { useListWorkoutVideos, useCreateWorkoutVideo, useDeleteWorkoutVideo } from "@workspace/api-client-react";
+import { useListWorkoutVideos, useCreateWorkoutVideo, useDeleteWorkoutVideo, useGetVideoLikes, useToggleVideoLike } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 const MAX_DURATION_SEC = 120;
 const MAX_FILE_MB = 200;
+
+function LikeButton({ videoId }: { videoId: string }) {
+  const queryClient = useQueryClient();
+  const { data } = useGetVideoLikes(videoId);
+  const toggle = useToggleVideoLike();
+
+  const handleLike = () => {
+    toggle.mutate({ id: videoId }, {
+      onSuccess: (updated) => {
+        queryClient.setQueryData(["getVideoLikes", videoId], updated);
+      },
+    });
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleLike}
+      disabled={toggle.isPending}
+      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-60"
+      style={data?.likedByMe
+        ? { background: "#E8193C18", color: "#E8193C" }
+        : { background: "hsl(var(--secondary))", color: "hsl(var(--muted-foreground))" }
+      }
+    >
+      <Heart
+        className="w-3.5 h-3.5 transition-transform"
+        style={{
+          fill: data?.likedByMe ? "#E8193C" : "none",
+          stroke: data?.likedByMe ? "#E8193C" : "currentColor",
+          transform: toggle.isPending ? "scale(1.2)" : "scale(1)",
+        }}
+      />
+      <span>{data?.likeCount ?? 0}</span>
+    </button>
+  );
+}
 
 interface VideoUploaderProps {
   userId: string;
@@ -209,18 +246,21 @@ export function VideoUploader({ userId, isOwner }: VideoUploaderProps) {
               </button>
             )}
 
-            {isOwner && (
-              <div className="px-3 py-2 flex items-center justify-between">
-                <p className="text-xs font-semibold truncate">{v.title}</p>
-                <button
-                  onClick={() => handleDelete(v.id)}
-                  className="p-1.5 rounded-lg transition-colors hover:opacity-70 shrink-0"
-                  style={{ color: "hsl(var(--muted-foreground))" }}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+            <div className="px-3 py-2 flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold truncate flex-1">{v.title}</p>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <LikeButton videoId={v.id} />
+                {isOwner && (
+                  <button
+                    onClick={() => handleDelete(v.id)}
+                    className="p-1.5 rounded-lg transition-colors hover:opacity-70"
+                    style={{ color: "hsl(var(--muted-foreground))" }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
-            )}
+            </div>
           </div>
         ))}
       </div>

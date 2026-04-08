@@ -352,6 +352,44 @@ paths:
         "204":
           description: Deleted
 
+  /videos/{id}/like:
+    post:
+      operationId: toggleVideoLike
+      tags: [videos]
+      summary: Toggle like on a workout video
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Updated like status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoLikeStatus"
+
+  /videos/{id}/likes:
+    get:
+      operationId: getVideoLikes
+      tags: [videos]
+      summary: Get like count and whether the current user liked a video
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Like info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoLikeStatus"
+
 components:
   schemas:
     HealthStatus:
@@ -632,3 +670,14 @@ components:
           type: string
         description:
           type: string
+
+    VideoLikeStatus:
+      type: object
+      required: [videoId, likeCount, likedByMe]
+      properties:
+        videoId:
+          type: string
+        likeCount:
+          type: integer
+        likedByMe:
+          type: boolean

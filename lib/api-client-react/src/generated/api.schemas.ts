@@ -148,6 +148,12 @@ export interface CreateWorkoutVideoBody {
   description?: string;
 }
 
+export interface VideoLikeStatus {
+  videoId: string;
+  likeCount: number;
+  likedByMe: boolean;
+}
+
 export type ListUsersParams = {
   gym?: string;
   interest?: string;

@@ -25,4 +25,5 @@ export * from "./updateProfileBody";
 export * from "./uploadUrlRequest";
 export * from "./uploadUrlResponse";
 export * from "./user";
+export * from "./videoLikeStatus";
 export * from "./workoutVideo";
