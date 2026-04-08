@@ -3,10 +3,7 @@ import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
-import {
-  useGetVideoLikes,
-  useToggleVideoLike,
-} from "@workspace/api-client-react";
+import { useToggleVideoLike } from "@workspace/api-client-react";
 
 interface VideoCardProps {
   id: string;
@@ -14,6 +11,8 @@ interface VideoCardProps {
   uploaderName: string;
   uploaderAvatar?: React.ReactNode;
   createdAt: string;
+  likeCount?: number;
+  likedByMe?: boolean;
   onPress?: () => void;
 }
 
@@ -23,17 +22,18 @@ export function VideoCard({
   uploaderName,
   uploaderAvatar,
   createdAt,
+  likeCount: initialLikeCount = 0,
+  likedByMe: initialLikedByMe = false,
   onPress,
 }: VideoCardProps) {
   const colors = useColors();
   const [optimisticLiked, setOptimisticLiked] = useState<boolean | null>(null);
   const [optimisticCount, setOptimisticCount] = useState<number | null>(null);
 
-  const { data: likeData } = useGetVideoLikes(id);
   const { mutate: toggleLike, isPending } = useToggleVideoLike();
 
-  const liked = optimisticLiked ?? likeData?.likedByMe ?? false;
-  const count = optimisticCount ?? likeData?.likeCount ?? 0;
+  const liked = optimisticLiked ?? initialLikedByMe;
+  const count = optimisticCount ?? initialLikeCount;
 
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();

@@ -367,6 +367,8 @@ export const ListWorkoutVideosResponseItem = zod.object({
   title: zod.string(),
   description: zod.string().nullish(),
   createdAt: zod.coerce.date(),
+  likeCount: zod.number(),
+  likedByMe: zod.boolean(),
 });
 export const ListWorkoutVideosResponse = zod.array(
   ListWorkoutVideosResponseItem,

@@ -643,7 +643,7 @@ components:
 
     WorkoutVideo:
       type: object
-      required: [id, userId, objectPath, title, createdAt]
+      required: [id, userId, objectPath, title, createdAt, likeCount, likedByMe]
       properties:
         id:
           type: string
@@ -659,6 +659,10 @@ components:
         createdAt:
           type: string
           format: date-time
+        likeCount:
+          type: integer
+        likedByMe:
+          type: boolean
 
     CreateWorkoutVideoBody:
       type: object

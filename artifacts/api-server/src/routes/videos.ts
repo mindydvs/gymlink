@@ -11,7 +11,15 @@ router.get("/videos", async (req, res): Promise<void> => {
     .select()
     .from(workoutVideosTable)
     .where(eq(workoutVideosTable.userId, userId));
-  res.json(videos);
+
+  const videosWithLikes = await Promise.all(
+    videos.map(async (video) => {
+      const status = await getLikeStatus(video.id, req.userId);
+      return { ...video, likeCount: status.likeCount, likedByMe: status.likedByMe };
+    })
+  );
+
+  res.json(videosWithLikes);
 });
 
 router.post("/videos", async (req, res): Promise<void> => {

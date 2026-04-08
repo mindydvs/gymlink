@@ -25,6 +25,7 @@ import {
   useListConnections,
   useCreateConnection,
   getListConnectionsQueryKey,
+  getListUsersQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -44,12 +45,22 @@ export default function MemberDetailScreen() {
 
   const [showConnectMenu, setShowConnectMenu] = useState(false);
 
+  const cachedUsers = queryClient.getQueryData<{ id: string; name: string; [key: string]: unknown }[]>(
+    getListUsersQueryKey()
+  );
+  const cachedMember = cachedUsers?.find((u) => u.id === id);
+
   const {
     data: member,
     isLoading,
     refetch,
     isRefetching,
-  } = useGetUser(id ?? "");
+  } = useGetUser(id ?? "", {
+    query: {
+      initialData: cachedMember as never,
+      initialDataUpdatedAt: 0,
+    },
+  });
 
   const { data: videos, refetch: refetchVideos } = useListWorkoutVideos({
     userId: id ?? "",
@@ -253,6 +264,8 @@ export default function MemberDetailScreen() {
             title={item.title}
             uploaderName={member.name}
             createdAt={item.createdAt}
+            likeCount={item.likeCount}
+            likedByMe={item.likedByMe}
           />
         )}
       />

@@ -13,4 +13,6 @@ export interface WorkoutVideo {
   title: string;
   description?: string | null;
   createdAt: Date;
+  likeCount: number;
+  likedByMe: boolean;
 }
