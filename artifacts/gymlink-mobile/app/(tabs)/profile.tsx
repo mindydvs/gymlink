@@ -246,6 +246,7 @@ export default function ProfileScreen() {
             createdAt={item.createdAt}
             likeCount={item.likeCount}
             likedByMe={item.likedByMe}
+            isOwner
           />
         )}
       />

@@ -384,6 +384,28 @@ export const CreateWorkoutVideoBody = zod.object({
 });
 
 /**
+ * @summary Update a workout video title
+ */
+export const UpdateWorkoutVideoParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UpdateWorkoutVideoBody = zod.object({
+  title: zod.string(),
+});
+
+export const UpdateWorkoutVideoResponse = zod.object({
+  id: zod.string(),
+  userId: zod.string(),
+  objectPath: zod.string(),
+  title: zod.string(),
+  description: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+  likeCount: zod.number(),
+  likedByMe: zod.boolean(),
+});
+
+/**
  * @summary Delete a workout video
  */
 export const DeleteWorkoutVideoParams = zod.object({

@@ -42,6 +42,30 @@ router.post("/videos", async (req, res): Promise<void> => {
   res.status(201).json(video);
 });
 
+router.patch("/videos/:id", async (req, res): Promise<void> => {
+  const { title } = req.body as { title: string };
+  if (!title?.trim()) {
+    res.status(400).json({ error: "title is required" });
+    return;
+  }
+  const [updated] = await db
+    .update(workoutVideosTable)
+    .set({ title: title.trim() })
+    .where(
+      and(
+        eq(workoutVideosTable.id, req.params.id),
+        eq(workoutVideosTable.userId, req.userId)
+      )
+    )
+    .returning();
+  if (!updated) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const status = await getLikeStatus(updated.id, req.userId);
+  res.json({ ...updated, likeCount: status.likeCount, likedByMe: status.likedByMe });
+});
+
 router.delete("/videos/:id", async (req, res): Promise<void> => {
   await db
     .delete(workoutVideosTable)

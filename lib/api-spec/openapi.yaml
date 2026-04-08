@@ -338,6 +338,29 @@ paths:
                 $ref: "#/components/schemas/WorkoutVideo"
 
   /videos/{id}:
+    patch:
+      operationId: updateWorkoutVideo
+      tags: [videos]
+      summary: Update a workout video title
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWorkoutVideoBody"
+      responses:
+        "200":
+          description: Updated video
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkoutVideo"
     delete:
       operationId: deleteWorkoutVideo
       tags: [videos]
@@ -673,6 +696,13 @@ components:
         title:
           type: string
         description:
+          type: string
+
+    UpdateWorkoutVideoBody:
+      type: object
+      required: [title]
+      properties:
+        title:
           type: string
 
     VideoLikeStatus:

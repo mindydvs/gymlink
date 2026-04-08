@@ -22,6 +22,7 @@ export * from "./notification";
 export * from "./respondConnectionBody";
 export * from "./respondConnectionBodyResponse";
 export * from "./updateProfileBody";
+export * from "./updateWorkoutVideoBody";
 export * from "./uploadUrlRequest";
 export * from "./uploadUrlResponse";
 export * from "./user";

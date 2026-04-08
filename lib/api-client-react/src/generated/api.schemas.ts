@@ -140,12 +140,18 @@ export interface WorkoutVideo {
   title: string;
   description?: string | null;
   createdAt: string;
+  likeCount: number;
+  likedByMe: boolean;
 }
 
 export interface CreateWorkoutVideoBody {
   objectPath: string;
   title: string;
   description?: string;
+}
+
+export interface UpdateWorkoutVideoBody {
+  title: string;
 }
 
 export interface VideoLikeStatus {

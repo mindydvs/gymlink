@@ -30,6 +30,7 @@ import type {
   Notification,
   RespondConnectionBody,
   UpdateProfileBody,
+  UpdateWorkoutVideoBody,
   UploadUrlRequest,
   UploadUrlResponse,
   User,
@@ -1448,6 +1449,93 @@ export const useCreateWorkoutVideo = <
   TContext
 > => {
   return useMutation(getCreateWorkoutVideoMutationOptions(options));
+};
+
+/**
+ * @summary Update a workout video title
+ */
+export const getUpdateWorkoutVideoUrl = (id: string) => {
+  return `/api/videos/${id}`;
+};
+
+export const updateWorkoutVideo = async (
+  id: string,
+  updateWorkoutVideoBody: UpdateWorkoutVideoBody,
+  options?: RequestInit,
+): Promise<WorkoutVideo> => {
+  return customFetch<WorkoutVideo>(getUpdateWorkoutVideoUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateWorkoutVideoBody),
+  });
+};
+
+export const getUpdateWorkoutVideoMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateWorkoutVideo>>,
+    TError,
+    { id: string; data: BodyType<UpdateWorkoutVideoBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateWorkoutVideo>>,
+  TError,
+  { id: string; data: BodyType<UpdateWorkoutVideoBody> },
+  TContext
+> => {
+  const mutationKey = ["updateWorkoutVideo"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateWorkoutVideo>>,
+    { id: string; data: BodyType<UpdateWorkoutVideoBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateWorkoutVideo(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateWorkoutVideoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateWorkoutVideo>>
+>;
+export type UpdateWorkoutVideoMutationBody = BodyType<UpdateWorkoutVideoBody>;
+export type UpdateWorkoutVideoMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update a workout video title
+ */
+export const useUpdateWorkoutVideo = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateWorkoutVideo>>,
+    TError,
+    { id: string; data: BodyType<UpdateWorkoutVideoBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateWorkoutVideo>>,
+  TError,
+  { id: string; data: BodyType<UpdateWorkoutVideoBody> },
+  TContext
+> => {
+  return useMutation(getUpdateWorkoutVideoMutationOptions(options));
 };
 
 /**
