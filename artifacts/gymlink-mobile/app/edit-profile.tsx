@@ -1,7 +1,7 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -20,7 +20,10 @@ import {
   useGetMe,
   useUpdateMe,
   useRequestUploadUrl,
+  getGetMeQueryKey,
+  getListUsersQueryKey,
 } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
 
@@ -35,6 +38,7 @@ export default function EditProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
+  const queryClient = useQueryClient();
   const { data: me, isLoading } = useGetMe();
   const { mutateAsync: updateMe, isPending: isSaving } = useUpdateMe();
   const { mutateAsync: requestUploadUrl } = useRequestUploadUrl();
@@ -44,9 +48,11 @@ export default function EditProfileScreen() {
   const [interests, setInterests] = useState<string[]>([]);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const initialized = useRef(false);
 
   useEffect(() => {
-    if (me) {
+    if (me && !initialized.current) {
+      initialized.current = true;
       setBio(me.bio ?? "");
       setSchedule(me.schedule ?? "");
       setInterests(me.interests ?? []);
@@ -111,6 +117,8 @@ export default function EditProfileScreen() {
   const handleSave = async () => {
     try {
       await updateMe({ data: { bio, schedule, interests, avatarUrl: avatarUrl ?? undefined } });
+      await queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+      await queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
       router.back();
     } catch {
       Alert.alert("Save failed", "Could not save your profile. Please try again.");
