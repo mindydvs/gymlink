@@ -87,12 +87,11 @@ export default function EditProfileScreen() {
     setIsUploadingPhoto(true);
     try {
       const { uploadURL, objectPath } = await requestUploadUrl({
-        name: fileName,
-        size: fileSize,
-        contentType,
+        data: { name: fileName, size: fileSize, contentType },
       });
 
-      const blob = await fetch(uri).then((r) => r.blob());
+      const fileResponse = await fetch(uri);
+      const blob = await fileResponse.blob();
       await fetch(uploadURL, {
         method: "PUT",
         headers: { "Content-Type": contentType },
@@ -101,7 +100,8 @@ export default function EditProfileScreen() {
 
       const publicUrl = `${API_BASE}/api/storage${objectPath}`;
       setAvatarUrl(publicUrl);
-    } catch {
+    } catch (err) {
+      console.error("Upload error:", err);
       Alert.alert("Upload failed", "Could not upload your photo. Please try again.");
     } finally {
       setIsUploadingPhoto(false);
@@ -110,7 +110,7 @@ export default function EditProfileScreen() {
 
   const handleSave = async () => {
     try {
-      await updateMe({ bio, schedule, interests, avatarUrl: avatarUrl ?? undefined });
+      await updateMe({ data: { bio, schedule, interests, avatarUrl: avatarUrl ?? undefined } });
       router.back();
     } catch {
       Alert.alert("Save failed", "Could not save your profile. Please try again.");
