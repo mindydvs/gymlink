@@ -125,27 +125,28 @@ export default function Welcome() {
 
       {/* Landing */}
       {screen === "landing" && (
-        <div className="flex-1 relative flex flex-col" style={{ minHeight: "100dvh" }}>
-          <div className="absolute inset-0">
+        <div style={{ position: "relative", minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
+          {/* Fixed background — always covers the full viewport */}
+          <div style={{ position: "fixed", inset: 0, zIndex: 0 }}>
             <img
               src="/hero-lunge.jpeg"
               alt=""
-              className="w-full h-full object-cover object-center"
+              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
             />
             <div
-              className="absolute inset-0"
               style={{
+                position: "absolute", inset: 0,
                 background: "linear-gradient(to bottom, rgba(10,13,26,0.45) 0%, rgba(10,13,26,0.65) 45%, rgba(10,13,26,0.95) 78%, rgba(10,13,26,1) 100%)",
               }}
             />
           </div>
 
-          <div className="relative flex flex-col items-center justify-end flex-1 px-6 pb-8 text-center">
-            <img src={logoImg} alt="GymLink" className="mb-4 drop-shadow-lg" style={{ width: "clamp(260px, 35vw, 560px)", height: "auto", maxHeight: "55vh" }} />
+          <div className="relative flex flex-col items-center justify-end flex-1 px-6 pb-8 text-center" style={{ zIndex: 1, minHeight: "100dvh" }}>
+            <img src={logoImg} alt="GymLink" className="mb-4 drop-shadow-lg" style={{ width: "clamp(280px, 70vw, 900px)", maxWidth: "95vw", height: "auto", maxHeight: "55vh" }} />
             <h1 className="text-4xl font-extrabold tracking-tight mb-3 text-white leading-tight">
               Find your<br />gym crew
             </h1>
-            <p className="text-base mb-10 max-w-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
+            <p className="text-base mb-6 max-w-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
               Connect with gym crushes, workout buddies, advisors, and spotters at your gym.
             </p>
             <div className="w-full max-w-xs space-y-3">
