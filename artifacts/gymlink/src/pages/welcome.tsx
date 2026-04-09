@@ -159,7 +159,7 @@ export default function Welcome() {
             <img
               src="/hero-gym.jpeg"
               alt=""
-              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 35%", display: "block" }}
+              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%", display: "block" }}
             />
             <div
               style={{
@@ -177,7 +177,7 @@ export default function Welcome() {
                 src={logoImg}
                 alt="GymLink"
                 className="drop-shadow-2xl"
-                style={{ width: "min(60vw, 20vh)", height: "auto", maxWidth: "60vw" }}
+                style={{ width: "min(70vw, 28vh)", height: "auto", maxWidth: "70vw" }}
               />
             </div>
             {/* Spacer to push CTA down */}
