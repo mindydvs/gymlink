@@ -8,6 +8,7 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -46,6 +47,9 @@ export default function WelcomeScreen() {
 
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSent, setForgotSent] = useState(false);
+
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const handleForgotPassword = async () => {
     if (!forgotEmail.trim()) { Alert.alert("Missing info", "Please enter your email address."); return; }
@@ -90,6 +94,7 @@ export default function WelcomeScreen() {
   };
 
   const handleJoin = async () => {
+    if (!termsAccepted) { Alert.alert("Terms Required", "Please read and accept the Terms of Service to create an account."); return; }
     if (!joinName.trim()) { Alert.alert("Missing info", "Please enter your display name."); return; }
     if (!joinUsername.trim() || joinUsername.length < 2) { Alert.alert("Missing info", "Please enter a username (min 2 characters)."); return; }
     if (!joinEmail.trim() || !joinEmail.includes("@")) { Alert.alert("Missing info", "Please enter a valid email address."); return; }
@@ -125,8 +130,55 @@ export default function WelcomeScreen() {
     }
   };
 
+  const TERMS_SECTIONS = [
+    { h: "1. Eligibility", p: "You must be at least 18 years old to create an account. By using GymLink, you confirm you are at least 18 years of age." },
+    { h: "2. Your Account", p: "You are responsible for your account credentials and all activity under your account. Provide accurate information, keep credentials secure, and use only one account." },
+    { h: "3. Zero Tolerance — Bullying & Harassment", p: "GymLink has a strict zero-tolerance policy for bullying, harassment, intimidation, hate speech, threats, body shaming, doxxing, impersonation, and manipulation. Violations result in immediate and permanent account termination without refund." },
+    { h: "4. User Conduct", p: "Treat all users with respect. Do not solicit, advertise, upload illegal/obscene content, hack the App, use bots, or collect other users' personal information." },
+    { h: "5. Content You Create", p: "You are solely responsible for content you post. You grant GymLink a non-exclusive, royalty-free license to display it within the App. We may remove content that violates these Terms." },
+    { h: "6. Selfie Verification & Photos", p: "Profile photos must be of you and accurately represent your appearance. No photos of others, celebrities, stock photos, or AI-generated images. Verification selfies are deleted within 24 hours." },
+    { h: "7. Purchases — ALL SALES FINAL", p: "All purchases through GymLink are final and non-refundable, including subscriptions and in-app purchases. Subscriptions auto-renew unless cancelled before renewal. No refunds for accounts terminated for policy violations." },
+    { h: "8. Privacy", p: "Your use of GymLink is governed by our Privacy Policy, incorporated into these Terms by reference." },
+    { h: "9. Anonymous Features", p: "Gym Crush notifications are anonymous unless mutual. Anonymous Hype never reveals the sender. These features must not be used to harass or stalk others." },
+    { h: "10. Safety & Meeting In Person", p: "Use provided safety tools (Block, Report, Buddies-Only Mode). Always meet gym connections in public gym areas. GymLink is not responsible for user interactions online or in person." },
+    { h: "11. Intellectual Property", p: "GymLink's name, logo, and content are protected by copyright and trademark law. You may not copy, modify, or distribute our IP without written permission." },
+    { h: "12. Disclaimers & Liability", p: "GymLink is provided \"as is\" without warranties. Our total liability shall not exceed $100 or amounts paid in the preceding 12 months, whichever is less." },
+    { h: "13. Governing Law", p: "These Terms are governed by the laws of the State of Illinois. Disputes shall be resolved in courts in St. Clair County, Illinois." },
+    { h: "14. Contact", p: "Questions? Email us at legal@gymlink.app or support@gymlink.app" },
+  ];
+
   return (
     <View style={styles.root}>
+      {/* ── Terms of Service Modal ── */}
+      <Modal visible={showTermsModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowTermsModal(false)}>
+        <View style={{ flex: 1, backgroundColor: "#0D0F17" }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 20, paddingTop: 24, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.08)" }}>
+            <Text style={{ color: "#fff", fontFamily: "Inter_700Bold", fontSize: 18 }}>Terms of Service</Text>
+            <Pressable onPress={() => setShowTermsModal(false)} hitSlop={12} style={{ backgroundColor: "rgba(255,255,255,0.1)", borderRadius: 16, width: 32, height: 32, alignItems: "center", justifyContent: "center" }}>
+              <Ionicons name="close" size={18} color="#fff" />
+            </Pressable>
+          </View>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+            <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, marginBottom: 20 }}>Last updated: April 9, 2026</Text>
+            {TERMS_SECTIONS.map(({ h, p }) => (
+              <View key={h} style={{ marginBottom: 20 }}>
+                <Text style={{ color: "#fff", fontFamily: "Inter_700Bold", fontSize: 14, marginBottom: 6 }}>{h}</Text>
+                <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, lineHeight: 20 }}>{p}</Text>
+              </View>
+            ))}
+            <Text style={{ color: "rgba(255,255,255,0.25)", fontSize: 12, marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.08)" }}>© 2026 GymLink. All rights reserved.</Text>
+          </ScrollView>
+          <View style={{ padding: 20, paddingBottom: 36, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.08)" }}>
+            <Pressable
+              style={({ pressed }) => ({ backgroundColor: "#E8193C", borderRadius: 14, paddingVertical: 15, alignItems: "center", opacity: pressed ? 0.85 : 1 })}
+              onPress={() => { setTermsAccepted(true); setShowTermsModal(false); }}
+            >
+              <Text style={{ color: "#fff", fontFamily: "Inter_700Bold", fontSize: 16 }}>I Agree to the Terms of Service</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
       <ExpoImage
         source={require("@/assets/images/hero-gym.jpeg")}
         style={StyleSheet.absoluteFillObject}
@@ -408,8 +460,32 @@ export default function WelcomeScreen() {
                 </View>
               </View>
 
+              {/* Terms checkbox */}
               <Pressable
-                style={({ pressed }) => [styles.primaryBtn, { opacity: pressed || isLoading ? 0.8 : 1 }]}
+                onPress={() => setTermsAccepted((v) => !v)}
+                style={{ flexDirection: "row", alignItems: "flex-start", gap: 10, paddingVertical: 4 }}
+              >
+                <View style={{
+                  width: 20, height: 20, borderRadius: 5, borderWidth: 2, marginTop: 1, flexShrink: 0,
+                  borderColor: termsAccepted ? "#E8193C" : "rgba(255,255,255,0.3)",
+                  backgroundColor: termsAccepted ? "#E8193C" : "transparent",
+                  alignItems: "center", justifyContent: "center",
+                }}>
+                  {termsAccepted && <Ionicons name="checkmark" size={13} color="#fff" />}
+                </View>
+                <Text style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, flex: 1, lineHeight: 20 }}>
+                  I have read and agree to the{" "}
+                  <Text
+                    style={{ color: "#00C4E8", textDecorationLine: "underline" }}
+                    onPress={() => setShowTermsModal(true)}
+                  >
+                    Terms of Service
+                  </Text>
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [styles.primaryBtn, { opacity: pressed || isLoading || !termsAccepted ? 0.6 : 1 }]}
                 onPress={handleJoin}
                 disabled={isLoading}
               >

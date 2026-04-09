@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GymLink — Terms of Service</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#000;color:#ccc;line-height:1.7;padding:40px 20px}
+.container{max-width:720px;margin:0 auto}
+h1{font-size:28px;color:#fff;margin-bottom:8px}
+h2{font-size:20px;color:#fff;margin:32px 0 12px;padding-top:16px;border-top:1px solid #222}
+h3{font-size:16px;color:#ddd;margin:20px 0 8px}
+p{margin-bottom:14px;color:#aaa}
+ul{margin:0 0 14px 24px;color:#aaa}
+li{margin-bottom:6px}
+.updated{font-size:13px;color:#666;margin-bottom:32px}
+a{color:#00B4FF;text-decoration:none}
+a:hover{text-decoration:underline}
+.logo{font-size:24px;font-weight:900;margin-bottom:4px;letter-spacing:1px}
+.logo span{color:#00B4FF}
+strong{color:#ddd}
+.highlight{background:rgba(229,32,48,0.08);border:1px solid rgba(229,32,48,0.15);border-radius:10px;padding:16px;margin:16px 0}
+.highlight-blue{background:rgba(0,180,255,0.06);border:1px solid rgba(0,180,255,0.12);border-radius:10px;padding:16px;margin:16px 0}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="logo">GYM<span>LINK</span></div>
+<h1>Terms of Service</h1>
+<p class="updated">Last updated: April 9, 2026</p>
+
+<p>Welcome to GymLink! These Terms of Service ("Terms") govern your use of the GymLink mobile application ("App") operated by GymLink ("we," "our," or "us"). By downloading, accessing, or using GymLink, you agree to be bound by these Terms. If you do not agree, do not use the App.</p>
+
+<h2>1. Eligibility</h2>
+<p>You must be at least <strong>18 years old</strong> to create an account and use GymLink. By using the App, you represent and warrant that you are at least 18 years of age. We reserve the right to request proof of age at any time and to terminate accounts that violate this requirement.</p>
+
+<h2>2. Your Account</h2>
+<p>You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account. You agree to:</p>
+<ul>
+<li>Provide accurate, current, and complete information during registration</li>
+<li>Keep your login credentials secure and not share them with anyone</li>
+<li>Notify us immediately of any unauthorized use of your account</li>
+<li>Use only one account per person — duplicate accounts will be removed</li>
+</ul>
+<p>We reserve the right to suspend or terminate your account at any time for any violation of these Terms.</p>
+
+<h2>3. Zero Tolerance for Bullying & Harassment</h2>
+
+<div class="highlight">
+<p style="color:#E52030;font-weight:700;font-size:16px;margin-bottom:8px">⛔ ZERO TOLERANCE POLICY</p>
+<p style="margin-bottom:0">GymLink has a <strong>strict zero-tolerance policy</strong> for bullying, harassment, intimidation, hate speech, and any form of abusive behavior. This is not negotiable. The gym is a place for everyone, and GymLink exists to make it more welcoming — not less.</p>
+</div>
+
+<p>The following behaviors will result in <strong>immediate and permanent account termination</strong> without warning or refund:</p>
+<ul>
+<li><strong>Bullying:</strong> Repeated unwanted contact, intimidation, mocking, degrading comments, or any behavior intended to make another person feel unwelcome, unsafe, or humiliated</li>
+<li><strong>Harassment:</strong> Unwanted sexual advances, sexual comments, explicit messages, stalking behavior, or continued contact after being asked to stop or being blocked</li>
+<li><strong>Hate speech:</strong> Slurs, derogatory language, or attacks based on race, ethnicity, gender, sexual orientation, religion, disability, body type, fitness level, or any other personal characteristic</li>
+<li><strong>Threats:</strong> Any threat of physical violence, harm, or intimidation, whether direct or implied</li>
+<li><strong>Body shaming:</strong> Mocking, ridiculing, or making derogatory comments about anyone's body, weight, fitness level, or physical appearance</li>
+<li><strong>Doxxing:</strong> Sharing or threatening to share another person's private information without their consent</li>
+<li><strong>Impersonation:</strong> Pretending to be another person or creating fake profiles to deceive others</li>
+<li><strong>Manipulation:</strong> Using the anonymous features (Gym Crush, Anonymous Hype) to harass, stalk, or manipulate another person</li>
+</ul>
+
+<p>If you experience or witness any of these behaviors, please use the <strong>one-tap Block & Report</strong> feature in the App. All reports are reviewed by our safety team, and we may also share reports with your gym's management when appropriate.</p>
+
+<p>We reserve the right to determine, in our sole discretion, what constitutes a violation of this policy. <strong>Banned users are banned permanently.</strong> Creating a new account after being banned is a further violation of these Terms.</p>
+
+<h2>4. User Conduct</h2>
+<p>By using GymLink, you agree to:</p>
+<ul>
+<li>Treat all users with respect and courtesy</li>
+<li>Use the App only for its intended purpose — connecting with people at the gym</li>
+<li>Not use the App to solicit, sell, advertise, or promote products or services</li>
+<li>Not use the App to recruit, scam, or deceive other users</li>
+<li>Not upload content that is illegal, obscene, pornographic, or otherwise objectionable</li>
+<li>Not attempt to reverse engineer, hack, or compromise the App's security</li>
+<li>Not use bots, scripts, or automated tools to interact with the App</li>
+<li>Not collect or harvest other users' personal information</li>
+<li>Respect the anonymous features — do not attempt to identify anonymous users through external means</li>
+</ul>
+
+<h2>5. Content You Create</h2>
+<p>You are solely responsible for all content you post, including your profile information, photos, messages, hype messages, and tips. By posting content on GymLink, you grant us a non-exclusive, royalty-free, worldwide license to use, display, and distribute that content within the App for the purpose of providing our services.</p>
+<p>You represent that you own or have the right to use any content you post and that it does not violate any third party's rights. We reserve the right to remove any content that violates these Terms without notice.</p>
+
+<h2>6. Selfie Verification & Photos</h2>
+<p>GymLink's selfie verification feature is designed to confirm that you are a real person and that your profile photos represent you accurately. By using this feature, you agree that:</p>
+<ul>
+<li>Your profile photos must be of you and accurately represent your current appearance</li>
+<li>You will not use photos of other people, celebrities, stock photos, or AI-generated images</li>
+<li>Verification selfies are processed for identity confirmation and deleted within 24 hours</li>
+<li>We may use facial comparison technology to verify your identity</li>
+</ul>
+
+<h2>7. Purchases & Payments</h2>
+
+<div class="highlight-blue">
+<p style="color:#00B4FF;font-weight:700;font-size:16px;margin-bottom:8px">💳 ALL PURCHASES ARE FINAL</p>
+<p style="margin-bottom:0"><strong>All purchases made through GymLink are final and non-refundable.</strong> This includes, but is not limited to, GymLink Premium subscriptions, in-app purchases, and any other paid features or services. By making a purchase, you acknowledge and agree that you will not be entitled to a refund for any reason.</p>
+</div>
+
+<h3>7.1 Subscriptions</h3>
+<p>If GymLink offers subscription plans (such as GymLink Premium):</p>
+<ul>
+<li>Subscriptions automatically renew at the end of each billing period unless you cancel before the renewal date</li>
+<li>You can cancel your subscription at any time through your Apple ID settings (Settings → your name → Subscriptions → GymLink)</li>
+<li>Cancellation takes effect at the end of your current billing period — you retain access until then</li>
+<li>No refunds or credits will be issued for partial billing periods</li>
+<li>We reserve the right to change subscription prices with 30 days' notice</li>
+</ul>
+
+<h3>7.2 In-App Purchases</h3>
+<ul>
+<li>All in-app purchases are processed through Apple's App Store and are subject to Apple's payment terms</li>
+<li>All in-app purchases are final and non-refundable</li>
+<li>We are not responsible for any issues with Apple's payment processing</li>
+<li>If you believe you were charged in error, contact Apple Support directly for billing disputes</li>
+</ul>
+
+<h3>7.3 Account Termination & Purchases</h3>
+<p>If your account is terminated due to a violation of these Terms (including the Zero Tolerance Policy), <strong>you will not receive a refund</strong> for any remaining subscription time or unused in-app purchases. This is a consequence of violating our community standards.</p>
+
+<h2>8. Privacy</h2>
+<p>Your privacy matters to us. Our collection, use, and sharing of your personal information is governed by our <a href="privacy-policy.html">Privacy Policy</a>, which is incorporated into these Terms by reference. By using GymLink, you consent to the practices described in our Privacy Policy.</p>
+
+<h2>9. Anonymous Features</h2>
+<p>GymLink offers anonymous features including Gym Crush and Anonymous Hype. Regarding these features:</p>
+<ul>
+<li><strong>Gym Crush</strong> notifications are anonymous — the recipient only learns your identity if they also send a crush back (mutual match)</li>
+<li><strong>Anonymous Hype</strong> messages never reveal the sender's identity under any circumstances</li>
+<li>You can <strong>undo</strong> (withdraw) any crush or connection request at any time before the recipient responds</li>
+<li>Anonymous features must not be used to harass, stalk, or intimidate others</li>
+<li>We reserve the right to reveal a user's identity to law enforcement if required by law or if there is a credible threat to someone's safety</li>
+</ul>
+
+<h2>10. Safety Features</h2>
+<p>GymLink provides safety tools that you can use to control your experience:</p>
+<ul>
+<li><strong>Buddies-Only Mode:</strong> Blocks all crush requests — only platonic connections allowed</li>
+<li><strong>Invisible Mode:</strong> Hides your profile from discovery</li>
+<li><strong>Trust-Level Filtering:</strong> Only show your profile to verified users</li>
+<li><strong>Block:</strong> Instantly block any user — they can no longer see or contact you</li>
+<li><strong>Report:</strong> Report violations to our safety team</li>
+</ul>
+<p>While we provide these tools and actively review reports, we cannot guarantee your safety. You are responsible for your own interactions and should exercise judgment when communicating with or meeting anyone from the App.</p>
+
+<h2>11. Meeting In Person</h2>
+<p>GymLink facilitates connections between people at the same gym, which may lead to in-person interactions. For your safety:</p>
+<ul>
+<li>Always meet in public areas of the gym, not in private locations</li>
+<li>Tell a friend or family member about any planned meetups</li>
+<li>Trust your instincts — if something feels wrong, leave and report the user</li>
+<li>Do not share sensitive personal information (home address, financial details) with people you've just connected with</li>
+</ul>
+<p><strong>GymLink is not responsible for any interactions that occur between users, whether online or in person.</strong> We do not conduct criminal background checks on users and cannot verify the intentions of any user.</p>
+
+<h2>12. Intellectual Property</h2>
+<p>The GymLink name, logo, design, and all content created by us (excluding user-generated content) are our intellectual property and are protected by copyright, trademark, and other laws. You may not copy, modify, distribute, or create derivative works based on our intellectual property without written permission.</p>
+
+<h2>13. Disclaimer of Warranties</h2>
+<p>GymLink is provided <strong>"as is" and "as available"</strong> without warranties of any kind, either express or implied. We do not warrant that the App will be uninterrupted, error-free, secure, or free of viruses. We do not warrant the accuracy or completeness of any information provided by users.</p>
+
+<h2>14. Limitation of Liability</h2>
+<p>To the maximum extent permitted by law, GymLink and its owners, employees, and affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the App, including but not limited to:</p>
+<ul>
+<li>Interactions with other users, whether online or in person</li>
+<li>Loss of data or unauthorized access to your account</li>
+<li>Any harm resulting from reliance on information provided through the App</li>
+<li>Service interruptions or technical failures</li>
+</ul>
+<p>Our total liability for any claim arising from these Terms or your use of the App shall not exceed the amount you paid to us in the 12 months preceding the claim, or $100, whichever is less.</p>
+
+<h2>15. Indemnification</h2>
+<p>You agree to indemnify and hold harmless GymLink and its owners, employees, and affiliates from any claims, damages, losses, or expenses (including legal fees) arising from your use of the App, your violation of these Terms, or your violation of any rights of another person.</p>
+
+<h2>16. Termination</h2>
+<p>You may delete your account at any time through the App's settings. We may terminate or suspend your account at any time, with or without cause, with or without notice. Upon termination:</p>
+<ul>
+<li>Your right to use the App immediately ceases</li>
+<li>Your profile and data will be deleted in accordance with our Privacy Policy</li>
+<li>Any remaining subscription time or unused purchases are forfeited with no refund</li>
+<li>Provisions regarding intellectual property, limitation of liability, indemnification, and governing law survive termination</li>
+</ul>
+
+<h2>17. Changes to These Terms</h2>
+<p>We may update these Terms from time to time. We will notify you of material changes through an in-app notification or by updating the "Last updated" date. Your continued use of the App after changes constitutes acceptance of the updated Terms. If you disagree with any changes, your only remedy is to stop using the App and delete your account.</p>
+
+<h2>18. Governing Law</h2>
+<p>These Terms are governed by the laws of the State of Illinois, United States, without regard to conflict of law principles. Any disputes arising from these Terms or your use of the App shall be resolved in the courts located in St. Clair County, Illinois.</p>
+
+<h2>19. Dispute Resolution</h2>
+<p>Before filing any legal claim, you agree to first contact us at <a href="mailto:legal@gymlink.app">legal@gymlink.app</a> and attempt to resolve the dispute informally for at least 30 days. If we cannot resolve the dispute informally, either party may pursue legal action as described in the Governing Law section.</p>
+
+<h2>20. Severability</h2>
+<p>If any provision of these Terms is found to be unenforceable, the remaining provisions shall continue in full force and effect.</p>
+
+<h2>21. Entire Agreement</h2>
+<p>These Terms, together with our Privacy Policy, constitute the entire agreement between you and GymLink regarding your use of the App. They supersede any prior agreements or understandings.</p>
+
+<h2>22. Contact Us</h2>
+<p>If you have questions about these Terms of Service, please contact us:</p>
+<ul>
+<li><strong>Email:</strong> <a href="mailto:legal@gymlink.app">legal@gymlink.app</a></li>
+<li><strong>Support:</strong> <a href="mailto:support@gymlink.app">support@gymlink.app</a></li>
+</ul>
+
+<p style="margin-top:40px;padding-top:20px;border-top:1px solid #222;font-size:13px;color:#555">© 2026 GymLink. All rights reserved.</p>
+</div>
+</body>
+</html>

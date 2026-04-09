@@ -53,6 +53,10 @@ export default function Welcome() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSent, setForgotSent] = useState(false);
 
+  // Terms of Service
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+
   const { data: gyms = [] } = useListGyms();
 
   const filteredGyms = gymSearch
@@ -88,6 +92,7 @@ export default function Welcome() {
   };
 
   const handleJoin = async () => {
+    if (!termsAccepted) { setShowTermsModal(true); return; }
     setIsSubmitting(true);
     try {
       const { userId } = await registerUser({
@@ -141,6 +146,63 @@ export default function Welcome() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "hsl(var(--background))" }}>
+
+      {/* ── Terms of Service Modal ── */}
+      {showTermsModal && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "flex-end" }}
+          onClick={() => setShowTermsModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "#111318", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 640, margin: "0 auto", maxHeight: "88dvh", display: "flex", flexDirection: "column", boxShadow: "0 -4px 40px rgba(0,0,0,0.6)" }}
+          >
+            <div style={{ padding: "16px 20px 12px", borderBottom: "1px solid rgba(255,255,255,0.08)", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+              <span style={{ fontWeight: 800, fontSize: 17, color: "#fff" }}>Terms of Service</span>
+              <button onClick={() => setShowTermsModal(false)} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 20, width: 32, height: 32, cursor: "pointer", color: "#fff", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
+            </div>
+            <div style={{ overflowY: "auto", padding: "20px", flex: 1, fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1.7 }}>
+              {[
+                { h: "1. Eligibility", p: "You must be at least 18 years old to create an account and use GymLink. By using the App, you represent and warrant that you are at least 18 years of age." },
+                { h: "2. Your Account", p: "You are responsible for maintaining the confidentiality of your account credentials. You agree to provide accurate information, keep credentials secure, not share them, notify us of unauthorized use, and use only one account per person." },
+                { h: "3. Zero Tolerance — Bullying & Harassment", p: "GymLink has a strict zero-tolerance policy for bullying, harassment, intimidation, hate speech, threats, body shaming, doxxing, impersonation, and manipulation. These behaviors result in immediate and permanent account termination. Banned users may not create new accounts." },
+                { h: "4. User Conduct", p: "You agree to treat all users with respect, use the App only for its intended purpose, not solicit or advertise, not upload illegal or obscene content, not reverse engineer or hack the App, not use bots or scripts, and not collect other users' personal information." },
+                { h: "5. Content You Create", p: "You are solely responsible for all content you post. By posting, you grant GymLink a non-exclusive, royalty-free license to display that content within the App. We may remove any content that violates these Terms without notice." },
+                { h: "6. Selfie Verification & Photos", p: "Profile photos must be of you and accurately represent your current appearance. You may not use photos of other people, celebrities, stock photos, or AI-generated images. Verification selfies are deleted within 24 hours." },
+                { h: "7. Purchases & Payments — ALL SALES FINAL", p: "All purchases through GymLink are final and non-refundable, including subscriptions and in-app purchases. Subscriptions auto-renew unless cancelled before the renewal date. If your account is terminated for violating these Terms, no refund will be issued." },
+                { h: "8. Privacy", p: "Your use of GymLink is governed by our Privacy Policy, which is incorporated into these Terms by reference." },
+                { h: "9. Anonymous Features", p: "Gym Crush notifications are anonymous unless a mutual crush occurs. Anonymous Hype messages never reveal the sender's identity. These features must not be used to harass, stalk, or intimidate others." },
+                { h: "10. Safety", p: "GymLink provides safety tools including Buddies-Only Mode, Invisible Mode, Block, and Report. While we actively review reports, we cannot guarantee your safety. Exercise judgment in all interactions." },
+                { h: "11. Meeting In Person", p: "Always meet in public gym areas. Tell someone about planned meetups. GymLink is not responsible for in-person interactions and does not conduct criminal background checks on users." },
+                { h: "12. Intellectual Property", p: "The GymLink name, logo, and content are our intellectual property protected by copyright and trademark law. You may not copy, modify, or distribute our IP without written permission." },
+                { h: "13. Disclaimer of Warranties", p: "GymLink is provided \"as is\" without warranties of any kind. We do not warrant uninterrupted, error-free, or secure service." },
+                { h: "14. Limitation of Liability", p: "To the maximum extent permitted by law, GymLink shall not be liable for any indirect, incidental, or consequential damages. Our total liability shall not exceed $100 or amounts paid in the preceding 12 months." },
+                { h: "15. Indemnification", p: "You agree to indemnify GymLink from any claims arising from your use of the App or your violation of these Terms." },
+                { h: "16. Termination", p: "You may delete your account at any time. We may terminate accounts with or without cause. Remaining subscription time or purchases are forfeited upon termination for violations." },
+                { h: "17. Changes to Terms", p: "We may update these Terms and will notify you of material changes via in-app notification. Continued use constitutes acceptance." },
+                { h: "18. Governing Law", p: "These Terms are governed by the laws of the State of Illinois. Disputes shall be resolved in courts in St. Clair County, Illinois." },
+                { h: "19. Dispute Resolution", p: "Before filing any legal claim, contact us at legal@gymlink.app and attempt to resolve informally for at least 30 days." },
+                { h: "20. Contact", p: "Email: legal@gymlink.app | Support: support@gymlink.app" },
+              ].map(({ h, p }) => (
+                <div key={h} style={{ marginBottom: 20 }}>
+                  <div style={{ fontWeight: 700, color: "#fff", marginBottom: 6, fontSize: 14 }}>{h}</div>
+                  <div>{p}</div>
+                </div>
+              ))}
+              <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.08)", fontSize: 12, color: "rgba(255,255,255,0.35)" }}>Last updated: April 9, 2026 · © 2026 GymLink. All rights reserved.</div>
+            </div>
+            <div style={{ padding: "16px 20px", borderTop: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
+              <button
+                onClick={() => { setTermsAccepted(true); setShowTermsModal(false); }}
+                style={{ width: "100%", background: "hsl(var(--primary))", color: "#fff", border: "none", borderRadius: 12, padding: "14px", fontWeight: 700, fontSize: 15, cursor: "pointer" }}
+              >
+                I Agree to the Terms of Service
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {screen !== "landing" && (
         <button
           onClick={goBack}
@@ -564,11 +626,29 @@ export default function Welcome() {
               })}
             </div>
           </div>
-          <div className="pt-3 space-y-2">
+          <div className="pt-3 space-y-3">
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                style={{ marginTop: 3, width: 16, height: 16, accentColor: "hsl(var(--primary))", cursor: "pointer", flexShrink: 0 }}
+              />
+              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>
+                I have read and agree to the{" "}
+                <button
+                  type="button"
+                  onClick={() => setShowTermsModal(true)}
+                  style={{ color: "hsl(var(--primary))", fontWeight: 600, textDecoration: "underline", background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 13 }}
+                >
+                  Terms of Service
+                </button>
+              </span>
+            </label>
             <button
               onClick={handleJoin}
-              disabled={isSubmitting}
-              className="w-full py-3.5 rounded-xl font-bold text-base text-white flex items-center justify-center gap-2 disabled:opacity-60"
+              disabled={isSubmitting || !termsAccepted}
+              className="w-full py-3.5 rounded-xl font-bold text-base text-white flex items-center justify-center gap-2 disabled:opacity-50"
               style={{ background: "hsl(var(--primary))" }}
             >
               {isSubmitting ? "Creating account…" : (
