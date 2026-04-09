@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
-import { useGetUser, useCreateConnection, getGetUserQueryKey, getListConnectionsQueryKey } from "@workspace/api-client-react";
+import { useGetUser, useCreateConnection, useListConnections, getGetUserQueryKey, getListConnectionsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, MapPin, Clock, Heart, Dumbbell, Brain, HandHelpingIcon, CheckCircle2, EyeOff, Eye, Video, Sparkles } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Heart, Dumbbell, Brain, HandHelpingIcon, CheckCircle2, EyeOff, Eye, Video, Sparkles, Send } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { VideoUploader } from "@/components/video-uploader";
+import { useAuth } from "@/context/auth";
 
 const CONN_TYPES = [
   { type: "crush"   as const, label: "Gym Crush",       Icon: Heart,           color: "#E8193C", desc: "You're interested in them" },
@@ -17,17 +18,33 @@ const CONN_TYPES = [
 export default function MemberDetail() {
   const [, params] = useRoute("/members/:id");
   const [, setLocation] = useLocation();
+  const { userId: myId } = useAuth();
   const { data: user, isLoading } = useGetUser(params?.id ?? "", {
     query: { enabled: !!params?.id, queryKey: getGetUserQueryKey(params?.id ?? "") },
   });
 
+  const { data: connections = [] } = useListConnections({});
+
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [anonymous, setAnonymous] = useState(true);
   const [mutualNotify, setMutualNotify] = useState(false);
-  const [sent, setSent] = useState(false);
   const createConn = useCreateConnection();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const profileId = params?.id ?? "";
+
+  // Find any connection already sent from me to this user
+  const sentConn = connections.find(
+    (c) => c.fromUserId === myId && c.toUserId === profileId
+  );
+  // Find any accepted connection (either direction)
+  const acceptedConn = connections.find(
+    (c) =>
+      c.status === "accepted" &&
+      ((c.fromUserId === myId && c.toUserId === profileId) ||
+       (c.toUserId === myId && c.fromUserId === profileId))
+  );
 
   const handleConnect = () => {
     if (!selectedType || !user) return;
@@ -43,9 +60,8 @@ export default function MemberDetail() {
       },
       {
         onSuccess: () => {
-          setSent(true);
           queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() });
-          toast({ title: "Request sent!", description: `Connected with ${user.name}` });
+          toast({ title: "Request sent!", description: `Your ${selectedType} request has been sent` });
         },
         onError: () => toast({ title: "Error", description: "Failed to send", variant: "destructive" }),
       }
@@ -127,37 +143,64 @@ export default function MemberDetail() {
       </div>
 
       {/* Connection section */}
-      {!sent ? (
+      {acceptedConn ? (
+        <div className="card-surface p-5 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: "#12B76A18" }}>
+            <CheckCircle2 className="w-5 h-5" style={{ color: "#12B76A" }} />
+          </div>
+          <div>
+            <p className="font-bold text-sm">Connected</p>
+            <p className="text-[12px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+              You're connected as {CONN_TYPES.find(c => c.type === acceptedConn.type)?.label ?? acceptedConn.type}
+            </p>
+          </div>
+        </div>
+      ) : (
         <div className="card-surface p-5 space-y-4">
           <p className="section-label">Connect with {user.name.split(" ")[0]}</p>
 
           <div className="grid grid-cols-2 gap-2.5">
             {CONN_TYPES.map(({ type, label, Icon, color, desc }) => {
               const isSelected = selectedType === type;
+              const wasSent = sentConn?.type === type;
+              const anyPending = !!sentConn;
+
               return (
                 <button
                   key={type}
-                  onClick={() => setSelectedType(type)}
-                  className="p-4 rounded-lg border text-left transition-all duration-150"
-                  style={isSelected
-                    ? { borderColor: color, background: color + "12" }
-                    : { borderColor: "hsl(var(--border))", background: "transparent" }}
+                  onClick={() => !anyPending && setSelectedType(type)}
+                  disabled={anyPending}
+                  className="p-4 rounded-lg border text-left transition-all duration-150 relative"
+                  style={
+                    wasSent
+                      ? { borderColor: color, background: color + "18" }
+                      : isSelected
+                      ? { borderColor: color, background: color + "12" }
+                      : { borderColor: "hsl(var(--border))", background: "transparent" }
+                  }
                   data-testid={`btn-connection-type-${type}`}
                 >
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2.5"
-                    style={{ background: color + (isSelected ? "22" : "15") }}>
+                    style={{ background: color + (isSelected || wasSent ? "22" : "15") }}>
                     <Icon className="w-4 h-4" style={{ color }} />
                   </div>
-                  <p className="font-bold text-[13px]" style={isSelected ? { color } : undefined}>{label}</p>
-                  <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>{desc}</p>
+                  <p className="font-bold text-[13px]" style={{ color: isSelected || wasSent ? color : undefined }}>{label}</p>
+                  {wasSent ? (
+                    <span className="flex items-center gap-1 text-[11px] font-bold mt-0.5" style={{ color }}>
+                      <Send className="w-3 h-3" /> Sent
+                    </span>
+                  ) : (
+                    <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>{desc}</p>
+                  )}
                 </button>
               );
             })}
           </div>
 
-          {selectedType === "crush" && (
+          {/* Crush options — only shown if no pending request and crush is selected */}
+          {!sentConn && selectedType === "crush" && (
             <div className="space-y-2.5">
-              {/* Anonymous toggle */}
               <button
                 onClick={() => setAnonymous(!anonymous)}
                 className="w-full flex items-center gap-3 p-3.5 rounded-lg border transition-all"
@@ -184,7 +227,6 @@ export default function MemberDetail() {
                 </div>
               </button>
 
-              {/* Mutual notify toggle */}
               <button
                 onClick={() => setMutualNotify(!mutualNotify)}
                 className="w-full flex items-center gap-3 p-3.5 rounded-lg border transition-all"
@@ -213,26 +255,26 @@ export default function MemberDetail() {
             </div>
           )}
 
-          <button
-            onClick={handleConnect}
-            disabled={!selectedType || createConn.isPending}
-            className="w-full py-3 rounded-lg font-bold text-sm text-white transition-all disabled:opacity-50"
-            style={{ background: selected ? selected.color : "hsl(var(--muted))" }}
-            data-testid="btn-send-connection"
-          >
-            {createConn.isPending ? "Sending..." : selected ? `Send as ${selected.label}` : "Choose a connection type"}
-          </button>
-        </div>
-      ) : (
-        <div className="card-surface p-8 text-center">
-          <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ background: "#12B76A18" }}>
-            <CheckCircle2 className="w-7 h-7" style={{ color: "#12B76A" }} />
-          </div>
-          <p className="font-extrabold text-lg">Request Sent!</p>
-          <p className="text-sm mt-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
-            Sent as {selected?.label} to {user.name.split(" ")[0]}
-          </p>
+          {!sentConn && (
+            <button
+              onClick={handleConnect}
+              disabled={!selectedType || createConn.isPending}
+              className="w-full py-3 rounded-lg font-bold text-sm text-white transition-all disabled:opacity-50"
+              style={{ background: selected ? selected.color : "hsl(var(--muted))" }}
+              data-testid="btn-send-connection"
+            >
+              {createConn.isPending ? "Sending..." : selected ? `Send as ${selected.label}` : "Choose a connection type"}
+            </button>
+          )}
+
+          {sentConn && (
+            <div className="flex items-center gap-2 px-1 py-0.5">
+              <Send className="w-3.5 h-3.5" style={{ color: "hsl(var(--muted-foreground))" }} />
+              <p className="text-xs font-semibold" style={{ color: "hsl(var(--muted-foreground))" }}>
+                Request sent — waiting for their response
+              </p>
+            </div>
+          )}
         </div>
       )}
 

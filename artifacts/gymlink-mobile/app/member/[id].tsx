@@ -65,15 +65,22 @@ export default function MemberDetailScreen() {
     userId: id ?? "",
   });
 
-  const { data: connections } = useListConnections({ status: "accepted" });
+  const { data: connections } = useListConnections({});
   const { mutate: createConnection, isPending: connecting } = useCreateConnection();
 
   const isMe = id === userId;
 
+  // Accepted connection (either direction)
   const existingConn = connections?.find(
     (c) =>
-      (c.fromUserId === userId && c.toUserId === id) ||
-      (c.toUserId === userId && c.fromUserId === id)
+      c.status === "accepted" &&
+      ((c.fromUserId === userId && c.toUserId === id) ||
+       (c.toUserId === userId && c.fromUserId === id))
+  );
+
+  // Pending request already sent FROM me TO this person
+  const sentConn = connections?.find(
+    (c) => c.fromUserId === userId && c.toUserId === id && c.status === "pending"
   );
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
@@ -233,45 +240,68 @@ export default function MemberDetailScreen() {
                   Connect as...
                 </Text>
                 <View style={styles.connectGrid}>
-                  {CONNECTION_TYPES.map((ct) => (
-                    <Pressable
-                      key={ct.type}
-                      onPress={() => {
-                        if (ct.type === "crush") {
-                          setCrushPanelOpen((v) => !v);
-                        } else {
-                          handleConnect(ct.type, false);
-                        }
-                      }}
-                      disabled={connecting}
-                      style={({ pressed }) => [
-                        styles.connectTile,
-                        {
-                          backgroundColor: ct.type === "crush" && crushPanelOpen
-                            ? `${colors.crush}25`
-                            : `${colors[ct.type]}18`,
-                          borderColor: ct.type === "crush" && crushPanelOpen
-                            ? `${colors.crush}88`
-                            : `${colors[ct.type]}55`,
-                          opacity: pressed ? 0.75 : 1,
-                        },
-                      ]}
-                    >
-                      <Ionicons name={ct.icon} size={22} color={colors[ct.type] as string} />
-                      <Text style={[styles.connectTileLabel, { color: colors[ct.type] as string }]}>
-                        {ct.label}
-                      </Text>
-                      {ct.type === "crush" && (
-                        <Text style={[styles.connectTileAnon, { color: colors.mutedForeground }]}>
-                          {crushPanelOpen ? "Tap to collapse" : "Tap to configure"}
+                  {CONNECTION_TYPES.map((ct) => {
+                    const wasSent = sentConn?.type === ct.type;
+                    const anyPending = !!sentConn;
+                    return (
+                      <Pressable
+                        key={ct.type}
+                        onPress={() => {
+                          if (anyPending) return;
+                          if (ct.type === "crush") {
+                            setCrushPanelOpen((v) => !v);
+                          } else {
+                            handleConnect(ct.type, false);
+                          }
+                        }}
+                        disabled={connecting || anyPending}
+                        style={({ pressed }) => [
+                          styles.connectTile,
+                          {
+                            backgroundColor: wasSent
+                              ? `${colors[ct.type]}25`
+                              : ct.type === "crush" && crushPanelOpen
+                              ? `${colors.crush}25`
+                              : `${colors[ct.type]}18`,
+                            borderColor: wasSent
+                              ? `${colors[ct.type]}99`
+                              : ct.type === "crush" && crushPanelOpen
+                              ? `${colors.crush}88`
+                              : `${colors[ct.type]}55`,
+                            opacity: pressed ? 0.75 : 1,
+                          },
+                        ]}
+                      >
+                        <Ionicons name={ct.icon} size={22} color={colors[ct.type] as string} />
+                        <Text style={[styles.connectTileLabel, { color: colors[ct.type] as string }]}>
+                          {ct.label}
                         </Text>
-                      )}
-                    </Pressable>
-                  ))}
+                        {wasSent ? (
+                          <View style={styles.sentRow}>
+                            <Ionicons name="paper-plane-outline" size={11} color={colors[ct.type] as string} />
+                            <Text style={[styles.sentLabel, { color: colors[ct.type] as string }]}>Sent</Text>
+                          </View>
+                        ) : ct.type === "crush" ? (
+                          <Text style={[styles.connectTileAnon, { color: colors.mutedForeground }]}>
+                            {crushPanelOpen ? "Tap to collapse" : "Tap to configure"}
+                          </Text>
+                        ) : null}
+                      </Pressable>
+                    );
+                  })}
                 </View>
 
-                {/* Crush options panel */}
-                {crushPanelOpen && (
+                {sentConn && (
+                  <View style={[styles.sentStatus, { borderColor: colors.border }]}>
+                    <Ionicons name="paper-plane-outline" size={14} color={colors.mutedForeground} />
+                    <Text style={[styles.sentStatusText, { color: colors.mutedForeground }]}>
+                      Request sent — waiting for their response
+                    </Text>
+                  </View>
+                )}
+
+                {/* Crush options panel — only shown when no pending request */}
+                {crushPanelOpen && !sentConn && (
                   <View style={[styles.crushPanel, { borderColor: `${colors.crush}44`, backgroundColor: `${colors.crush}08` }]}>
                     {/* Anonymous toggle */}
                     <Pressable
@@ -564,6 +594,29 @@ const styles = StyleSheet.create({
   connectTileAnon: {
     fontFamily: "Inter_400Regular",
     fontSize: 11,
+  },
+  sentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    marginTop: 1,
+  },
+  sentLabel: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 11,
+  },
+  sentStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  sentStatusText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
   },
   crushPanel: {
     borderWidth: 1,
