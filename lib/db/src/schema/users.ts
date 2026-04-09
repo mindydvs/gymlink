@@ -5,6 +5,8 @@ import { z } from "zod/v4";
 export const usersTable = pgTable("users", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
+  username: text("username"),
+  email: text("email"),
   age: integer("age").notNull(),
   avatar: text("avatar").notNull().default("💪"),
   bio: text("bio").notNull().default(""),
@@ -21,6 +23,14 @@ export const usersTable = pgTable("users", {
   passwordHash: text("password_hash"),
   hidden: boolean("hidden").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const passwordResetTokensTable = pgTable("password_reset_tokens", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
 });
 
 export const insertUserSchema = createInsertSchema(usersTable).omit({ createdAt: true });

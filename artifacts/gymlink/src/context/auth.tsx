@@ -56,6 +56,8 @@ const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 export async function registerUser(data: {
   name: string;
+  username: string;
+  email: string;
   age: number;
   bio: string;
   gymId?: string;
@@ -85,12 +87,12 @@ export async function loginUser(name: string, password: string): Promise<{ userI
   return json;
 }
 
-export async function resetPassword(name: string, newPassword: string): Promise<void> {
-  const res = await fetch(`${BASE}/api/auth/reset-password`, {
+export async function forgotPassword(email: string): Promise<void> {
+  const res = await fetch(`${BASE}/api/auth/forgot-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, newPassword }),
+    body: JSON.stringify({ email }),
   });
   const json = await res.json();
-  if (!res.ok) throw new Error(json.error ?? "Reset failed");
+  if (!res.ok) throw new Error(json.error ?? "Failed to send reset email");
 }

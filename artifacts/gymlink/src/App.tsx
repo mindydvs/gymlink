@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/context/auth";
 import NotFound from "@/pages/not-found";
 import Welcome from "@/pages/welcome";
+import ResetPassword from "@/pages/reset-password";
 import Home from "./pages/home";
 import Members from "./pages/members";
 import MemberDetail from "./pages/member-detail";
@@ -28,6 +29,11 @@ function Router() {
   }
 
   if (!userId) {
+    const path = window.location.pathname;
+    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+    if (path === `${base}/reset-password` || path.startsWith(`${base}/reset-password?`)) {
+      return <ResetPassword />;
+    }
     return <Welcome />;
   }
 

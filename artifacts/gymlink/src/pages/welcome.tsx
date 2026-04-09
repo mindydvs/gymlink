@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth, registerUser, loginUser, resetPassword } from "@/context/auth";
+import { useAuth, registerUser, loginUser, forgotPassword } from "@/context/auth";
 import { useListGyms } from "@workspace/api-client-react";
 import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, LogIn, UserPlus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,8 @@ type Screen = "landing" | "sign-in" | "forgot" | "join-name" | "join-gym" | "joi
 
 interface JoinData {
   name: string;
+  username: string;
+  email: string;
   age: string;
   bio: string;
   gymId: string;
@@ -32,7 +34,7 @@ export default function Welcome() {
   const { toast } = useToast();
   const [screen, setScreen] = useState<Screen>("landing");
   const [joinData, setJoinData] = useState<JoinData>({
-    name: "", age: "", bio: "", gymId: "", gymName: "", schedule: "",
+    name: "", username: "", email: "", age: "", bio: "", gymId: "", gymName: "", schedule: "",
     interests: [], password: "", confirmPassword: "",
   });
   const [gymSearch, setGymSearch] = useState("");
@@ -48,10 +50,8 @@ export default function Welcome() {
   const [showJoinConfirm, setShowJoinConfirm] = useState(false);
 
   // Forgot password
-  const [forgotName, setForgotName] = useState("");
-  const [forgotNewPw, setForgotNewPw] = useState("");
-  const [forgotConfirm, setForgotConfirm] = useState("");
-  const [showForgotPw, setShowForgotPw] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
 
   const { data: gyms = [] } = useListGyms();
 
@@ -92,6 +92,8 @@ export default function Welcome() {
     try {
       const { userId } = await registerUser({
         name: joinData.name.trim(),
+        username: joinData.username.trim(),
+        email: joinData.email.trim(),
         age: parseInt(joinData.age),
         bio: joinData.bio,
         gymId: joinData.gymId || undefined,
@@ -112,27 +114,17 @@ export default function Welcome() {
   };
 
   const handleForgotPassword = async () => {
-    if (!forgotName.trim()) {
-      toast({ title: "Please enter your name", variant: "destructive" });
-      return;
-    }
-    if (forgotNewPw.length < 6) {
-      toast({ title: "Password must be at least 6 characters", variant: "destructive" });
-      return;
-    }
-    if (forgotNewPw !== forgotConfirm) {
-      toast({ title: "Passwords don't match", variant: "destructive" });
+    if (!forgotEmail.trim()) {
+      toast({ title: "Please enter your email address", variant: "destructive" });
       return;
     }
     setIsSubmitting(true);
     try {
-      await resetPassword(forgotName.trim(), forgotNewPw);
-      toast({ title: "Password updated! You can now sign in." });
-      setForgotName(""); setForgotNewPw(""); setForgotConfirm("");
-      setScreen("sign-in");
+      await forgotPassword(forgotEmail.trim());
+      setForgotSent(true);
     } catch (err: unknown) {
       toast({
-        title: err instanceof Error ? err.message : "Reset failed",
+        title: err instanceof Error ? err.message : "Failed to send reset email",
         variant: "destructive",
       });
     } finally {
@@ -292,68 +284,54 @@ export default function Welcome() {
       {/* Forgot password */}
       {screen === "forgot" && (
         <div className="flex-1 flex flex-col px-6 pt-20 max-w-md mx-auto w-full">
-          <div className="mb-8">
-            <h2 className="text-2xl font-extrabold tracking-tight">Reset password</h2>
-            <p className="text-sm opacity-60 mt-1">Enter your display name and choose a new password.</p>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <label className="section-label block mb-2">Your Name</label>
-              <Input
-                placeholder="Alex Rivera"
-                value={forgotName}
-                onChange={(e) => setForgotName(e.target.value)}
-                className="h-11 text-sm"
-              />
-            </div>
-            <div>
-              <label className="section-label block mb-2">New Password</label>
-              <div className="relative">
-                <Input
-                  type={showForgotPw ? "text" : "password"}
-                  placeholder="At least 6 characters"
-                  value={forgotNewPw}
-                  onChange={(e) => setForgotNewPw(e.target.value)}
-                  className="h-11 text-sm pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowForgotPw((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-80"
-                >
-                  {showForgotPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+          {forgotSent ? (
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
+                <Check className="w-8 h-8 text-green-400" />
               </div>
+              <h2 className="text-2xl font-extrabold mb-2">Check your email</h2>
+              <p className="text-sm opacity-60 mb-6">We sent a password reset link to <strong>{forgotEmail}</strong>. Check your inbox and click the link to set a new password.</p>
+              <button
+                onClick={() => { setForgotSent(false); setForgotEmail(""); setScreen("sign-in"); }}
+                className="text-sm font-semibold"
+                style={{ color: "hsl(var(--primary))" }}
+              >
+                Back to Sign In
+              </button>
             </div>
-            <div>
-              <label className="section-label block mb-2">Confirm New Password</label>
-              <Input
-                type="password"
-                placeholder="Repeat new password"
-                value={forgotConfirm}
-                onChange={(e) => setForgotConfirm(e.target.value)}
-                className="h-11 text-sm"
-                onKeyDown={(e) => e.key === "Enter" && handleForgotPassword()}
-              />
-            </div>
-          </div>
-
-          <button
-            onClick={handleForgotPassword}
-            disabled={isSubmitting}
-            className="mt-8 w-full py-3.5 rounded-xl font-bold text-base text-white flex items-center justify-center gap-2 disabled:opacity-60"
-            style={{ background: "hsl(var(--primary))" }}
-          >
-            <Check className="w-4 h-4" />
-            {isSubmitting ? "Updating…" : "Update Password"}
-          </button>
-
-          <button
-            onClick={() => setScreen("sign-in")}
-            className="mt-4 text-sm text-center w-full opacity-60 hover:opacity-100"
-          >
-            Back to Sign In
-          </button>
+          ) : (
+            <>
+              <div className="mb-8">
+                <h2 className="text-2xl font-extrabold tracking-tight">Forgot password?</h2>
+                <p className="text-sm opacity-60 mt-1">Enter the email you signed up with and we'll send you a reset link.</p>
+              </div>
+              <div>
+                <label className="section-label block mb-2">Email Address</label>
+                <Input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  className="h-11 text-sm"
+                  onKeyDown={(e) => e.key === "Enter" && handleForgotPassword()}
+                />
+              </div>
+              <button
+                onClick={handleForgotPassword}
+                disabled={isSubmitting}
+                className="mt-6 w-full py-3.5 rounded-xl font-bold text-base text-white flex items-center justify-center gap-2 disabled:opacity-60"
+                style={{ background: "hsl(var(--primary))" }}
+              >
+                {isSubmitting ? "Sending…" : "Send Reset Link"}
+              </button>
+              <button
+                onClick={() => setScreen("sign-in")}
+                className="mt-4 text-sm text-center w-full opacity-60 hover:opacity-100"
+              >
+                Back to Sign In
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -366,11 +344,34 @@ export default function Welcome() {
           </div>
           <div className="space-y-4">
             <div>
-              <label className="section-label block mb-2">Full Name</label>
+              <label className="section-label block mb-2">Display Name</label>
               <Input
                 placeholder="Alex Rivera"
                 value={joinData.name}
                 onChange={(e) => setJoinData((p) => ({ ...p, name: e.target.value }))}
+                className="h-11 text-sm"
+              />
+            </div>
+            <div>
+              <label className="section-label block mb-2">Username</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40 text-sm">@</span>
+                <Input
+                  placeholder="alexrivera"
+                  value={joinData.username}
+                  onChange={(e) => setJoinData((p) => ({ ...p, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "") }))}
+                  className="h-11 text-sm pl-7"
+                />
+              </div>
+              <p className="text-xs opacity-40 mt-1">Letters, numbers, and underscores only</p>
+            </div>
+            <div>
+              <label className="section-label block mb-2">Email</label>
+              <Input
+                type="email"
+                placeholder="you@example.com"
+                value={joinData.email}
+                onChange={(e) => setJoinData((p) => ({ ...p, email: e.target.value }))}
                 className="h-11 text-sm"
               />
             </div>
@@ -445,8 +446,20 @@ export default function Welcome() {
           </div>
           <button
             onClick={() => {
-              if (!joinData.name.trim() || !joinData.age) {
-                toast({ title: "Name and age are required", variant: "destructive" });
+              if (!joinData.name.trim()) {
+                toast({ title: "Display name is required", variant: "destructive" });
+                return;
+              }
+              if (!joinData.username.trim() || joinData.username.length < 2) {
+                toast({ title: "Username must be at least 2 characters", variant: "destructive" });
+                return;
+              }
+              if (!joinData.email.trim() || !joinData.email.includes("@")) {
+                toast({ title: "A valid email is required", variant: "destructive" });
+                return;
+              }
+              if (!joinData.age) {
+                toast({ title: "Age is required", variant: "destructive" });
                 return;
               }
               if (joinData.password.length < 6) {

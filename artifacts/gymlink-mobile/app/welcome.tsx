@@ -36,35 +36,31 @@ export default function WelcomeScreen() {
   const [showSignInPw, setShowSignInPw] = useState(false);
 
   const [joinName, setJoinName] = useState("");
+  const [joinUsername, setJoinUsername] = useState("");
+  const [joinEmail, setJoinEmail] = useState("");
   const [joinAge, setJoinAge] = useState("");
   const [joinPassword, setJoinPassword] = useState("");
   const [joinConfirm, setJoinConfirm] = useState("");
   const [showJoinPw, setShowJoinPw] = useState(false);
   const [showJoinConfirm, setShowJoinConfirm] = useState(false);
 
-  const [forgotName, setForgotName] = useState("");
-  const [forgotNewPw, setForgotNewPw] = useState("");
-  const [forgotConfirm, setForgotConfirm] = useState("");
-  const [showForgotPw, setShowForgotPw] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
 
   const handleForgotPassword = async () => {
-    if (!forgotName.trim()) { Alert.alert("Missing info", "Please enter your name."); return; }
-    if (forgotNewPw.length < 6) { Alert.alert("Weak password", "Password must be at least 6 characters."); return; }
-    if (forgotNewPw !== forgotConfirm) { Alert.alert("Passwords don't match", "Please make sure both passwords are the same."); return; }
+    if (!forgotEmail.trim()) { Alert.alert("Missing info", "Please enter your email address."); return; }
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+      const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: forgotName.trim(), newPassword: forgotNewPw }),
+        body: JSON.stringify({ email: forgotEmail.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Reset failed");
-      Alert.alert("Password updated!", "You can now sign in with your new password.");
-      setForgotName(""); setForgotNewPw(""); setForgotConfirm("");
-      setScreen("sign-in");
+      if (!res.ok) throw new Error(data.error ?? "Failed to send email");
+      setForgotSent(true);
     } catch (err: unknown) {
-      Alert.alert("Reset failed", err instanceof Error ? err.message : "Please try again.");
+      Alert.alert("Error", err instanceof Error ? err.message : "Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +90,9 @@ export default function WelcomeScreen() {
   };
 
   const handleJoin = async () => {
-    if (!joinName.trim()) { Alert.alert("Missing info", "Please enter your name."); return; }
+    if (!joinName.trim()) { Alert.alert("Missing info", "Please enter your display name."); return; }
+    if (!joinUsername.trim() || joinUsername.length < 2) { Alert.alert("Missing info", "Please enter a username (min 2 characters)."); return; }
+    if (!joinEmail.trim() || !joinEmail.includes("@")) { Alert.alert("Missing info", "Please enter a valid email address."); return; }
     const age = parseInt(joinAge);
     if (!joinAge || isNaN(age) || age < 13 || age > 120) { Alert.alert("Invalid age", "Please enter a valid age (13–120)."); return; }
     if (joinPassword.length < 6) { Alert.alert("Weak password", "Password must be at least 6 characters."); return; }
@@ -107,6 +105,8 @@ export default function WelcomeScreen() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: joinName.trim(),
+          username: joinUsername.trim(),
+          email: joinEmail.trim(),
           age,
           password: joinPassword,
           bio: "",
@@ -259,67 +259,56 @@ export default function WelcomeScreen() {
 
           {screen === "forgot" && (
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Reset password</Text>
-              <Text style={styles.cardSub}>Enter your name and choose a new password.</Text>
+              {forgotSent ? (
+                <>
+                  <Text style={styles.cardTitle}>Check your email</Text>
+                  <Text style={styles.cardSub}>
+                    We sent a password reset link to {forgotEmail}. Open it to set a new password.
+                  </Text>
+                  <Pressable
+                    style={({ pressed }) => [styles.primaryBtn, { opacity: pressed ? 0.8 : 1, marginTop: 16 }]}
+                    onPress={() => { setForgotSent(false); setForgotEmail(""); setScreen("sign-in"); }}
+                  >
+                    <Text style={styles.primaryBtnText}>Back to Sign In</Text>
+                  </Pressable>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.cardTitle}>Forgot password?</Text>
+                  <Text style={styles.cardSub}>Enter your email and we'll send a reset link.</Text>
 
-              <View style={styles.fields}>
-                <View style={styles.fieldWrap}>
-                  <Text style={styles.fieldLabel}>Your Name</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Alex Rivera"
-                    placeholderTextColor="rgba(255,255,255,0.35)"
-                    value={forgotName}
-                    onChangeText={setForgotName}
-                    autoCapitalize="words"
-                    returnKeyType="next"
-                  />
-                </View>
-                <View style={styles.fieldWrap}>
-                  <Text style={styles.fieldLabel}>New Password</Text>
-                  <View style={styles.pwRow}>
-                    <TextInput
-                      style={[styles.input, { flex: 1 }]}
-                      placeholder="At least 6 characters"
-                      placeholderTextColor="rgba(255,255,255,0.35)"
-                      value={forgotNewPw}
-                      onChangeText={setForgotNewPw}
-                      secureTextEntry={!showForgotPw}
-                      returnKeyType="next"
-                    />
-                    <Pressable onPress={() => setShowForgotPw((v) => !v)} style={styles.eyeBtn} hitSlop={8}>
-                      <Ionicons name={showForgotPw ? "eye-off-outline" : "eye-outline"} size={20} color="rgba(255,255,255,0.5)" />
-                    </Pressable>
+                  <View style={styles.fields}>
+                    <View style={styles.fieldWrap}>
+                      <Text style={styles.fieldLabel}>Email Address</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="you@example.com"
+                        placeholderTextColor="rgba(255,255,255,0.35)"
+                        value={forgotEmail}
+                        onChangeText={setForgotEmail}
+                        autoCapitalize="none"
+                        keyboardType="email-address"
+                        returnKeyType="done"
+                        onSubmitEditing={handleForgotPassword}
+                      />
+                    </View>
                   </View>
-                </View>
-                <View style={styles.fieldWrap}>
-                  <Text style={styles.fieldLabel}>Confirm New Password</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Repeat new password"
-                    placeholderTextColor="rgba(255,255,255,0.35)"
-                    value={forgotConfirm}
-                    onChangeText={setForgotConfirm}
-                    secureTextEntry
-                    returnKeyType="done"
-                    onSubmitEditing={handleForgotPassword}
-                  />
-                </View>
-              </View>
 
-              <Pressable
-                style={({ pressed }) => [styles.primaryBtn, { opacity: pressed || isLoading ? 0.8 : 1, marginTop: 8 }]}
-                onPress={handleForgotPassword}
-                disabled={isLoading}
-              >
-                {isLoading ? <ActivityIndicator color="#fff" size="small" /> : (
-                  <Text style={styles.primaryBtnText}>Update Password</Text>
-                )}
-              </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [styles.primaryBtn, { opacity: pressed || isLoading ? 0.8 : 1, marginTop: 8 }]}
+                    onPress={handleForgotPassword}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? <ActivityIndicator color="#fff" size="small" /> : (
+                      <Text style={styles.primaryBtnText}>Send Reset Link</Text>
+                    )}
+                  </Pressable>
 
-              <Pressable onPress={() => setScreen("sign-in")} style={{ marginTop: 12, alignItems: "center" }}>
-                <Text style={[styles.switchText, { opacity: 0.6 }]}>Back to Sign In</Text>
-              </Pressable>
+                  <Pressable onPress={() => setScreen("sign-in")} style={{ marginTop: 12, alignItems: "center" }}>
+                    <Text style={[styles.switchText, { opacity: 0.6 }]}>Back to Sign In</Text>
+                  </Pressable>
+                </>
+              )}
             </View>
           )}
 
@@ -330,7 +319,7 @@ export default function WelcomeScreen() {
 
               <View style={styles.fields}>
                 <View style={styles.fieldWrap}>
-                  <Text style={styles.fieldLabel}>Full Name</Text>
+                  <Text style={styles.fieldLabel}>Display Name</Text>
                   <TextInput
                     style={styles.input}
                     placeholder="Alex Rivera"
@@ -338,6 +327,34 @@ export default function WelcomeScreen() {
                     value={joinName}
                     onChangeText={setJoinName}
                     autoCapitalize="words"
+                    returnKeyType="next"
+                  />
+                </View>
+                <View style={styles.fieldWrap}>
+                  <Text style={styles.fieldLabel}>Username</Text>
+                  <View style={styles.pwRow}>
+                    <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 16, paddingLeft: 4, paddingRight: 2 }}>@</Text>
+                    <TextInput
+                      style={[styles.input, { flex: 1 }]}
+                      placeholder="alexrivera"
+                      placeholderTextColor="rgba(255,255,255,0.35)"
+                      value={joinUsername}
+                      onChangeText={(t) => setJoinUsername(t.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                      autoCapitalize="none"
+                      returnKeyType="next"
+                    />
+                  </View>
+                </View>
+                <View style={styles.fieldWrap}>
+                  <Text style={styles.fieldLabel}>Email</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="you@example.com"
+                    placeholderTextColor="rgba(255,255,255,0.35)"
+                    value={joinEmail}
+                    onChangeText={setJoinEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
                     returnKeyType="next"
                   />
                 </View>
