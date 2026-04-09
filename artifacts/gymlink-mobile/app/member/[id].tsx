@@ -78,13 +78,18 @@ export default function MemberDetailScreen() {
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
-  const handleConnect = (type: "crush" | "buddy" | "advisor" | "spotter", anonymous: boolean) => {
+  const [crushPanelOpen, setCrushPanelOpen] = React.useState(false);
+  const [crushAnonymous, setCrushAnonymous] = React.useState(true);
+  const [crushMutualNotify, setCrushMutualNotify] = React.useState(false);
+
+  const handleConnect = (type: "crush" | "buddy" | "advisor" | "spotter", anonymous: boolean, mutualNotify = false) => {
     if (!id) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     createConnection(
-      { data: { toUserId: id, type, anonymous } },
+      { data: { toUserId: id, type, anonymous, mutualNotify } },
       {
         onSuccess: () => {
+          setCrushPanelOpen(false);
           queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() });
           Alert.alert("Request Sent", `Your ${type} request has been sent!`);
         },
@@ -231,13 +236,23 @@ export default function MemberDetailScreen() {
                   {CONNECTION_TYPES.map((ct) => (
                     <Pressable
                       key={ct.type}
-                      onPress={() => handleConnect(ct.type, ct.anonymous)}
+                      onPress={() => {
+                        if (ct.type === "crush") {
+                          setCrushPanelOpen((v) => !v);
+                        } else {
+                          handleConnect(ct.type, false);
+                        }
+                      }}
                       disabled={connecting}
                       style={({ pressed }) => [
                         styles.connectTile,
                         {
-                          backgroundColor: `${colors[ct.type]}18`,
-                          borderColor: `${colors[ct.type]}55`,
+                          backgroundColor: ct.type === "crush" && crushPanelOpen
+                            ? `${colors.crush}25`
+                            : `${colors[ct.type]}18`,
+                          borderColor: ct.type === "crush" && crushPanelOpen
+                            ? `${colors.crush}88`
+                            : `${colors[ct.type]}55`,
                           opacity: pressed ? 0.75 : 1,
                         },
                       ]}
@@ -246,15 +261,109 @@ export default function MemberDetailScreen() {
                       <Text style={[styles.connectTileLabel, { color: colors[ct.type] as string }]}>
                         {ct.label}
                       </Text>
-                      {ct.anonymous && (
+                      {ct.type === "crush" && (
                         <Text style={[styles.connectTileAnon, { color: colors.mutedForeground }]}>
-                          Anonymous
+                          {crushPanelOpen ? "Tap to collapse" : "Tap to configure"}
                         </Text>
                       )}
                     </Pressable>
                   ))}
                 </View>
-                {connecting && (
+
+                {/* Crush options panel */}
+                {crushPanelOpen && (
+                  <View style={[styles.crushPanel, { borderColor: `${colors.crush}44`, backgroundColor: `${colors.crush}08` }]}>
+                    {/* Anonymous toggle */}
+                    <Pressable
+                      onPress={() => setCrushAnonymous((v) => !v)}
+                      style={[
+                        styles.crushOption,
+                        {
+                          borderColor: crushAnonymous ? `${colors.crush}55` : colors.border,
+                          backgroundColor: crushAnonymous ? `${colors.crush}12` : "transparent",
+                        },
+                      ]}
+                    >
+                      <View style={[styles.crushOptionIcon, { backgroundColor: crushAnonymous ? `${colors.crush}22` : colors.muted }]}>
+                        <Ionicons
+                          name={crushAnonymous ? "eye-off-outline" : "eye-outline"}
+                          size={18}
+                          color={crushAnonymous ? colors.crush : colors.mutedForeground}
+                        />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.crushOptionTitle, { color: colors.foreground }]}>
+                          {crushAnonymous ? "Stay anonymous" : "Show your name"}
+                        </Text>
+                        <Text style={[styles.crushOptionSub, { color: colors.mutedForeground }]}>
+                          {crushAnonymous ? "They won't know it's you" : "They'll see your name"}
+                        </Text>
+                      </View>
+                      <View style={[
+                        styles.crushOptionDot,
+                        crushAnonymous
+                          ? { borderColor: colors.crush, backgroundColor: colors.crush }
+                          : { borderColor: colors.border },
+                      ]}>
+                        {crushAnonymous && <View style={styles.crushOptionDotInner} />}
+                      </View>
+                    </Pressable>
+
+                    {/* Mutual notify toggle */}
+                    <Pressable
+                      onPress={() => setCrushMutualNotify((v) => !v)}
+                      style={[
+                        styles.crushOption,
+                        {
+                          borderColor: crushMutualNotify ? `${colors.crush}55` : colors.border,
+                          backgroundColor: crushMutualNotify ? `${colors.crush}12` : "transparent",
+                        },
+                      ]}
+                    >
+                      <View style={[styles.crushOptionIcon, { backgroundColor: crushMutualNotify ? `${colors.crush}22` : colors.muted }]}>
+                        <Ionicons
+                          name="sparkles-outline"
+                          size={18}
+                          color={crushMutualNotify ? colors.crush : colors.mutedForeground}
+                        />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.crushOptionTitle, { color: colors.foreground }]}>
+                          Notify me if they crush back
+                        </Text>
+                        <Text style={[styles.crushOptionSub, { color: colors.mutedForeground }]}>
+                          {crushMutualNotify
+                            ? "You'll both know if it's mutual"
+                            : "No mutual alerts"}
+                        </Text>
+                      </View>
+                      <View style={[
+                        styles.crushOptionDot,
+                        crushMutualNotify
+                          ? { borderColor: colors.crush, backgroundColor: colors.crush }
+                          : { borderColor: colors.border },
+                      ]}>
+                        {crushMutualNotify && <View style={styles.crushOptionDotInner} />}
+                      </View>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => handleConnect("crush", crushAnonymous, crushMutualNotify)}
+                      disabled={connecting}
+                      style={({ pressed }) => [
+                        styles.crushSendBtn,
+                        { backgroundColor: colors.crush, opacity: pressed || connecting ? 0.8 : 1 },
+                      ]}
+                    >
+                      {connecting
+                        ? <ActivityIndicator color="#fff" size="small" />
+                        : <Text style={styles.crushSendBtnText}>Send Gym Crush 💘</Text>
+                      }
+                    </Pressable>
+                  </View>
+                )}
+
+                {connecting && !crushPanelOpen && (
                   <ActivityIndicator color={colors.primary} style={{ marginTop: 4 }} />
                 )}
               </View>
@@ -455,6 +564,61 @@ const styles = StyleSheet.create({
   connectTileAnon: {
     fontFamily: "Inter_400Regular",
     fontSize: 11,
+  },
+  crushPanel: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+  },
+  crushOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 10,
+  },
+  crushOptionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  crushOptionTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+  },
+  crushOptionSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    marginTop: 1,
+  },
+  crushOptionDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  crushOptionDotInner: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#fff",
+  },
+  crushSendBtn: {
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginTop: 2,
+  },
+  crushSendBtnText: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 14,
+    color: "#fff",
   },
   connectedRow: {
     flexDirection: "row",

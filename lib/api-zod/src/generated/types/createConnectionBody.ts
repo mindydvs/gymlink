@@ -11,4 +11,5 @@ export interface CreateConnectionBody {
   toUserId: string;
   type: ConnectionType;
   anonymous: boolean;
+  mutualNotify?: boolean;
 }

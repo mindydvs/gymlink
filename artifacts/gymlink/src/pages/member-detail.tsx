@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useGetUser, useCreateConnection, getGetUserQueryKey, getListConnectionsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, MapPin, Clock, Heart, Dumbbell, Brain, HandHelpingIcon, CheckCircle2, EyeOff, Eye, Video } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Heart, Dumbbell, Brain, HandHelpingIcon, CheckCircle2, EyeOff, Eye, Video, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { VideoUploader } from "@/components/video-uploader";
@@ -23,6 +23,7 @@ export default function MemberDetail() {
 
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [anonymous, setAnonymous] = useState(true);
+  const [mutualNotify, setMutualNotify] = useState(false);
   const [sent, setSent] = useState(false);
   const createConn = useCreateConnection();
   const queryClient = useQueryClient();
@@ -30,8 +31,16 @@ export default function MemberDetail() {
 
   const handleConnect = () => {
     if (!selectedType || !user) return;
+    const isCrush = selectedType === "crush";
     createConn.mutate(
-      { data: { toUserId: user.id, type: selectedType as "crush" | "buddy" | "advisor" | "spotter", anonymous: selectedType === "crush" ? anonymous : false } },
+      {
+        data: {
+          toUserId: user.id,
+          type: selectedType as "crush" | "buddy" | "advisor" | "spotter",
+          anonymous: isCrush ? anonymous : false,
+          mutualNotify: isCrush ? mutualNotify : false,
+        },
+      },
       {
         onSuccess: () => {
           setSent(true);
@@ -147,29 +156,61 @@ export default function MemberDetail() {
           </div>
 
           {selectedType === "crush" && (
-            <button
-              onClick={() => setAnonymous(!anonymous)}
-              className="w-full flex items-center gap-3 p-3.5 rounded-lg border transition-all"
-              style={anonymous
-                ? { borderColor: "#E8193C44", background: "#E8193C0C" }
-                : { borderColor: "hsl(var(--border))", background: "transparent" }}
-              data-testid="btn-anonymous-toggle"
-            >
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                style={{ background: anonymous ? "#E8193C20" : "hsl(var(--secondary))" }}>
-                {anonymous ? <EyeOff className="w-4 h-4" style={{ color: "#E8193C" }} /> : <Eye className="w-4 h-4" style={{ color: "hsl(var(--muted-foreground))" }} />}
-              </div>
-              <div className="text-left">
-                <p className="text-sm font-semibold">{anonymous ? "Stay anonymous" : "Show your name"}</p>
-                <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
-                  {anonymous ? "They won't know it's you" : "They'll see your name"}
-                </p>
-              </div>
-              <div className="ml-auto w-4 h-4 rounded-full border-2 flex items-center justify-center"
-                style={anonymous ? { borderColor: "#E8193C", background: "#E8193C" } : { borderColor: "hsl(var(--border))" }}>
-                {anonymous && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-              </div>
-            </button>
+            <div className="space-y-2.5">
+              {/* Anonymous toggle */}
+              <button
+                onClick={() => setAnonymous(!anonymous)}
+                className="w-full flex items-center gap-3 p-3.5 rounded-lg border transition-all"
+                style={anonymous
+                  ? { borderColor: "#E8193C44", background: "#E8193C0C" }
+                  : { borderColor: "hsl(var(--border))", background: "transparent" }}
+                data-testid="btn-anonymous-toggle"
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: anonymous ? "#E8193C20" : "hsl(var(--secondary))" }}>
+                  {anonymous
+                    ? <EyeOff className="w-4 h-4" style={{ color: "#E8193C" }} />
+                    : <Eye className="w-4 h-4" style={{ color: "hsl(var(--muted-foreground))" }} />}
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-semibold">{anonymous ? "Stay anonymous" : "Show your name"}</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+                    {anonymous ? "They won't know it's you" : "They'll see your name"}
+                  </p>
+                </div>
+                <div className="ml-auto w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0"
+                  style={anonymous ? { borderColor: "#E8193C", background: "#E8193C" } : { borderColor: "hsl(var(--border))" }}>
+                  {anonymous && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </div>
+              </button>
+
+              {/* Mutual notify toggle */}
+              <button
+                onClick={() => setMutualNotify(!mutualNotify)}
+                className="w-full flex items-center gap-3 p-3.5 rounded-lg border transition-all"
+                style={mutualNotify
+                  ? { borderColor: "#E8193C44", background: "#E8193C0C" }
+                  : { borderColor: "hsl(var(--border))", background: "transparent" }}
+                data-testid="btn-mutual-notify-toggle"
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: mutualNotify ? "#E8193C20" : "hsl(var(--secondary))" }}>
+                  <Sparkles className="w-4 h-4" style={{ color: mutualNotify ? "#E8193C" : "hsl(var(--muted-foreground))" }} />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-semibold">Notify me if they crush back</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+                    {mutualNotify
+                      ? "You'll both know if it's mutual — only if they opt in too"
+                      : "Stay in the dark, no mutual alerts"}
+                  </p>
+                </div>
+                <div className="ml-auto w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0"
+                  style={mutualNotify ? { borderColor: "#E8193C", background: "#E8193C" } : { borderColor: "hsl(var(--border))" }}>
+                  {mutualNotify && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </div>
+              </button>
+            </div>
           )}
 
           <button

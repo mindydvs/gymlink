@@ -16,6 +16,7 @@ export interface Connection {
   type: ConnectionType;
   status: ConnectionStatus;
   anonymous: boolean;
+  mutualNotify: boolean;
   createdAt: Date;
   fromUser?: User;
   toUser?: User;

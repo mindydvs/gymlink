@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, or } from "drizzle-orm";
+import { eq, or, and } from "drizzle-orm";
 import { db, connectionsTable, usersTable, notificationsTable } from "@workspace/db";
 import {
   CreateConnectionBody,
@@ -20,12 +20,12 @@ router.post("/connections", async (req, res): Promise<void> => {
   }
 
   const meId = req.userId;
-  const { toUserId, type, anonymous } = parsed.data;
+  const { toUserId, type, anonymous, mutualNotify = false } = parsed.data;
 
   const id = randomUUID();
   const [connection] = await db
     .insert(connectionsTable)
-    .values({ id, fromUserId: meId, toUserId, type, status: "pending", anonymous })
+    .values({ id, fromUserId: meId, toUserId, type, status: "pending", anonymous, mutualNotify })
     .returning();
 
   const [meUser] = await db.select().from(usersTable).where(eq(usersTable.id, meId));
@@ -41,6 +41,51 @@ router.post("/connections", async (req, res): Promise<void> => {
     read: false,
     responded: false,
   });
+
+  // Check for mutual crush: if both users opted into mutualNotify, notify both
+  if (type === "crush" && mutualNotify) {
+    const [existingMutual] = await db
+      .select()
+      .from(connectionsTable)
+      .where(
+        and(
+          eq(connectionsTable.fromUserId, toUserId),
+          eq(connectionsTable.toUserId, meId),
+          eq(connectionsTable.type, "crush"),
+          eq(connectionsTable.mutualNotify, true)
+        )
+      );
+
+    if (existingMutual) {
+      const [toUserInfo] = await db.select().from(usersTable).where(eq(usersTable.id, toUserId));
+      const senderName = fromName;
+      const otherName = toUserInfo?.name ?? "Someone";
+
+      // Notify the current user (meId) — the other person already had a crush on them
+      await db.insert(notificationsTable).values({
+        id: randomUUID(),
+        connectionId: existingMutual.id,
+        userId: meId,
+        type: "mutual_crush",
+        fromName: otherName,
+        anonymous: false,
+        read: false,
+        responded: false,
+      });
+
+      // Notify toUserId — this user now also has a crush on them
+      await db.insert(notificationsTable).values({
+        id: randomUUID(),
+        connectionId: id,
+        userId: toUserId,
+        type: "mutual_crush",
+        fromName: senderName,
+        anonymous: false,
+        read: false,
+        responded: false,
+      });
+    }
+  }
 
   const [fromUser] = await db.select().from(usersTable).where(eq(usersTable.id, meId));
   const [toUser] = await db.select().from(usersTable).where(eq(usersTable.id, toUserId));

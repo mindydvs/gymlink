@@ -10,6 +10,7 @@ export const connectionsTable = pgTable("connections", {
   type: text("type").notNull(), // crush | buddy | advisor | spotter
   status: text("status").notNull().default("pending"), // pending | accepted | declined
   anonymous: boolean("anonymous").notNull().default(false),
+  mutualNotify: boolean("mutual_notify").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

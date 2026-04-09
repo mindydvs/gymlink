@@ -1,14 +1,15 @@
 import { useListNotifications, useRespondToConnection, useMarkNotificationRead, getListNotificationsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bell, Heart, Dumbbell, Brain, HandHelpingIcon, Check, X, CheckCircle2 } from "lucide-react";
+import { Bell, Heart, Dumbbell, Brain, HandHelpingIcon, Check, X, CheckCircle2, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 
 const CONN_CONFIG = {
-  crush:   { label: "Gym Crush",       Icon: Heart,           color: "#E8193C" },
-  buddy:   { label: "Workout Buddy",   Icon: Dumbbell,        color: "#0B9ED9" },
-  advisor: { label: "Fitness Advisor", Icon: Brain,           color: "#12B76A" },
-  spotter: { label: "Spotter",         Icon: HandHelpingIcon, color: "#F79009" },
+  crush:        { label: "Gym Crush",       Icon: Heart,           color: "#E8193C" },
+  buddy:        { label: "Workout Buddy",   Icon: Dumbbell,        color: "#0B9ED9" },
+  advisor:      { label: "Fitness Advisor", Icon: Brain,           color: "#12B76A" },
+  spotter:      { label: "Spotter",         Icon: HandHelpingIcon, color: "#F79009" },
+  mutual_crush: { label: "Mutual Crush",    Icon: Sparkles,        color: "#E8193C" },
 };
 
 export default function Notifications() {
@@ -67,11 +68,19 @@ export default function Notifications() {
                   const cfg = CONN_CONFIG[n.type as keyof typeof CONN_CONFIG] ?? CONN_CONFIG.buddy;
                   const { Icon, color, label } = cfg;
                   const isCrush = n.type === "crush";
+                  const isMutual = n.type === "mutual_crush";
 
                   return (
                     <div key={n.id} className="card-surface overflow-hidden" data-testid={`notification-${n.id}`}>
-                      <div className="h-0.5" style={{ background: color }} />
+                      <div className="h-0.5" style={{ background: isMutual ? `linear-gradient(90deg, #E8193C, #ff6b6b)` : color }} />
                       <div className="p-4">
+                        {isMutual && (
+                          <div className="flex items-center gap-1.5 mb-2.5 px-2.5 py-1 rounded-full w-fit text-[11px] font-bold"
+                            style={{ background: "#E8193C15", color: "#E8193C" }}>
+                            <Sparkles className="w-3 h-3" />
+                            It's a mutual crush!
+                          </div>
+                        )}
                         <div className="flex items-start gap-3 mb-3">
                           <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                             style={{ background: color + "18" }}>
@@ -80,8 +89,9 @@ export default function Notifications() {
                           <div className="flex-1">
                             <p className="font-bold text-sm">{n.anonymous ? "Anonymous" : n.fromName}</p>
                             <p className="text-xs mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
-                              Wants to be your {label}
-                              {n.anonymous ? " · Hidden identity" : ""}
+                              {isMutual
+                                ? `${n.fromName} also has a crush on you 💘`
+                                : `Wants to be your ${label}${n.anonymous ? " · Hidden identity" : ""}`}
                             </p>
                             <p className="text-[11px] mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>
                               {new Date(n.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
@@ -89,7 +99,17 @@ export default function Notifications() {
                           </div>
                         </div>
 
-                        {!n.responded ? (
+                        {isMutual ? (
+                          <button
+                            onClick={() => handleDismiss(n.id)}
+                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-bold text-white"
+                            style={{ background: "#E8193C" }}
+                            data-testid={`btn-dismiss-mutual-${n.id}`}
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            Woohoo! Dismiss
+                          </button>
+                        ) : !n.responded ? (
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleRespond(n.id, "accept")}
