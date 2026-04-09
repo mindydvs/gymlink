@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -102,7 +103,17 @@ export default function WelcomeScreen() {
         style={StyleSheet.absoluteFillObject}
         resizeMode="cover"
       />
-      <View style={[styles.overlay, StyleSheet.absoluteFillObject]} />
+      <LinearGradient
+        colors={[
+          "rgba(10,13,26,0.72)",
+          "rgba(10,13,26,0.15)",
+          "rgba(10,13,26,0.08)",
+          "rgba(10,13,26,0.55)",
+          "rgba(10,13,26,0.96)",
+        ]}
+        locations={[0, 0.22, 0.5, 0.72, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -306,9 +317,6 @@ export default function WelcomeScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#0A0D1A" },
-  overlay: {
-    backgroundColor: "rgba(10,13,26,0.62)",
-  },
   scroll: {
     flexGrow: 1,
     paddingHorizontal: 20,
@@ -328,8 +336,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   logo: {
-    width: "96%",
-    height: 320,
+    width: "80%",
+    height: 180,
     alignSelf: "center" as const,
   },
   card: {
