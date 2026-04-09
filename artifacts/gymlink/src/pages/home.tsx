@@ -1,7 +1,7 @@
 import { useGetGymStats, useListNotifications, useListUsers, useRespondToConnection, useGetMe, useCheckIn, useListConnections, getListNotificationsQueryKey, getGetMeQueryKey, getGetGymStatsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
-import { Bell, TrendingUp, ChevronRight, Heart, Dumbbell, Brain, HandHelpingIcon, Check, X, MapPin, Users } from "lucide-react";
+import { Bell, TrendingUp, ChevronRight, Heart, Dumbbell, Brain, HandHelpingIcon, Check, X, MapPin, Users, Zap } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { GymPicker } from "@/components/gym-picker";
@@ -16,6 +16,7 @@ const CONN_CONFIG = {
 };
 
 type ConnType = keyof typeof CONN_CONFIG;
+type PanelKey = ConnType | "activeNow" | "members";
 
 function NotifCard({ n, onAccept, onDecline, isPending }: {
   n: { id: string; type: string; fromName: string; anonymous: boolean; responded: boolean; createdAt: string };
@@ -80,6 +81,101 @@ function NotifCard({ n, onAccept, onDecline, isPending }: {
   );
 }
 
+interface MiniPerson {
+  id: string;
+  name?: string;
+  avatar?: string;
+  avatarUrl?: string | null;
+  age?: number;
+  gym?: string;
+  activeNow?: boolean;
+}
+
+function MemberPanel({
+  title,
+  subtitle,
+  color,
+  Icon,
+  people,
+  onClose,
+  onSelect,
+}: {
+  title: string;
+  subtitle?: string;
+  color: string;
+  Icon: React.ElementType;
+  people: MiniPerson[];
+  onClose: () => void;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <div className="mt-3 card-surface overflow-hidden" style={{ borderColor: color + "44" }}>
+      <div className="h-0.5 w-full" style={{ background: color }} />
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Icon className="w-4 h-4" style={{ color }} />
+            <span className="font-bold text-sm">{title}</span>
+            <span className="text-xs px-1.5 py-0.5 rounded-full font-bold"
+              style={{ background: color + "18", color }}>
+              {people.length}
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+            style={{ background: "hsl(var(--secondary))" }}
+          >
+            <X className="w-3.5 h-3.5" style={{ color: "hsl(var(--muted-foreground))" }} />
+          </button>
+        </div>
+        {subtitle && (
+          <p className="text-[11px] mb-3" style={{ color: "hsl(var(--muted-foreground))" }}>{subtitle}</p>
+        )}
+        {people.length === 0 ? (
+          <div className="flex flex-col items-center py-6 gap-2 text-center">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: color + "15" }}>
+              <Icon className="w-5 h-5" style={{ color }} />
+            </div>
+            <p className="text-sm font-semibold">Nobody here yet</p>
+            <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>Check back later</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {people.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => onSelect(p.id)}
+                className="w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left"
+                style={{ background: "hsl(var(--secondary))" }}
+              >
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 overflow-hidden"
+                  style={{ background: "hsl(var(--muted))" }}>
+                  {p.avatarUrl
+                    ? <img src={`/api/storage${p.avatarUrl}`} alt={p.name} className="w-full h-full object-cover" />
+                    : p.avatar}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-semibold text-sm truncate">{p.name}</p>
+                    {p.activeNow && (
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "#12B76A" }} />
+                    )}
+                  </div>
+                  <p className="text-[11px] mt-0.5 truncate" style={{ color: "hsl(var(--muted-foreground))" }}>
+                    {p.age ? `${p.age} · ` : ""}{p.gym ?? ""}
+                  </p>
+                </div>
+                <ChevronRight className="w-4 h-4 shrink-0" style={{ color: "hsl(var(--muted-foreground))" }} />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const { data: stats, isLoading: statsLoading } = useGetGymStats();
   const { data: notifications = [] } = useListNotifications();
@@ -93,7 +189,7 @@ export default function Home() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [showGymPicker, setShowGymPicker] = useState(false);
-  const [activePanel, setActivePanel] = useState<ConnType | null>(null);
+  const [activePanel, setActivePanel] = useState<PanelKey | null>(null);
 
   const handleCheckIn = (gymId: string, gymName: string) => {
     checkInMutation.mutate({ data: { gymId, gymName } }, {
@@ -129,20 +225,22 @@ export default function Home() {
     });
   };
 
-  // Build a list of the other person in each accepted connection, by type
-  const connectedByType = (type: ConnType) => {
-    return connections
+  const connectedByType = (type: ConnType) =>
+    connections
       .filter((c) => c.type === type)
       .map((c) => {
         const other = c.fromUserId === myId ? c.toUser : c.fromUser;
         const otherId = c.fromUserId === myId ? c.toUserId : c.fromUserId;
-        return { id: otherId, user: other };
+        return { id: otherId, ...(other ?? {}) } as MiniPerson & { id: string };
       })
-      .filter((x) => x.user != null);
-  };
+      .filter((x) => x.name != null);
 
-  const panelCfg = activePanel ? CONN_CONFIG[activePanel] : null;
-  const panelPeople = activePanel ? connectedByType(activePanel) : [];
+  const allOtherUsers: MiniPerson[] = users.filter((u) => !u.isMe);
+  const activeUsers: MiniPerson[] = allOtherUsers.filter((u) => u.activeNow);
+
+  const navigateMember = (id: string) => { setActivePanel(null); setLocation(`/members/${id}`); };
+
+  const toggle = (key: PanelKey) => setActivePanel((prev) => prev === key ? null : key);
 
   return (
     <div className="space-y-8">
@@ -204,20 +302,60 @@ export default function Home() {
         )}
       </div>
 
-      {/* Activity stats (non-clickable) */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="card-surface p-5">
-          {statsLoading ? <Skeleton className="h-8 w-14 mb-2" /> : (
-            <div className="stat-number mb-1" style={{ color: "#12B76A" }}>{stats?.activeNow ?? 0}</div>
-          )}
-          <div className="section-label">Active Now</div>
+      {/* Activity stats — now clickable */}
+      <div>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => toggle("activeNow")}
+            className="card-surface p-5 text-left transition-all duration-150 hover:scale-[1.02]"
+            style={activePanel === "activeNow" ? { borderColor: "#12B76A", boxShadow: "0 0 0 1px #12B76A40" } : {}}
+            data-testid="btn-stat-activeNow"
+          >
+            {statsLoading ? <Skeleton className="h-8 w-14 mb-2" /> : (
+              <div className="stat-number mb-1" style={{ color: "#12B76A" }}>{stats?.activeNow ?? 0}</div>
+            )}
+            <div className="flex items-center justify-between">
+              <div className="section-label">Active Now</div>
+              <Zap className="w-3.5 h-3.5 opacity-50" style={{ color: "#12B76A" }} />
+            </div>
+          </button>
+          <button
+            onClick={() => toggle("members")}
+            className="card-surface p-5 text-left transition-all duration-150 hover:scale-[1.02]"
+            style={activePanel === "members" ? { borderColor: "hsl(var(--primary))", boxShadow: "0 0 0 1px hsl(var(--primary) / 0.25)" } : {}}
+            data-testid="btn-stat-members"
+          >
+            {statsLoading ? <Skeleton className="h-8 w-14 mb-2" /> : (
+              <div className="stat-number mb-1">{stats?.totalMembers ?? 0}</div>
+            )}
+            <div className="flex items-center justify-between">
+              <div className="section-label">Members</div>
+              <Users className="w-3.5 h-3.5 opacity-50" style={{ color: "hsl(var(--foreground))" }} />
+            </div>
+          </button>
         </div>
-        <div className="card-surface p-5">
-          {statsLoading ? <Skeleton className="h-8 w-14 mb-2" /> : (
-            <div className="stat-number mb-1">{stats?.totalMembers ?? 0}</div>
-          )}
-          <div className="section-label">Members</div>
-        </div>
+
+        {activePanel === "activeNow" && (
+          <MemberPanel
+            title="Active Now"
+            subtitle="People currently at the gym"
+            color="#12B76A"
+            Icon={Zap}
+            people={activeUsers}
+            onClose={() => setActivePanel(null)}
+            onSelect={navigateMember}
+          />
+        )}
+        {activePanel === "members" && (
+          <MemberPanel
+            title="All Members"
+            color="hsl(var(--primary))"
+            Icon={Users}
+            people={allOtherUsers}
+            onClose={() => setActivePanel(null)}
+            onSelect={navigateMember}
+          />
+        )}
       </div>
 
       {/* Connection stats (clickable) */}
@@ -230,7 +368,7 @@ export default function Home() {
             return (
               <button
                 key={type}
-                onClick={() => setActivePanel(isActive ? null : type)}
+                onClick={() => toggle(type)}
                 className="card-surface p-5 text-left transition-all duration-150 hover:scale-[1.02]"
                 style={isActive ? { borderColor: cfg.color, boxShadow: `0 0 0 1px ${cfg.color}40` } : {}}
                 data-testid={`btn-stat-${type}`}
@@ -247,70 +385,20 @@ export default function Home() {
           })}
         </div>
 
-        {/* Inline people panel */}
-        {activePanel && panelCfg && (
-          <div className="mt-3 card-surface overflow-hidden"
-            style={{ borderColor: panelCfg.color + "44" }}>
-            <div className="h-0.5 w-full" style={{ background: panelCfg.color }} />
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <panelCfg.Icon className="w-4 h-4" style={{ color: panelCfg.color }} />
-                  <span className="font-bold text-sm">{panelCfg.pluralLabel}</span>
-                  <span className="text-xs px-1.5 py-0.5 rounded-full font-bold"
-                    style={{ background: panelCfg.color + "18", color: panelCfg.color }}>
-                    {panelPeople.length}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setActivePanel(null)}
-                  className="w-6 h-6 rounded-full flex items-center justify-center transition-colors"
-                  style={{ background: "hsl(var(--secondary))" }}
-                >
-                  <X className="w-3.5 h-3.5" style={{ color: "hsl(var(--muted-foreground))" }} />
-                </button>
-              </div>
-
-              {panelPeople.length === 0 ? (
-                <div className="flex flex-col items-center py-6 gap-2 text-center">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ background: panelCfg.color + "15" }}>
-                    <Users className="w-5 h-5" style={{ color: panelCfg.color }} />
-                  </div>
-                  <p className="text-sm font-semibold">No {panelCfg.pluralLabel.toLowerCase()} yet</p>
-                  <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
-                    Visit a member's profile to connect
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {panelPeople.map(({ id, user }) => (
-                    <button
-                      key={id}
-                      onClick={() => { setActivePanel(null); setLocation(`/members/${id}`); }}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left"
-                      style={{ background: "hsl(var(--secondary))" }}
-                    >
-                      <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 overflow-hidden"
-                        style={{ background: "hsl(var(--muted))" }}>
-                        {user?.avatarUrl
-                          ? <img src={`/api/storage${user.avatarUrl}`} alt={user?.name} className="w-full h-full object-cover" />
-                          : user?.avatar}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm truncate">{user?.name}</p>
-                        <p className="text-[11px] mt-0.5 truncate" style={{ color: "hsl(var(--muted-foreground))" }}>
-                          {user?.age ? `${user.age} · ` : ""}{user?.gym ?? ""}
-                        </p>
-                      </div>
-                      <ChevronRight className="w-4 h-4 shrink-0" style={{ color: "hsl(var(--muted-foreground))" }} />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {activePanel && activePanel in CONN_CONFIG && (() => {
+          const cfg = CONN_CONFIG[activePanel as ConnType];
+          const people = connectedByType(activePanel as ConnType);
+          return (
+            <MemberPanel
+              title={cfg.pluralLabel}
+              color={cfg.color}
+              Icon={cfg.Icon}
+              people={people}
+              onClose={() => setActivePanel(null)}
+              onSelect={navigateMember}
+            />
+          );
+        })()}
       </div>
 
       {/* Notifications */}

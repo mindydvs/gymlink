@@ -370,19 +370,29 @@ export default function MemberDetailScreen() {
                 })()}
 
                 {sentConn && !undoPending && (
-                  <View style={[styles.sentStatus, { borderColor: colors.border }]}>
-                    <Ionicons name="paper-plane-outline" size={14} color={colors.mutedForeground} />
-                    <Text style={[styles.sentStatusText, { color: colors.mutedForeground }]}>
-                      Waiting for their response
-                    </Text>
+                  <View style={[styles.sentStatus, { borderColor: colors.border, backgroundColor: colors.secondary }]}>
+                    <View style={styles.sentStatusTop}>
+                      <View style={[styles.sentStatusIcon, { backgroundColor: colors.muted }]}>
+                        <Ionicons name="paper-plane-outline" size={15} color={colors.mutedForeground} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.sentStatusTitle, { color: colors.foreground }]}>Request sent</Text>
+                        <Text style={[styles.sentStatusSub, { color: colors.mutedForeground }]}>
+                          Waiting for their response. They may have already seen this.
+                        </Text>
+                      </View>
+                    </View>
                     <Pressable
                       onPress={handleCancelSent}
                       disabled={cancelling}
-                      style={[styles.cancelBtn, { backgroundColor: colors.muted }]}
+                      style={({ pressed }) => [
+                        styles.cancelBtn,
+                        { backgroundColor: colors.muted, opacity: pressed || cancelling ? 0.7 : 1 },
+                      ]}
                     >
-                      <Ionicons name="close-outline" size={14} color={colors.mutedForeground} />
+                      <Ionicons name="close-circle-outline" size={15} color={colors.mutedForeground} />
                       <Text style={[styles.cancelBtnText, { color: colors.mutedForeground }]}>
-                        {cancelling ? "Cancelling…" : "Cancel"}
+                        {cancelling ? "Cancelling…" : "Take Back Request"}
                       </Text>
                     </Pressable>
                   </View>
@@ -694,13 +704,33 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   sentStatus: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
     borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    gap: 10,
+  },
+  sentStatusTop: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  sentStatusIcon: {
+    width: 32,
+    height: 32,
     borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sentStatusTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 13,
+  },
+  sentStatusSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    marginTop: 2,
+    lineHeight: 15,
   },
   sentStatusText: {
     fontFamily: "Inter_400Regular",
@@ -831,14 +861,13 @@ const styles = StyleSheet.create({
   cancelBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 3,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginLeft: "auto",
+    justifyContent: "center",
+    gap: 5,
+    paddingVertical: 9,
+    borderRadius: 8,
   },
   cancelBtnText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 12,
+    fontFamily: "Inter_700Bold",
+    fontSize: 13,
   },
 });
