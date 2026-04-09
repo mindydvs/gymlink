@@ -164,7 +164,7 @@ export default function Welcome() {
             <div
               style={{
                 position: "absolute", inset: 0,
-                background: "linear-gradient(to bottom, rgba(10,13,26,0.90) 0%, rgba(10,13,26,0.80) 18%, rgba(10,13,26,0.20) 38%, rgba(10,13,26,0.45) 60%, rgba(10,13,26,0.97) 82%, rgba(10,13,26,1) 100%)",
+                background: "linear-gradient(to bottom, rgba(10,13,26,1) 0%, rgba(10,13,26,1) 28%, rgba(10,13,26,0.15) 48%, rgba(10,13,26,0.55) 68%, rgba(10,13,26,1) 85%, rgba(10,13,26,1) 100%)",
               }}
             />
           </div>
