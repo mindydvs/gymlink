@@ -125,60 +125,6 @@ export default function WelcomeScreen() {
     }
   };
 
-  if (screen === "landing") {
-    return (
-      <View style={{ flex: 1, backgroundColor: "#0A0D1A" }}>
-        {/* TOP — solid dark background, logo only, no photo here */}
-        <View style={{ backgroundColor: "#0A0D1A", alignItems: "center", paddingTop: insets.top + 16, paddingBottom: 12 }}>
-          <Image
-            source={require("@/assets/images/logo.png")}
-            style={{ width: "75%", height: 110 }}
-            resizeMode="contain"
-          />
-        </View>
-
-        {/* MIDDLE — photo only, never behind the logo */}
-        <View style={{ flex: 1, overflow: "hidden" }}>
-          <ExpoImage
-            source={require("@/assets/images/hero-gym.jpeg")}
-            style={StyleSheet.absoluteFillObject}
-            contentFit="cover"
-            contentPosition="top"
-          />
-          <LinearGradient
-            colors={["transparent", "rgba(10,13,26,0.85)", "rgba(10,13,26,1)"]}
-            locations={[0.55, 0.85, 1]}
-            style={StyleSheet.absoluteFillObject}
-          />
-        </View>
-
-        {/* BOTTOM — solid dark, CTA */}
-        <View style={{ backgroundColor: "#0A0D1A", paddingHorizontal: 24, paddingTop: 20, paddingBottom: insets.bottom + 28, gap: 14 }}>
-          <Text style={styles.cardTitle}>Find your gym crew</Text>
-          <Text style={styles.cardSub}>
-            Connect with gym crushes, workout buddies, advisors & spotters.
-          </Text>
-          <View style={styles.btnGroup}>
-            <Pressable
-              style={({ pressed }) => [styles.primaryBtn, { opacity: pressed ? 0.85 : 1 }]}
-              onPress={() => setScreen("join-1")}
-            >
-              <Ionicons name="person-add-outline" size={18} color="#fff" />
-              <Text style={styles.primaryBtnText}>Join GymLink</Text>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [styles.secondaryBtn, { opacity: pressed ? 0.85 : 1 }]}
-              onPress={() => setScreen("sign-in")}
-            >
-              <Ionicons name="log-in-outline" size={18} color="#fff" />
-              <Text style={styles.secondaryBtnText}>Sign In</Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.root}>
       <ExpoImage
@@ -188,8 +134,14 @@ export default function WelcomeScreen() {
         contentPosition="top"
       />
       <LinearGradient
-        colors={["rgba(10,13,26,0.85)", "rgba(10,13,26,0.6)", "rgba(10,13,26,0.97)"]}
-        locations={[0, 0.4, 1]}
+        colors={[
+          "rgba(10,13,26,0.15)",
+          "rgba(10,13,26,0)",
+          "rgba(10,13,26,0)",
+          "rgba(10,13,26,0.82)",
+          "rgba(10,13,26,0.97)",
+        ]}
+        locations={[0, 0.18, 0.62, 0.78, 1]}
         style={StyleSheet.absoluteFillObject}
       />
 
@@ -204,13 +156,15 @@ export default function WelcomeScreen() {
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          <Pressable
-            onPress={() => setScreen("landing")}
-            style={styles.backBtn}
-            hitSlop={12}
-          >
-            <Ionicons name="arrow-back" size={22} color="rgba(255,255,255,0.8)" />
-          </Pressable>
+          {screen !== "landing" && (
+            <Pressable
+              onPress={() => setScreen("landing")}
+              style={styles.backBtn}
+              hitSlop={12}
+            >
+              <Ionicons name="arrow-back" size={22} color="rgba(255,255,255,0.8)" />
+            </Pressable>
+          )}
 
           <View style={styles.logoWrap}>
             <Image
@@ -220,6 +174,30 @@ export default function WelcomeScreen() {
             />
           </View>
 
+          {screen === "landing" && (
+            <View style={[styles.card, { marginTop: "auto" }]}>
+              <Text style={styles.cardTitle}>Find your gym crew</Text>
+              <Text style={styles.cardSub}>
+                Connect with gym crushes, workout buddies, advisors & spotters.
+              </Text>
+              <View style={styles.btnGroup}>
+                <Pressable
+                  style={({ pressed }) => [styles.primaryBtn, { opacity: pressed ? 0.85 : 1 }]}
+                  onPress={() => setScreen("join-1")}
+                >
+                  <Ionicons name="person-add-outline" size={18} color="#fff" />
+                  <Text style={styles.primaryBtnText}>Join GymLink</Text>
+                </Pressable>
+                <Pressable
+                  style={({ pressed }) => [styles.secondaryBtn, { opacity: pressed ? 0.85 : 1 }]}
+                  onPress={() => setScreen("sign-in")}
+                >
+                  <Ionicons name="log-in-outline" size={18} color="#fff" />
+                  <Text style={styles.secondaryBtnText}>Sign In</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
 
           {screen === "sign-in" && (
             <View style={styles.card}>
