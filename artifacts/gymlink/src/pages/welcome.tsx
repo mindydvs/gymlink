@@ -171,15 +171,17 @@ export default function Welcome() {
 
           {/* Content: logo fills top, cta anchored bottom */}
           <div style={{ position: "relative", zIndex: 1, minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
-            {/* Logo — upper half */}
-            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "12px 16px 0" }}>
+            {/* Logo — pinned to the top, clear of the face */}
+            <div style={{ display: "flex", justifyContent: "center", paddingTop: "clamp(12px, 3vh, 28px)", paddingLeft: 16, paddingRight: 16 }}>
               <img
                 src={logoImg}
                 alt="GymLink"
                 className="drop-shadow-2xl"
-                style={{ width: "min(95vw, 95vh)", height: "auto", maxWidth: "95vw" }}
+                style={{ width: "min(60vw, 20vh)", height: "auto", maxWidth: "60vw" }}
               />
             </div>
+            {/* Spacer to push CTA down */}
+            <div style={{ flex: 1 }} />
 
             {/* CTA — lower section */}
             <div className="px-6 pb-8 text-center" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
