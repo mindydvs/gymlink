@@ -157,7 +157,7 @@ export default function Welcome() {
           {/* Fixed background — always covers the full viewport */}
           <div style={{ position: "fixed", inset: 0, zIndex: 0, backgroundColor: "#0A0D1A" }}>
             <img
-              src="/hero-gym.jpeg"
+              src="/hero-gym2.jpeg"
               alt=""
               style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%", display: "block" }}
             />
