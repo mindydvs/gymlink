@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Image as ExpoImage } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -98,20 +99,21 @@ export default function WelcomeScreen() {
 
   return (
     <View style={styles.root}>
-      <Image
+      <ExpoImage
         source={require("@/assets/images/hero-gym.jpeg")}
         style={StyleSheet.absoluteFillObject}
-        resizeMode="cover"
+        contentFit="cover"
+        contentPosition={{ top: "35%", left: "50%" }}
       />
       <LinearGradient
         colors={[
-          "rgba(10,13,26,0.72)",
-          "rgba(10,13,26,0.15)",
-          "rgba(10,13,26,0.08)",
-          "rgba(10,13,26,0.55)",
-          "rgba(10,13,26,0.96)",
+          "rgba(10,13,26,0.75)",
+          "rgba(10,13,26,0)",
+          "rgba(10,13,26,0)",
+          "rgba(10,13,26,0.82)",
+          "rgba(10,13,26,0.97)",
         ]}
-        locations={[0, 0.22, 0.5, 0.72, 1]}
+        locations={[0, 0.18, 0.62, 0.78, 1]}
         style={StyleSheet.absoluteFillObject}
       />
 
