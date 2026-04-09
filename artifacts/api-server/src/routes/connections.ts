@@ -176,4 +176,30 @@ router.post("/connections/:id/respond", async (req, res): Promise<void> => {
   }));
 });
 
+router.delete("/connections/:id", async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const meId = req.userId;
+
+  const [connection] = await db
+    .select()
+    .from(connectionsTable)
+    .where(
+      and(
+        eq(connectionsTable.id, raw),
+        eq(connectionsTable.fromUserId, meId),
+        eq(connectionsTable.status, "pending")
+      )
+    );
+
+  if (!connection) {
+    res.status(404).json({ error: "Connection not found or cannot be cancelled" });
+    return;
+  }
+
+  await db.delete(notificationsTable).where(eq(notificationsTable.connectionId, raw));
+  await db.delete(connectionsTable).where(eq(connectionsTable.id, raw));
+
+  res.json({ success: true });
+});
+
 export default router;

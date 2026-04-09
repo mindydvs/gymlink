@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   FlatList,
   Platform,
   Pressable,
@@ -24,6 +25,7 @@ import {
   useListWorkoutVideos,
   useListConnections,
   useCreateConnection,
+  useCancelConnection,
   getListConnectionsQueryKey,
   getListUsersQueryKey,
 } from "@workspace/api-client-react";
@@ -85,27 +87,74 @@ export default function MemberDetailScreen() {
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
+  const UNDO_SECONDS = 10;
+
   const [crushPanelOpen, setCrushPanelOpen] = React.useState(false);
   const [crushAnonymous, setCrushAnonymous] = React.useState(true);
   const [crushMutualNotify, setCrushMutualNotify] = React.useState(false);
+  const [undoPending, setUndoPending] = React.useState<{
+    type: "crush" | "buddy" | "advisor" | "spotter";
+    anonymous: boolean;
+    mutualNotify: boolean;
+    countdown: number;
+  } | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const handleConnect = (type: "crush" | "buddy" | "advisor" | "spotter", anonymous: boolean, mutualNotify = false) => {
+  const { mutate: cancelConnection, isPending: cancelling } = useCancelConnection();
+
+  const fireSend = (type: "crush" | "buddy" | "advisor" | "spotter", anon: boolean, mutual: boolean) => {
     if (!id) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     createConnection(
-      { data: { toUserId: id, type, anonymous, mutualNotify } },
+      { data: { toUserId: id, type, anonymous: anon, mutualNotify: mutual } },
       {
-        onSuccess: () => {
-          setCrushPanelOpen(false);
-          queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() });
-          Alert.alert("Request Sent", `Your ${type} request has been sent!`);
-        },
-        onError: () => {
-          Alert.alert("Error", "Failed to send connection request");
-        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() }),
+        onError: () => Alert.alert("Error", "Failed to send connection request"),
       }
     );
   };
+
+  const startUndo = (type: "crush" | "buddy" | "advisor" | "spotter", anon: boolean, mutual: boolean) => {
+    if (!id) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (timerRef.current) clearInterval(timerRef.current);
+    setCrushPanelOpen(false);
+    setUndoPending({ type, anonymous: anon, mutualNotify: mutual, countdown: UNDO_SECONDS });
+
+    timerRef.current = setInterval(() => {
+      setUndoPending((prev) => {
+        if (!prev) return null;
+        if (prev.countdown <= 1) {
+          clearInterval(timerRef.current!);
+          timerRef.current = null;
+          fireSend(prev.type, prev.anonymous, prev.mutualNotify);
+          return null;
+        }
+        return { ...prev, countdown: prev.countdown - 1 };
+      });
+    }, 1000);
+  };
+
+  const handleUndo = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+    setUndoPending(null);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Alert.alert("Cancelled", "Request cancelled — nothing was sent");
+  };
+
+  const handleCancelSent = () => {
+    if (!sentConn) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    cancelConnection(
+      { id: sentConn.id },
+      {
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() }),
+        onError: () => Alert.alert("Error", "Failed to cancel request"),
+      }
+    );
+  };
+
+  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
 
   if (isLoading) {
     return (
@@ -241,20 +290,20 @@ export default function MemberDetailScreen() {
                 </Text>
                 <View style={styles.connectGrid}>
                   {CONNECTION_TYPES.map((ct) => {
-                    const wasSent = sentConn?.type === ct.type;
-                    const anyPending = !!sentConn;
+                    const wasSent = (sentConn?.type === ct.type) || (undoPending?.type === ct.type);
+                    const anyLocked = !!(sentConn || undoPending);
                     return (
                       <Pressable
                         key={ct.type}
                         onPress={() => {
-                          if (anyPending) return;
+                          if (anyLocked) return;
                           if (ct.type === "crush") {
                             setCrushPanelOpen((v) => !v);
                           } else {
-                            handleConnect(ct.type, false);
+                            startUndo(ct.type, false, false);
                           }
                         }}
-                        disabled={connecting || anyPending}
+                        disabled={connecting || anyLocked}
                         style={({ pressed }) => [
                           styles.connectTile,
                           {
@@ -291,17 +340,56 @@ export default function MemberDetailScreen() {
                   })}
                 </View>
 
-                {sentConn && (
+                {/* Undo countdown banner */}
+                {undoPending && (() => {
+                  const undoColor = colors[undoPending.type] as string;
+                  const progress = (undoPending.countdown / UNDO_SECONDS) * 100;
+                  return (
+                    <View style={[styles.undoBanner, { borderColor: undoColor + "55", backgroundColor: undoColor + "0C" }]}>
+                      <View style={[styles.undoProgress, { width: `${progress}%` as `${number}%`, backgroundColor: undoColor }]} />
+                      <View style={styles.undoContent}>
+                        <Ionicons name="paper-plane-outline" size={16} color={undoColor} />
+                        <View style={{ flex: 1, marginLeft: 10 }}>
+                          <Text style={[styles.undoTitle, { color: colors.foreground }]}>
+                            Sending in {undoPending.countdown}s…
+                          </Text>
+                          <Text style={[styles.undoSub, { color: colors.mutedForeground }]}>
+                            Tap Undo to cancel before it goes
+                          </Text>
+                        </View>
+                        <Pressable
+                          onPress={handleUndo}
+                          style={[styles.undoBtn, { backgroundColor: undoColor + "22" }]}
+                        >
+                          <Ionicons name="arrow-undo-outline" size={14} color={undoColor} />
+                          <Text style={[styles.undoBtnText, { color: undoColor }]}>Undo</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  );
+                })()}
+
+                {sentConn && !undoPending && (
                   <View style={[styles.sentStatus, { borderColor: colors.border }]}>
                     <Ionicons name="paper-plane-outline" size={14} color={colors.mutedForeground} />
                     <Text style={[styles.sentStatusText, { color: colors.mutedForeground }]}>
-                      Request sent — waiting for their response
+                      Waiting for their response
                     </Text>
+                    <Pressable
+                      onPress={handleCancelSent}
+                      disabled={cancelling}
+                      style={[styles.cancelBtn, { backgroundColor: colors.muted }]}
+                    >
+                      <Ionicons name="close-outline" size={14} color={colors.mutedForeground} />
+                      <Text style={[styles.cancelBtnText, { color: colors.mutedForeground }]}>
+                        {cancelling ? "Cancelling…" : "Cancel"}
+                      </Text>
+                    </Pressable>
                   </View>
                 )}
 
                 {/* Crush options panel — only shown when no pending request */}
-                {crushPanelOpen && !sentConn && (
+                {crushPanelOpen && !sentConn && !undoPending && (
                   <View style={[styles.crushPanel, { borderColor: `${colors.crush}44`, backgroundColor: `${colors.crush}08` }]}>
                     {/* Anonymous toggle */}
                     <Pressable
@@ -378,7 +466,7 @@ export default function MemberDetailScreen() {
                     </Pressable>
 
                     <Pressable
-                      onPress={() => handleConnect("crush", crushAnonymous, crushMutualNotify)}
+                      onPress={() => startUndo("crush", crushAnonymous, crushMutualNotify)}
                       disabled={connecting}
                       style={({ pressed }) => [
                         styles.crushSendBtn,
@@ -704,5 +792,53 @@ const styles = StyleSheet.create({
   emptyText: {
     fontFamily: "Inter_400Regular",
     fontSize: 14,
+  },
+  undoBanner: {
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  undoProgress: {
+    height: 3,
+  },
+  undoContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  undoTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 13,
+  },
+  undoSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    marginTop: 1,
+  },
+  undoBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  undoBtnText: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 12,
+  },
+  cancelBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginLeft: "auto",
+  },
+  cancelBtnText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 12,
   },
 });

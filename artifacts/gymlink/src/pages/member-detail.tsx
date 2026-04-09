@@ -1,8 +1,14 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRoute, useLocation } from "wouter";
-import { useGetUser, useCreateConnection, useListConnections, getGetUserQueryKey, getListConnectionsQueryKey } from "@workspace/api-client-react";
+import {
+  useGetUser, useCreateConnection, useListConnections, useCancelConnection,
+  getGetUserQueryKey, getListConnectionsQueryKey,
+} from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, MapPin, Clock, Heart, Dumbbell, Brain, HandHelpingIcon, CheckCircle2, EyeOff, Eye, Video, Sparkles, Send } from "lucide-react";
+import {
+  ArrowLeft, MapPin, Clock, Heart, Dumbbell, Brain, HandHelpingIcon,
+  CheckCircle2, EyeOff, Eye, Video, Sparkles, Send, X, RotateCcw,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { VideoUploader } from "@/components/video-uploader";
@@ -14,6 +20,8 @@ const CONN_TYPES = [
   { type: "advisor" as const, label: "Fitness Advisor", Icon: Brain,           color: "#12B76A", desc: "Get tips & guidance" },
   { type: "spotter" as const, label: "Spotter",         Icon: HandHelpingIcon, color: "#F79009", desc: "Help each other lift" },
 ];
+
+const UNDO_SECONDS = 10;
 
 export default function MemberDetail() {
   const [, params] = useRoute("/members/:id");
@@ -28,17 +36,23 @@ export default function MemberDetail() {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [anonymous, setAnonymous] = useState(true);
   const [mutualNotify, setMutualNotify] = useState(false);
+
+  // Undo countdown state
+  const [undoPending, setUndoPending] = useState<{
+    type: string; anonymous: boolean; mutualNotify: boolean; countdown: number;
+  } | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const createConn = useCreateConnection();
+  const cancelConn = useCancelConnection();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const profileId = params?.id ?? "";
 
-  // Find any connection already sent from me to this user
   const sentConn = connections.find(
-    (c) => c.fromUserId === myId && c.toUserId === profileId
+    (c) => c.fromUserId === myId && c.toUserId === profileId && c.status === "pending"
   );
-  // Find any accepted connection (either direction)
   const acceptedConn = connections.find(
     (c) =>
       c.status === "accepted" &&
@@ -46,27 +60,67 @@ export default function MemberDetail() {
        (c.toUserId === myId && c.fromUserId === profileId))
   );
 
-  const handleConnect = () => {
-    if (!selectedType || !user) return;
-    const isCrush = selectedType === "crush";
+  // Fire the actual API send
+  const fireSend = useCallback((type: string, anon: boolean, mutual: boolean) => {
+    if (!user) return;
     createConn.mutate(
       {
         data: {
           toUserId: user.id,
-          type: selectedType as "crush" | "buddy" | "advisor" | "spotter",
-          anonymous: isCrush ? anonymous : false,
-          mutualNotify: isCrush ? mutualNotify : false,
+          type: type as "crush" | "buddy" | "advisor" | "spotter",
+          anonymous: type === "crush" ? anon : false,
+          mutualNotify: type === "crush" ? mutual : false,
         },
       },
       {
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() }),
+        onError: () => toast({ title: "Failed to send request", variant: "destructive" }),
+      }
+    );
+  }, [user, createConn, queryClient, toast]);
+
+  // Start the 10-second countdown
+  const startUndo = (type: string, anon: boolean, mutual: boolean) => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setUndoPending({ type, anonymous: anon, mutualNotify: mutual, countdown: UNDO_SECONDS });
+
+    timerRef.current = setInterval(() => {
+      setUndoPending((prev) => {
+        if (!prev) return null;
+        if (prev.countdown <= 1) {
+          clearInterval(timerRef.current!);
+          timerRef.current = null;
+          fireSend(prev.type, prev.anonymous, prev.mutualNotify);
+          return null;
+        }
+        return { ...prev, countdown: prev.countdown - 1 };
+      });
+    }, 1000);
+  };
+
+  const handleUndo = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+    setUndoPending(null);
+    toast({ title: "Request cancelled", description: "Nothing was sent" });
+  };
+
+  const handleCancelSent = () => {
+    if (!sentConn) return;
+    cancelConn.mutate(
+      { id: sentConn.id },
+      {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() });
-          toast({ title: "Request sent!", description: `Your ${selectedType} request has been sent` });
+          toast({ title: "Request cancelled" });
         },
-        onError: () => toast({ title: "Error", description: "Failed to send", variant: "destructive" }),
+        onError: () => toast({ title: "Failed to cancel", variant: "destructive" }),
       }
     );
   };
+
+  // Cleanup on unmount
+  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
 
   if (isLoading) return (
     <div className="space-y-5 max-w-xl">
@@ -86,6 +140,8 @@ export default function MemberDetail() {
   );
 
   const selected = CONN_TYPES.find((c) => c.type === selectedType);
+  const undoColor = CONN_TYPES.find((c) => c.type === undoPending?.type)?.color ?? "#E8193C";
+  const progress = undoPending ? (undoPending.countdown / UNDO_SECONDS) * 100 : 100;
 
   return (
     <div className="space-y-5 max-w-xl">
@@ -105,8 +161,7 @@ export default function MemberDetail() {
             style={{ background: "hsl(var(--secondary))" }}>
             {user.avatarUrl
               ? <img src={`/api/storage${user.avatarUrl}`} alt={user.name} className="w-full h-full object-cover" />
-              : user.avatar
-            }
+              : user.avatar}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
@@ -127,11 +182,8 @@ export default function MemberDetail() {
             </div>
           </div>
         </div>
-
         <div className="divider my-4" />
-
         <p className="text-sm leading-relaxed" style={{ color: "hsl(var(--muted-foreground))" }}>{user.bio}</p>
-
         <div className="flex flex-wrap gap-2 mt-4">
           {user.interests.map((i) => (
             <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-md"
@@ -145,8 +197,7 @@ export default function MemberDetail() {
       {/* Connection section */}
       {acceptedConn ? (
         <div className="card-surface p-5 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: "#12B76A18" }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#12B76A18" }}>
             <CheckCircle2 className="w-5 h-5" style={{ color: "#12B76A" }} />
           </div>
           <div>
@@ -160,17 +211,18 @@ export default function MemberDetail() {
         <div className="card-surface p-5 space-y-4">
           <p className="section-label">Connect with {user.name.split(" ")[0]}</p>
 
+          {/* Type grid */}
           <div className="grid grid-cols-2 gap-2.5">
             {CONN_TYPES.map(({ type, label, Icon, color, desc }) => {
+              const wasSent = sentConn?.type === type || undoPending?.type === type;
+              const locked = !!(sentConn || undoPending);
               const isSelected = selectedType === type;
-              const wasSent = sentConn?.type === type;
-              const anyPending = !!sentConn;
 
               return (
                 <button
                   key={type}
-                  onClick={() => !anyPending && setSelectedType(type)}
-                  disabled={anyPending}
+                  onClick={() => !locked && setSelectedType(type)}
+                  disabled={locked}
                   className="p-4 rounded-lg border text-left transition-all duration-150 relative"
                   style={
                     wasSent
@@ -198,8 +250,8 @@ export default function MemberDetail() {
             })}
           </div>
 
-          {/* Crush options — only shown if no pending request and crush is selected */}
-          {!sentConn && selectedType === "crush" && (
+          {/* Crush options — only when no lock and crush selected */}
+          {!sentConn && !undoPending && selectedType === "crush" && (
             <div className="space-y-2.5">
               <button
                 onClick={() => setAnonymous(!anonymous)}
@@ -242,9 +294,7 @@ export default function MemberDetail() {
                 <div className="text-left">
                   <p className="text-sm font-semibold">Notify me if they crush back</p>
                   <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
-                    {mutualNotify
-                      ? "You'll both know if it's mutual — only if they opt in too"
-                      : "Stay in the dark, no mutual alerts"}
+                    {mutualNotify ? "You'll both know if it's mutual — only if they opt in too" : "Stay in the dark, no mutual alerts"}
                   </p>
                 </div>
                 <div className="ml-auto w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0"
@@ -255,24 +305,64 @@ export default function MemberDetail() {
             </div>
           )}
 
-          {!sentConn && (
+          {/* Send button — only when no lock */}
+          {!sentConn && !undoPending && (
             <button
-              onClick={handleConnect}
+              onClick={() => selectedType && startUndo(selectedType, anonymous, mutualNotify)}
               disabled={!selectedType || createConn.isPending}
               className="w-full py-3 rounded-lg font-bold text-sm text-white transition-all disabled:opacity-50"
               style={{ background: selected ? selected.color : "hsl(var(--muted))" }}
               data-testid="btn-send-connection"
             >
-              {createConn.isPending ? "Sending..." : selected ? `Send as ${selected.label}` : "Choose a connection type"}
+              {createConn.isPending ? "Sending…" : selected ? `Send as ${selected.label}` : "Choose a connection type"}
             </button>
           )}
 
-          {sentConn && (
-            <div className="flex items-center gap-2 px-1 py-0.5">
-              <Send className="w-3.5 h-3.5" style={{ color: "hsl(var(--muted-foreground))" }} />
-              <p className="text-xs font-semibold" style={{ color: "hsl(var(--muted-foreground))" }}>
+          {/* Undo countdown banner */}
+          {undoPending && (
+            <div className="rounded-lg overflow-hidden border" style={{ borderColor: undoColor + "44" }}>
+              {/* progress bar */}
+              <div className="h-1 transition-all duration-1000" style={{ width: `${progress}%`, background: undoColor }} />
+              <div className="flex items-center gap-3 px-4 py-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: undoColor + "18" }}>
+                  <Send className="w-4 h-4" style={{ color: undoColor }} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">Sending in {undoPending.countdown}s…</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+                    Tap Undo to cancel before it goes
+                  </p>
+                </div>
+                <button
+                  onClick={handleUndo}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all"
+                  style={{ background: undoColor + "18", color: undoColor }}
+                  data-testid="btn-undo"
+                >
+                  <RotateCcw className="w-3 h-3" /> Undo
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Already-sent footer with cancel */}
+          {sentConn && !undoPending && (
+            <div className="flex items-center gap-2 px-1">
+              <Send className="w-3.5 h-3.5 shrink-0" style={{ color: "hsl(var(--muted-foreground))" }} />
+              <p className="text-xs font-semibold flex-1" style={{ color: "hsl(var(--muted-foreground))" }}>
                 Request sent — waiting for their response
               </p>
+              <button
+                onClick={handleCancelSent}
+                disabled={cancelConn.isPending}
+                className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md transition-all"
+                style={{ background: "hsl(var(--secondary))", color: "hsl(var(--muted-foreground))" }}
+                data-testid="btn-cancel-request"
+              >
+                <X className="w-3 h-3" />
+                {cancelConn.isPending ? "Cancelling…" : "Cancel Request"}
+              </button>
             </div>
           )}
         </div>

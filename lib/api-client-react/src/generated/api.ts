@@ -1871,3 +1871,83 @@ export function useGetVideoLikes<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * Cancel a pending connection request (sender only)
+ */
+export const getCancelConnectionUrl = (id: string) => {
+  return `/api/connections/${id}`;
+};
+
+export const cancelConnection = async (
+  id: string,
+  options?: RequestInit,
+): Promise<{ success: boolean }> => {
+  return customFetch<{ success: boolean }>(getCancelConnectionUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getCancelConnectionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelConnection>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof cancelConnection>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["cancelConnection"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof cancelConnection>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+    return cancelConnection(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CancelConnectionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof cancelConnection>>
+>;
+export type CancelConnectionMutationError = ErrorType<unknown>;
+
+export const useCancelConnection = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelConnection>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof cancelConnection>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationOptions = getCancelConnectionMutationOptions(options);
+  return useMutation(mutationOptions);
+};
