@@ -436,8 +436,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   logo: {
-    width: "80%",
-    height: 180,
+    width: "90%",
+    height: 360,
     alignSelf: "center" as const,
   },
   card: {
