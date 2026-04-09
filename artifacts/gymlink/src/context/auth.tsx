@@ -84,3 +84,13 @@ export async function loginUser(name: string, password: string): Promise<{ userI
   if (!res.ok) throw new Error(json.error ?? "Login failed");
   return json;
 }
+
+export async function resetPassword(name: string, newPassword: string): Promise<void> {
+  const res = await fetch(`${BASE}/api/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, newPassword }),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error ?? "Reset failed");
+}

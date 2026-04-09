@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth, registerUser, loginUser } from "@/context/auth";
+import { useAuth, registerUser, loginUser, resetPassword } from "@/context/auth";
 import { useListGyms } from "@workspace/api-client-react";
 import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, LogIn, UserPlus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ const INTEREST_OPTIONS = [
   "Meal Prep", "Posing", "Jump Rope", "Functional Training", "Beginner Lifting",
 ];
 
-type Screen = "landing" | "sign-in" | "join-name" | "join-gym" | "join-interests";
+type Screen = "landing" | "sign-in" | "forgot" | "join-name" | "join-gym" | "join-interests";
 
 interface JoinData {
   name: string;
@@ -46,6 +46,12 @@ export default function Welcome() {
   // Show/hide password on join
   const [showJoinPw, setShowJoinPw] = useState(false);
   const [showJoinConfirm, setShowJoinConfirm] = useState(false);
+
+  // Forgot password
+  const [forgotName, setForgotName] = useState("");
+  const [forgotNewPw, setForgotNewPw] = useState("");
+  const [forgotConfirm, setForgotConfirm] = useState("");
+  const [showForgotPw, setShowForgotPw] = useState(false);
 
   const { data: gyms = [] } = useListGyms();
 
@@ -105,9 +111,39 @@ export default function Welcome() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!forgotName.trim()) {
+      toast({ title: "Please enter your name", variant: "destructive" });
+      return;
+    }
+    if (forgotNewPw.length < 6) {
+      toast({ title: "Password must be at least 6 characters", variant: "destructive" });
+      return;
+    }
+    if (forgotNewPw !== forgotConfirm) {
+      toast({ title: "Passwords don't match", variant: "destructive" });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await resetPassword(forgotName.trim(), forgotNewPw);
+      toast({ title: "Password updated! You can now sign in." });
+      setForgotName(""); setForgotNewPw(""); setForgotConfirm("");
+      setScreen("sign-in");
+    } catch (err: unknown) {
+      toast({
+        title: err instanceof Error ? err.message : "Reset failed",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const goBack = () => {
     if (screen === "join-gym") setScreen("join-name");
     else if (screen === "join-interests") setScreen("join-gym");
+    else if (screen === "forgot") setScreen("sign-in");
     else setScreen("landing");
   };
 
@@ -236,11 +272,87 @@ export default function Welcome() {
           </button>
 
           <button
+            onClick={() => setScreen("forgot")}
+            className="mt-3 text-sm text-center w-full opacity-60 hover:opacity-100 transition-opacity"
+            style={{ color: "hsl(var(--foreground))" }}
+          >
+            Forgot password?
+          </button>
+
+          <button
             onClick={() => setScreen("join-name")}
-            className="mt-4 text-sm font-semibold text-center w-full"
+            className="mt-2 text-sm font-semibold text-center w-full"
             style={{ color: "hsl(var(--primary))" }}
           >
             New here? Join GymLink
+          </button>
+        </div>
+      )}
+
+      {/* Forgot password */}
+      {screen === "forgot" && (
+        <div className="flex-1 flex flex-col px-6 pt-20 max-w-md mx-auto w-full">
+          <div className="mb-8">
+            <h2 className="text-2xl font-extrabold tracking-tight">Reset password</h2>
+            <p className="text-sm opacity-60 mt-1">Enter your display name and choose a new password.</p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="section-label block mb-2">Your Name</label>
+              <Input
+                placeholder="Alex Rivera"
+                value={forgotName}
+                onChange={(e) => setForgotName(e.target.value)}
+                className="h-11 text-sm"
+              />
+            </div>
+            <div>
+              <label className="section-label block mb-2">New Password</label>
+              <div className="relative">
+                <Input
+                  type={showForgotPw ? "text" : "password"}
+                  placeholder="At least 6 characters"
+                  value={forgotNewPw}
+                  onChange={(e) => setForgotNewPw(e.target.value)}
+                  className="h-11 text-sm pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPw((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-80"
+                >
+                  {showForgotPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="section-label block mb-2">Confirm New Password</label>
+              <Input
+                type="password"
+                placeholder="Repeat new password"
+                value={forgotConfirm}
+                onChange={(e) => setForgotConfirm(e.target.value)}
+                className="h-11 text-sm"
+                onKeyDown={(e) => e.key === "Enter" && handleForgotPassword()}
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={handleForgotPassword}
+            disabled={isSubmitting}
+            className="mt-8 w-full py-3.5 rounded-xl font-bold text-base text-white flex items-center justify-center gap-2 disabled:opacity-60"
+            style={{ background: "hsl(var(--primary))" }}
+          >
+            <Check className="w-4 h-4" />
+            {isSubmitting ? "Updating…" : "Update Password"}
+          </button>
+
+          <button
+            onClick={() => setScreen("sign-in")}
+            className="mt-4 text-sm text-center w-full opacity-60 hover:opacity-100"
+          >
+            Back to Sign In
           </button>
         </div>
       )}

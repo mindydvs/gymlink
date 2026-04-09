@@ -23,7 +23,7 @@ import { useListGyms } from "@workspace/api-client-react";
 const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
 const BASE = `${API_BASE}/gymlink-mobile`;
 
-type Screen = "landing" | "sign-in" | "join-1" | "join-2";
+type Screen = "landing" | "sign-in" | "forgot" | "join-1" | "join-2";
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
@@ -41,6 +41,34 @@ export default function WelcomeScreen() {
   const [joinConfirm, setJoinConfirm] = useState("");
   const [showJoinPw, setShowJoinPw] = useState(false);
   const [showJoinConfirm, setShowJoinConfirm] = useState(false);
+
+  const [forgotName, setForgotName] = useState("");
+  const [forgotNewPw, setForgotNewPw] = useState("");
+  const [forgotConfirm, setForgotConfirm] = useState("");
+  const [showForgotPw, setShowForgotPw] = useState(false);
+
+  const handleForgotPassword = async () => {
+    if (!forgotName.trim()) { Alert.alert("Missing info", "Please enter your name."); return; }
+    if (forgotNewPw.length < 6) { Alert.alert("Weak password", "Password must be at least 6 characters."); return; }
+    if (forgotNewPw !== forgotConfirm) { Alert.alert("Passwords don't match", "Please make sure both passwords are the same."); return; }
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: forgotName.trim(), newPassword: forgotNewPw }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Reset failed");
+      Alert.alert("Password updated!", "You can now sign in with your new password.");
+      setForgotName(""); setForgotNewPw(""); setForgotConfirm("");
+      setScreen("sign-in");
+    } catch (err: unknown) {
+      Alert.alert("Reset failed", err instanceof Error ? err.message : "Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSignIn = async () => {
     if (!signInName.trim() || !signInPassword) {
@@ -219,8 +247,78 @@ export default function WelcomeScreen() {
                 )}
               </Pressable>
 
-              <Pressable onPress={() => setScreen("join-1")} style={{ marginTop: 12, alignItems: "center" }}>
+              <Pressable onPress={() => setScreen("forgot")} style={{ marginTop: 10, alignItems: "center" }}>
+                <Text style={[styles.switchText, { opacity: 0.55 }]}>Forgot password?</Text>
+              </Pressable>
+
+              <Pressable onPress={() => setScreen("join-1")} style={{ marginTop: 6, alignItems: "center" }}>
                 <Text style={styles.switchText}>New here? <Text style={styles.switchLink}>Join GymLink</Text></Text>
+              </Pressable>
+            </View>
+          )}
+
+          {screen === "forgot" && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Reset password</Text>
+              <Text style={styles.cardSub}>Enter your name and choose a new password.</Text>
+
+              <View style={styles.fields}>
+                <View style={styles.fieldWrap}>
+                  <Text style={styles.fieldLabel}>Your Name</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Alex Rivera"
+                    placeholderTextColor="rgba(255,255,255,0.35)"
+                    value={forgotName}
+                    onChangeText={setForgotName}
+                    autoCapitalize="words"
+                    returnKeyType="next"
+                  />
+                </View>
+                <View style={styles.fieldWrap}>
+                  <Text style={styles.fieldLabel}>New Password</Text>
+                  <View style={styles.pwRow}>
+                    <TextInput
+                      style={[styles.input, { flex: 1 }]}
+                      placeholder="At least 6 characters"
+                      placeholderTextColor="rgba(255,255,255,0.35)"
+                      value={forgotNewPw}
+                      onChangeText={setForgotNewPw}
+                      secureTextEntry={!showForgotPw}
+                      returnKeyType="next"
+                    />
+                    <Pressable onPress={() => setShowForgotPw((v) => !v)} style={styles.eyeBtn} hitSlop={8}>
+                      <Ionicons name={showForgotPw ? "eye-off-outline" : "eye-outline"} size={20} color="rgba(255,255,255,0.5)" />
+                    </Pressable>
+                  </View>
+                </View>
+                <View style={styles.fieldWrap}>
+                  <Text style={styles.fieldLabel}>Confirm New Password</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Repeat new password"
+                    placeholderTextColor="rgba(255,255,255,0.35)"
+                    value={forgotConfirm}
+                    onChangeText={setForgotConfirm}
+                    secureTextEntry
+                    returnKeyType="done"
+                    onSubmitEditing={handleForgotPassword}
+                  />
+                </View>
+              </View>
+
+              <Pressable
+                style={({ pressed }) => [styles.primaryBtn, { opacity: pressed || isLoading ? 0.8 : 1, marginTop: 8 }]}
+                onPress={handleForgotPassword}
+                disabled={isLoading}
+              >
+                {isLoading ? <ActivityIndicator color="#fff" size="small" /> : (
+                  <Text style={styles.primaryBtnText}>Update Password</Text>
+                )}
+              </Pressable>
+
+              <Pressable onPress={() => setScreen("sign-in")} style={{ marginTop: 12, alignItems: "center" }}>
+                <Text style={[styles.switchText, { opacity: 0.6 }]}>Back to Sign In</Text>
               </Pressable>
             </View>
           )}

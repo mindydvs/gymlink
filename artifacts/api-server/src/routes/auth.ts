@@ -94,4 +94,31 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   res.json({ userId: user.id });
 });
 
+router.post("/auth/reset-password", async (req, res): Promise<void> => {
+  const parsed = z.object({
+    name: z.string().min(1),
+    newPassword: z.string().min(6).max(128),
+  }).safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Name and a new password (min 6 characters) are required" });
+    return;
+  }
+
+  const { name, newPassword } = parsed.data;
+  const [user] = await db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .where(ilike(usersTable.name, name));
+
+  if (!user) {
+    res.status(404).json({ error: "No account found with that name" });
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  await db.update(usersTable).set({ passwordHash }).where(eq(usersTable.id, user.id));
+
+  res.json({ ok: true });
+});
+
 export default router;
