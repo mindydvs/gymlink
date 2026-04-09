@@ -144,12 +144,25 @@ export default function MemberDetailScreen() {
 
   const handleCancelSent = () => {
     if (!sentConn) return;
+    const connId = sentConn.id;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    // Optimistically remove from every cached connections list right away
+    queryClient.setQueriesData<unknown[]>(
+      { queryKey: getListConnectionsQueryKey() },
+      (old) => (old ?? []).filter((c: { id: string }) => c.id !== connId)
+    );
+
     cancelConnection(
-      { id: sentConn.id },
+      { id: connId },
       {
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() }),
-        onError: () => Alert.alert("Error", "Failed to cancel request"),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() });
+        },
+        onError: () => {
+          queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() });
+          Alert.alert("Error", "Failed to cancel request");
+        },
       }
     );
   };

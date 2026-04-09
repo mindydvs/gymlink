@@ -107,14 +107,26 @@ export default function MemberDetail() {
 
   const handleCancelSent = () => {
     if (!sentConn) return;
+    const connId = sentConn.id;
+
+    // Optimistically remove from every cached connections list
+    queryClient.setQueriesData<unknown[]>(
+      { queryKey: getListConnectionsQueryKey() },
+      (old) => (old ?? []).filter((c: { id: string }) => c.id !== connId)
+    );
+
     cancelConn.mutate(
-      { id: sentConn.id },
+      { id: connId },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() });
-          toast({ title: "Request cancelled" });
+          toast({ title: "Request withdrawn" });
         },
-        onError: () => toast({ title: "Failed to cancel", variant: "destructive" }),
+        onError: () => {
+          // Restore stale data so the user can retry
+          queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() });
+          toast({ title: "Failed to cancel", variant: "destructive" });
+        },
       }
     );
   };
