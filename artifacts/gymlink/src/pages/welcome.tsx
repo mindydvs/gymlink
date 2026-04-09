@@ -153,35 +153,31 @@ export default function Welcome() {
 
       {/* Landing */}
       {screen === "landing" && (
-        <div style={{ position: "relative", minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
-          {/* Fixed background — always covers the full viewport */}
-          <div style={{ position: "fixed", inset: 0, zIndex: 0, backgroundColor: "#0A0D1A" }}>
+        <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", backgroundColor: "#0A0D1A" }}>
+
+          {/* TOP SECTION — solid dark, logo lives here, no image behind it */}
+          <div style={{ backgroundColor: "#0A0D1A", display: "flex", justifyContent: "center", alignItems: "center", padding: "clamp(16px, 3.5vh, 40px) 16px clamp(12px, 2vh, 24px)" }}>
             <img
-              src="/hero-gym2.jpeg"
-              alt=""
-              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%", display: "block" }}
-            />
-            <div
-              style={{
-                position: "absolute", inset: 0,
-                background: "linear-gradient(to bottom, rgba(10,13,26,0.75) 0%, rgba(10,13,26,0.55) 22%, rgba(10,13,26,0.10) 45%, rgba(10,13,26,0.55) 72%, rgba(10,13,26,1) 88%, rgba(10,13,26,1) 100%)",
-              }}
+              src={logoImg}
+              alt="GymLink"
+              className="drop-shadow-2xl"
+              style={{ width: "clamp(180px, 55vw, 280px)", height: "auto" }}
             />
           </div>
 
-          {/* Content: logo fills top, cta anchored bottom */}
-          <div style={{ position: "relative", zIndex: 1, minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
-            {/* Logo — pinned to the top, clear of the face */}
-            <div style={{ display: "flex", justifyContent: "center", paddingTop: "clamp(12px, 3vh, 28px)", paddingLeft: 16, paddingRight: 16 }}>
-              <img
-                src={logoImg}
-                alt="GymLink"
-                className="drop-shadow-2xl"
-                style={{ width: "min(70vw, 28vh)", height: "auto", maxWidth: "70vw" }}
-              />
-            </div>
-            {/* Spacer to push CTA down */}
-            <div style={{ flex: 1 }} />
+          {/* PHOTO SECTION — image only here, never behind logo */}
+          <div style={{ height: "42vh", minHeight: 200, maxHeight: 480, position: "relative", overflow: "hidden" }}>
+            <img
+              src="/hero-gym2.jpeg"
+              alt=""
+              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 30%", display: "block" }}
+            />
+            {/* fade top and bottom edges into dark */}
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(10,13,26,0.4) 0%, transparent 20%, transparent 65%, rgba(10,13,26,1) 100%)" }} />
+          </div>
+
+          {/* BOTTOM SECTION — solid dark, CTA */}
+          <div style={{ backgroundColor: "#0A0D1A" }}>
 
             {/* CTA — lower section */}
             <div className="px-6 pb-8 text-center" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
