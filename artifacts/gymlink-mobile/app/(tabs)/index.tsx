@@ -56,6 +56,8 @@ export default function FeedScreen() {
 
   const otherMembers = members?.filter((m) => m.id !== userId) ?? [];
 
+  const meId = me?.id ?? userId ?? "";
+
   const panelMembers = (() => {
     if (!activePanel) return [];
     if (activePanel === "activeNow") return otherMembers.filter((m) => m.activeNow);
@@ -63,20 +65,20 @@ export default function FeedScreen() {
     if (activePanel === "crush") {
       // Only show mutual crushes — people I crushed who also crushed me back
       const iCrushed = new Set(
-        (connections ?? []).filter((c) => c.type === "crush" && c.fromUserId === userId).map((c) => c.toUserId)
+        (connections ?? []).filter((c) => c.type === "crush" && c.fromUserId === meId).map((c) => c.toUserId)
       );
       const theyCrushedMe = new Set(
-        (connections ?? []).filter((c) => c.type === "crush" && c.toUserId === userId).map((c) => c.fromUserId)
+        (connections ?? []).filter((c) => c.type === "crush" && c.toUserId === meId).map((c) => c.fromUserId)
       );
       const mutualIds = new Set([...iCrushed].filter((id) => theyCrushedMe.has(id)));
-      return otherMembers.filter((m) => mutualIds.has(m.id));
+      return otherMembers.filter((m) => m.id !== meId && mutualIds.has(m.id));
     }
     const connectedIds = new Set(
       (connections ?? [])
         .filter((c) => c.type === activePanel && c.status === "accepted")
-        .map((c) => (c.fromUserId === userId ? c.toUserId : c.fromUserId))
+        .map((c) => (c.fromUserId === meId ? c.toUserId : c.fromUserId))
     );
-    return otherMembers.filter((m) => connectedIds.has(m.id));
+    return otherMembers.filter((m) => m.id !== meId && connectedIds.has(m.id));
   })();
 
   const statItems: { label: string; value: number; color: string; key: PanelKey }[] = stats
