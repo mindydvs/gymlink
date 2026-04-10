@@ -1,12 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Animated,
   FlatList,
+  Image,
   Platform,
   Pressable,
   RefreshControl,
@@ -26,10 +27,249 @@ import {
   useListConnections,
   useCreateConnection,
   useCancelConnection,
+  useListRecipes,
   getListConnectionsQueryKey,
   getListUsersQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+
+const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+
+function mediaUrl(objectPath: string) {
+  return `${API_BASE}/api/storage${objectPath}`;
+}
+
+function timeAgo(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+type RecipeItem = {
+  id: string;
+  title: string;
+  description?: string | null;
+  ingredients: string[];
+  steps: string[];
+  mediaObjectPath?: string | null;
+  mediaType?: string | null;
+  createdAt: string;
+};
+
+type ColorsType = ReturnType<typeof useColors>;
+
+function RecipeCard({ recipe, colors }: { recipe: RecipeItem; colors: ColorsType }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasImage = recipe.mediaObjectPath && recipe.mediaType !== "video";
+  const hasVideo = recipe.mediaObjectPath && recipe.mediaType === "video";
+
+  return (
+    <Pressable
+      onPress={() => setExpanded((v) => !v)}
+      style={({ pressed }) => [
+        recipeStyles.card,
+        { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.85 : 1 },
+      ]}
+    >
+      {hasImage ? (
+        <Image
+          source={{ uri: mediaUrl(recipe.mediaObjectPath!) }}
+          style={recipeStyles.thumbnail}
+          resizeMode="cover"
+        />
+      ) : hasVideo ? (
+        <View style={[recipeStyles.videoThumb, { backgroundColor: colors.muted }]}>
+          <Ionicons name="play-circle-outline" size={32} color={colors.mutedForeground} />
+        </View>
+      ) : null}
+
+      <View style={recipeStyles.cardBody}>
+        <View style={recipeStyles.cardRow}>
+          <Ionicons name="restaurant-outline" size={15} color={colors.primary} style={{ marginTop: 1 }} />
+          <Text style={[recipeStyles.title, { color: colors.foreground }]} numberOfLines={2}>
+            {recipe.title}
+          </Text>
+        </View>
+        {recipe.description ? (
+          <Text style={[recipeStyles.desc, { color: colors.mutedForeground }]} numberOfLines={expanded ? undefined : 2}>
+            {recipe.description}
+          </Text>
+        ) : null}
+
+        <View style={recipeStyles.metaRow}>
+          {recipe.ingredients.length > 0 && (
+            <View style={[recipeStyles.metaPill, { backgroundColor: `${colors.advisor}18` }]}>
+              <Ionicons name="list-outline" size={11} color={colors.advisor} />
+              <Text style={[recipeStyles.metaText, { color: colors.advisor }]}>
+                {recipe.ingredients.length} ingredients
+              </Text>
+            </View>
+          )}
+          {recipe.steps.length > 0 && (
+            <View style={[recipeStyles.metaPill, { backgroundColor: `${colors.buddy}18` }]}>
+              <Ionicons name="footsteps-outline" size={11} color={colors.buddy} />
+              <Text style={[recipeStyles.metaText, { color: colors.buddy }]}>
+                {recipe.steps.length} steps
+              </Text>
+            </View>
+          )}
+          <Text style={[recipeStyles.time, { color: colors.mutedForeground }]}>
+            {timeAgo(recipe.createdAt)}
+          </Text>
+        </View>
+
+        {expanded && (
+          <View style={recipeStyles.expandedSection}>
+            {recipe.ingredients.length > 0 && (
+              <View style={recipeStyles.expandBlock}>
+                <Text style={[recipeStyles.expandLabel, { color: colors.foreground }]}>Ingredients</Text>
+                {recipe.ingredients.map((ing, i) => (
+                  <View key={i} style={recipeStyles.expandItem}>
+                    <View style={[recipeStyles.bullet, { backgroundColor: colors.primary }]} />
+                    <Text style={[recipeStyles.expandText, { color: colors.mutedForeground }]}>{ing}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            {recipe.steps.length > 0 && (
+              <View style={recipeStyles.expandBlock}>
+                <Text style={[recipeStyles.expandLabel, { color: colors.foreground }]}>Steps</Text>
+                {recipe.steps.map((step, i) => (
+                  <View key={i} style={recipeStyles.expandItem}>
+                    <Text style={[recipeStyles.stepNum, { color: colors.primary }]}>{i + 1}.</Text>
+                    <Text style={[recipeStyles.expandText, { color: colors.mutedForeground }]}>{step}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+
+        <View style={recipeStyles.expandHint}>
+          <Ionicons
+            name={expanded ? "chevron-up-outline" : "chevron-down-outline"}
+            size={14}
+            color={colors.mutedForeground}
+          />
+          <Text style={[recipeStyles.expandHintText, { color: colors.mutedForeground }]}>
+            {expanded ? "Collapse" : "See ingredients & steps"}
+          </Text>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+const recipeStyles = StyleSheet.create({
+  card: {
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 10,
+    overflow: "hidden",
+  },
+  thumbnail: {
+    width: "100%",
+    height: 160,
+  },
+  videoThumb: {
+    width: "100%",
+    height: 120,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardBody: {
+    padding: 12,
+    gap: 6,
+  },
+  cardRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+  },
+  title: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+    flex: 1,
+  },
+  desc: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  metaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 2,
+  },
+  metaPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  metaText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 11,
+  },
+  time: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    marginLeft: "auto",
+  },
+  expandedSection: {
+    gap: 10,
+    marginTop: 4,
+  },
+  expandBlock: {
+    gap: 4,
+  },
+  expandLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  expandItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  bullet: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    marginTop: 7,
+  },
+  stepNum: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    minWidth: 18,
+  },
+  expandText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    flex: 1,
+    lineHeight: 18,
+  },
+  expandHint: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 4,
+    justifyContent: "center",
+  },
+  expandHintText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+  },
+});
 
 const CONNECTION_TYPES = [
   { type: "crush" as const, label: "Gym Crush", icon: "heart-outline" as const, anonymous: true },
@@ -66,6 +306,8 @@ export default function MemberDetailScreen() {
   const { data: videos, refetch: refetchVideos } = useListWorkoutVideos({
     userId: id ?? "",
   });
+
+  const { data: memberRecipes, refetch: refetchRecipes } = useListRecipes({ userId: id ?? "" });
 
   const { data: connections } = useListConnections({});
   const { mutate: createConnection, isPending: connecting } = useCreateConnection();
@@ -214,7 +456,7 @@ export default function MemberDetailScreen() {
       <FlatList
         data={videos ?? []}
         keyExtractor={(item) => item.id}
-        scrollEnabled={!!(videos?.length)}
+        scrollEnabled
         style={{ backgroundColor: colors.background }}
         contentContainerStyle={[
           styles.list,
@@ -226,6 +468,7 @@ export default function MemberDetailScreen() {
             onRefresh={() => {
               refetch();
               refetchVideos();
+              refetchRecipes();
             }}
             tintColor={colors.primary}
           />
@@ -550,6 +793,38 @@ export default function MemberDetailScreen() {
             <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
               No videos yet
             </Text>
+          </View>
+        }
+        ListFooterComponent={
+          <View style={styles.recipesSection}>
+            <View style={[styles.separator, { backgroundColor: colors.border }]} />
+            <View style={styles.recipesSectionHeader}>
+              <Ionicons name="restaurant-outline" size={18} color={colors.foreground} />
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+                Recipes
+              </Text>
+            </View>
+            {!memberRecipes || memberRecipes.length === 0 ? (
+              <View style={styles.recipesEmpty}>
+                <Ionicons name="restaurant-outline" size={32} color={colors.mutedForeground} />
+                <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+                  No recipes yet
+                </Text>
+              </View>
+            ) : (
+              (memberRecipes as Array<{
+                id: string;
+                title: string;
+                description?: string | null;
+                ingredients: string[];
+                steps: string[];
+                mediaObjectPath?: string | null;
+                mediaType?: string | null;
+                createdAt: string;
+              }>).map((recipe) => (
+                <RecipeCard key={recipe.id} recipe={recipe} colors={colors} />
+              ))
+            )}
           </View>
         }
         renderItem={({ item }) => (
@@ -897,5 +1172,20 @@ const styles = StyleSheet.create({
   cancelBtnText: {
     fontFamily: "Inter_700Bold",
     fontSize: 13,
+  },
+  recipesSection: {
+    marginTop: 4,
+    paddingBottom: 32,
+  },
+  recipesSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  recipesEmpty: {
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 24,
   },
 });
