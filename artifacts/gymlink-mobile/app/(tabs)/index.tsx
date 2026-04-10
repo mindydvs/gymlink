@@ -1,12 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Image,
+  Modal,
   Platform,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -19,14 +21,26 @@ import { useUser } from "@/context/UserContext";
 import {
   useGetGymStats,
   useGetMe,
+  useListConnections,
   useListUsers,
 } from "@workspace/api-client-react";
 import { router } from "expo-router";
+
+type PanelKey = "activeNow" | "members" | "crush" | "buddy";
+
+const PANEL_META: Record<PanelKey, { title: string; color: string }> = {
+  activeNow: { title: "Active Now",     color: "#12B76A" },
+  members:   { title: "All Members",    color: "#00C4E8" },
+  crush:     { title: "Gym Crushes",    color: "#E8193C" },
+  buddy:     { title: "Workout Buddies",color: "#0B9ED9" },
+};
 
 export default function FeedScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { userId } = useUser();
+
+  const [activePanel, setActivePanel] = useState<PanelKey | null>(null);
 
   const { data: me } = useGetMe();
   const { data: stats, refetch: refetchStats } = useGetGymStats();
@@ -36,22 +50,106 @@ export default function FeedScreen() {
     refetch: refetchMembers,
     isRefetching,
   } = useListUsers({ gym: me?.gymId ?? undefined });
+  const { data: connections } = useListConnections();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
-  const statItems = stats
+  const otherMembers = members?.filter((m) => m.id !== userId) ?? [];
+
+  const panelMembers = (() => {
+    if (!activePanel) return [];
+    if (activePanel === "activeNow") return otherMembers.filter((m) => m.activeNow);
+    if (activePanel === "members") return otherMembers;
+    const type = activePanel;
+    const connectedIds = new Set(
+      (connections ?? [])
+        .filter((c) => c.type === type && c.status === "accepted")
+        .map((c) => (c.requesterId === userId ? c.receiverId : c.requesterId))
+    );
+    return otherMembers.filter((m) => connectedIds.has(m.id));
+  })();
+
+  const statItems: { label: string; value: number; color: string; key: PanelKey }[] = stats
     ? [
-        { label: "Active Now", value: stats.activeNow, color: colors.advisor },
-        { label: "Members", value: stats.totalMembers, color: colors.brandCyan },
-        { label: "Crushes", value: stats.crushCount, color: colors.crush },
-        { label: "Buddies", value: stats.buddyCount, color: colors.buddy },
+        { label: "Active Now", value: stats.activeNow,    color: colors.advisor,   key: "activeNow" },
+        { label: "Members",    value: stats.totalMembers, color: colors.brandCyan, key: "members"   },
+        { label: "Crushes",    value: stats.crushCount,   color: colors.crush,     key: "crush"     },
+        { label: "Buddies",    value: stats.buddyCount,   color: colors.buddy,     key: "buddy"     },
       ]
     : [];
 
-  const otherMembers = members?.filter((m) => m.id !== userId) ?? [];
+  const meta = activePanel ? PANEL_META[activePanel] : null;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* ── Stat panel bottom sheet ── */}
+      <Modal
+        visible={!!activePanel}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setActivePanel(null)}
+      >
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          {/* Header */}
+          <View style={{
+            flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+            paddingHorizontal: 20, paddingTop: 24, paddingBottom: 16,
+            borderBottomWidth: 1, borderBottomColor: colors.border,
+          }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <View style={{ width: 4, height: 22, borderRadius: 2, backgroundColor: meta?.color ?? colors.primary }} />
+              <Text style={{ color: colors.foreground, fontFamily: "Inter_700Bold", fontSize: 18 }}>
+                {meta?.title}
+              </Text>
+              <View style={{ backgroundColor: colors.card, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 }}>
+                <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_700Bold", fontSize: 13 }}>
+                  {panelMembers.length}
+                </Text>
+              </View>
+            </View>
+            <Pressable
+              onPress={() => setActivePanel(null)}
+              hitSlop={12}
+              style={{ backgroundColor: colors.card, borderRadius: 16, width: 32, height: 32, alignItems: "center", justifyContent: "center" }}
+            >
+              <Ionicons name="close" size={18} color={colors.foreground} />
+            </Pressable>
+          </View>
+
+          {/* Member list */}
+          {panelMembers.length === 0 ? (
+            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 10 }}>
+              <Ionicons name="people-outline" size={44} color={colors.mutedForeground} />
+              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 15 }}>
+                Nobody here yet
+              </Text>
+            </View>
+          ) : (
+            <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
+              {panelMembers.map((item) => (
+                <MemberCard
+                  key={item.id}
+                  id={item.id}
+                  name={item.name}
+                  age={item.age}
+                  avatar={item.avatar}
+                  avatarUrl={item.avatarUrl}
+                  bio={item.bio}
+                  interests={item.interests}
+                  activeNow={item.activeNow}
+                  checkedIn={item.checkedIn}
+                  verified={item.verified}
+                  onPress={() => {
+                    setActivePanel(null);
+                    router.push(`/member/${item.id}`);
+                  }}
+                />
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      </Modal>
+
       <FlatList
         data={otherMembers}
         keyExtractor={(item) => item.id}
@@ -79,11 +177,17 @@ export default function FeedScreen() {
                 </Text>
                 <View style={styles.statsRow}>
                   {statItems.map((s) => (
-                    <View
+                    <Pressable
                       key={s.label}
-                      style={[
+                      onPress={() => setActivePanel(s.key)}
+                      style={({ pressed }) => [
                         styles.statBox,
-                        { backgroundColor: colors.card, borderColor: colors.border },
+                        {
+                          backgroundColor: colors.card,
+                          borderColor: activePanel === s.key ? s.color : colors.border,
+                          opacity: pressed ? 0.75 : 1,
+                        },
+                        activePanel === s.key && { shadowColor: s.color, shadowOpacity: 0.35, shadowRadius: 6, shadowOffset: { width: 0, height: 0 } },
                       ]}
                     >
                       <Text style={[styles.statValue, { color: s.color }]}>
@@ -92,7 +196,7 @@ export default function FeedScreen() {
                       <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
                         {s.label}
                       </Text>
-                    </View>
+                    </Pressable>
                   ))}
                 </View>
               </>
