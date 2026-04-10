@@ -63,7 +63,7 @@ export default function FeedScreen() {
     const type = activePanel;
     const connectedIds = new Set(
       (connections ?? [])
-        .filter((c) => c.type === type && c.status === "accepted")
+        .filter((c) => c.type === type && (type === "crush" || c.status === "accepted"))
         .map((c) => (c.requesterId === userId ? c.receiverId : c.requesterId))
     );
     return otherMembers.filter((m) => connectedIds.has(m.id));
