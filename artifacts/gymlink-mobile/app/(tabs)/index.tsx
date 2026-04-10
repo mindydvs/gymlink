@@ -38,7 +38,7 @@ const PANEL_META: Record<PanelKey, { title: string; color: string }> = {
 export default function FeedScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { userId } = useUser();
+  const { userId, logout } = useUser();
 
   const [activePanel, setActivePanel] = useState<PanelKey | null>(null);
 
@@ -253,16 +253,33 @@ export default function FeedScreen() {
           resizeMode="contain"
         />
 
-        <Pressable
-          onPress={() => router.push(`/member/${me?.id ?? userId}`)}
-          style={styles.avatarBtn}
-        >
-          <AvatarImage
-            avatarUrl={me?.avatarUrl}
-            avatarEmoji={me?.avatar}
-            size={32}
-          />
-        </Pressable>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <Pressable
+            onPress={logout}
+            style={({ pressed }) => ({
+              flexDirection: "row", alignItems: "center", gap: 5,
+              backgroundColor: "rgba(255,255,255,0.07)", borderRadius: 20,
+              paddingHorizontal: 12, paddingVertical: 7,
+              opacity: pressed ? 0.65 : 1,
+            })}
+          >
+            <Ionicons name="log-out-outline" size={16} color={colors.mutedForeground} />
+            <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_600SemiBold", fontSize: 13 }}>
+              Sign Out
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.push(`/member/${me?.id ?? userId}`)}
+            style={styles.avatarBtn}
+          >
+            <AvatarImage
+              avatarUrl={me?.avatarUrl}
+              avatarEmoji={me?.avatar}
+              size={32}
+            />
+          </Pressable>
+        </View>
       </View>
     </View>
   );
