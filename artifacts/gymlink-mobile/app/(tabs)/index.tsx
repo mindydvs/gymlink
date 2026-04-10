@@ -31,7 +31,7 @@ type PanelKey = "activeNow" | "members" | "crush" | "buddy";
 const PANEL_META: Record<PanelKey, { title: string; color: string }> = {
   activeNow: { title: "Active Now",     color: "#12B76A" },
   members:   { title: "All Members",    color: "#00C4E8" },
-  crush:     { title: "Gym Crushes",    color: "#E8193C" },
+  crush:     { title: "Mutual Crushes", color: "#E8193C" },
   buddy:     { title: "Workout Buddies",color: "#0B9ED9" },
 };
 
@@ -60,10 +60,20 @@ export default function FeedScreen() {
     if (!activePanel) return [];
     if (activePanel === "activeNow") return otherMembers.filter((m) => m.activeNow);
     if (activePanel === "members") return otherMembers;
-    const type = activePanel;
+    if (activePanel === "crush") {
+      // Only show mutual crushes — people I crushed who also crushed me back
+      const iCrushed = new Set(
+        (connections ?? []).filter((c) => c.type === "crush" && c.fromUserId === userId).map((c) => c.toUserId)
+      );
+      const theyCrushedMe = new Set(
+        (connections ?? []).filter((c) => c.type === "crush" && c.toUserId === userId).map((c) => c.fromUserId)
+      );
+      const mutualIds = new Set([...iCrushed].filter((id) => theyCrushedMe.has(id)));
+      return otherMembers.filter((m) => mutualIds.has(m.id));
+    }
     const connectedIds = new Set(
       (connections ?? [])
-        .filter((c) => c.type === type && (type === "crush" || c.status === "accepted"))
+        .filter((c) => c.type === activePanel && c.status === "accepted")
         .map((c) => (c.fromUserId === userId ? c.toUserId : c.fromUserId))
     );
     return otherMembers.filter((m) => connectedIds.has(m.id));

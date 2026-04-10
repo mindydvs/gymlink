@@ -225,15 +225,26 @@ export default function Home() {
     });
   };
 
-  const connectedByType = (type: ConnType) =>
-    connections
+  const connectedByType = (type: ConnType) => {
+    if (type === "crush") {
+      // Only mutual crushes — I crushed them AND they crushed me back
+      const iCrushed = new Set(connections.filter((c) => c.type === "crush" && c.fromUserId === myId).map((c) => c.toUserId));
+      const theyCrushedMe = new Set(connections.filter((c) => c.type === "crush" && c.toUserId === myId).map((c) => c.fromUserId));
+      const mutualIds = new Set([...iCrushed].filter((id) => theyCrushedMe.has(id)));
+      return connections
+        .filter((c) => c.type === "crush" && c.fromUserId === myId && mutualIds.has(c.toUserId))
+        .map((c) => ({ id: c.toUserId, ...(c.toUser ?? {}) } as MiniPerson & { id: string }))
+        .filter((x) => x.name != null && x.id !== myId);
+    }
+    return connections
       .filter((c) => c.type === type)
       .map((c) => {
         const other = c.fromUserId === myId ? c.toUser : c.fromUser;
         const otherId = c.fromUserId === myId ? c.toUserId : c.fromUserId;
         return { id: otherId, ...(other ?? {}) } as MiniPerson & { id: string };
       })
-      .filter((x) => x.name != null);
+      .filter((x) => x.name != null && x.id !== myId);
+  };
 
   const allOtherUsers: MiniPerson[] = users.filter((u) => !u.isMe);
   const activeUsers: MiniPerson[] = allOtherUsers.filter((u) => u.activeNow);
