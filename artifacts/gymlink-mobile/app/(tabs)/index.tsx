@@ -64,7 +64,7 @@ export default function FeedScreen() {
     const connectedIds = new Set(
       (connections ?? [])
         .filter((c) => c.type === type && (type === "crush" || c.status === "accepted"))
-        .map((c) => (c.requesterId === userId ? c.receiverId : c.requesterId))
+        .map((c) => (c.fromUserId === userId ? c.toUserId : c.fromUserId))
     );
     return otherMembers.filter((m) => connectedIds.has(m.id));
   })();
