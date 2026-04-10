@@ -186,20 +186,25 @@ export default function RecipesScreen() {
     ]);
   };
 
-  const launchPicker = async (source: "library" | "camera", mediaTypes: "images" | "videos") => {
+  const pickMedia = async (source: "library" | "camera", mediaTypes: "images" | "videos") => {
+    console.log("[Recipes] pickMedia called", source, mediaTypes);
+    Alert.alert("Debug", `Tapped: ${source} / ${mediaTypes}`, [{ text: "OK" }]);
+    setPicking(true);
+    setShowAddSheet(false);
+
     try {
       let result: ImagePicker.ImagePickerResult;
 
       if (source === "camera") {
+        console.log("[Recipes] requesting camera permission");
         const perm = await ImagePicker.requestCameraPermissionsAsync();
+        console.log("[Recipes] camera perm granted:", perm.granted);
         if (!perm.granted) {
-          Alert.alert(
-            "Camera Access Needed",
-            "Please allow camera access in Settings to take photos or videos.",
-            [{ text: "OK" }]
-          );
+          Alert.alert("Camera Access Needed", "Please allow camera access in Settings to take photos or videos.", [{ text: "OK" }]);
+          setPicking(false);
           return;
         }
+        console.log("[Recipes] launching camera for", mediaTypes);
         result = await ImagePicker.launchCameraAsync({
           mediaTypes,
           quality: 0.8,
@@ -207,15 +212,15 @@ export default function RecipesScreen() {
           allowsEditing: false,
         });
       } else {
+        console.log("[Recipes] requesting library permission");
         const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        console.log("[Recipes] library perm granted:", perm.granted);
         if (!perm.granted) {
-          Alert.alert(
-            "Photo Library Access Needed",
-            "Please allow photo library access in Settings to pick photos or videos.",
-            [{ text: "OK" }]
-          );
+          Alert.alert("Photo Library Access Needed", "Please allow photo library access in Settings to pick photos or videos.", [{ text: "OK" }]);
+          setPicking(false);
           return;
         }
+        console.log("[Recipes] launching library for", mediaTypes);
         result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes,
           quality: 1,
@@ -223,7 +228,11 @@ export default function RecipesScreen() {
         });
       }
 
-      if (!result || result.canceled || !result.assets?.[0]) return;
+      console.log("[Recipes] result canceled:", result?.canceled, "assets:", result?.assets?.length);
+      if (!result || result.canceled || !result.assets?.[0]) {
+        setPicking(false);
+        return;
+      }
 
       const asset = result.assets[0];
       const uri = asset.uri;
@@ -233,26 +242,14 @@ export default function RecipesScreen() {
       const fileName = parts[parts.length - 1] ?? `media-${Date.now()}`;
 
       clearPendingRecipeMedia();
-      setPendingRecipeMedia({
-        uri,
-        mimeType,
-        fileSize,
-        fileName,
-        mediaType: mediaTypes === "videos" ? "video" : "image",
-      });
+      setPendingRecipeMedia({ uri, mimeType, fileSize, fileName, mediaType: mediaTypes === "videos" ? "video" : "image" });
       router.push("/add-recipe");
     } catch (err) {
+      console.log("[Recipes] picker error:", err);
       Alert.alert("Error", "Could not open media picker. Please try again.");
     } finally {
       setPicking(false);
     }
-  };
-
-  const pickMedia = (source: "library" | "camera", mediaTypes: "images" | "videos") => {
-    setShowAddSheet(false);
-    setPicking(true);
-    // Give the bottom sheet time to fully dismiss before launching the native picker
-    setTimeout(() => launchPicker(source, mediaTypes), 400);
   };
 
   const goToAddNoMedia = () => {
