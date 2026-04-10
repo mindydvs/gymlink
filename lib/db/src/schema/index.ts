@@ -4,3 +4,4 @@ export * from "./notifications";
 export * from "./gyms";
 export * from "./workout-videos";
 export * from "./video-likes";
+export * from "./recipes";

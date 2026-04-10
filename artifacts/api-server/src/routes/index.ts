@@ -8,6 +8,7 @@ import gymsRouter from "./gyms";
 import authRouter from "./auth";
 import storageRouter from "./storage";
 import videosRouter from "./videos";
+import recipesRouter from "./recipes";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(notificationsRouter);
 router.use(statsRouter);
 router.use(storageRouter);
 router.use(videosRouter);
+router.use(recipesRouter);
 
 export default router;

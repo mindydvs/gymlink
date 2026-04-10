@@ -176,3 +176,36 @@ export type ListConnectionsParams = {
 export type ListWorkoutVideosParams = {
   userId?: string;
 };
+
+export interface RecipeUser {
+  id: string;
+  name: string;
+  avatar?: string | null;
+  avatarUrl?: string | null;
+}
+
+export interface Recipe {
+  id: string;
+  userId: string;
+  title: string;
+  description?: string | null;
+  ingredients: string[];
+  steps: string[];
+  mediaObjectPath?: string | null;
+  mediaType?: string | null;
+  createdAt: string;
+  user?: RecipeUser | null;
+}
+
+export interface CreateRecipeBody {
+  title: string;
+  description?: string;
+  ingredients?: string[];
+  steps?: string[];
+  mediaObjectPath?: string;
+  mediaType?: string;
+}
+
+export type ListRecipesParams = {
+  userId?: string;
+};

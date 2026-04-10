@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutGrid, Users, Link2, Bell, UserCircle } from "lucide-react";
+import { LayoutGrid, Users, Link2, Bell, UserCircle, ChefHat } from "lucide-react";
 import { ReactNode } from "react";
 import { useListNotifications } from "@workspace/api-client-react";
 import logoImg from "/logo.png";
@@ -8,6 +8,7 @@ const navItems = [
   { href: "/", icon: LayoutGrid, label: "Dashboard" },
   { href: "/members", icon: Users, label: "Members" },
   { href: "/connections", icon: Link2, label: "Connections" },
+  { href: "/recipes", icon: ChefHat, label: "Recipes" },
   { href: "/notifications", icon: Bell, label: "Alerts" },
   { href: "/profile", icon: UserCircle, label: "Profile" },
 ];

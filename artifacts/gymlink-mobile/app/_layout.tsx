@@ -60,6 +60,7 @@ function RootLayoutNav() {
       <Stack.Screen name="member/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
       <Stack.Screen name="upload-video" options={{ headerShown: false }} />
+      <Stack.Screen name="add-recipe" options={{ headerShown: false }} />
     </Stack>
   );
 }

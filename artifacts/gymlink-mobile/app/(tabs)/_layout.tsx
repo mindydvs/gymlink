@@ -24,6 +24,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "link", selected: "link" }} />
         <Label>Connections</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="recipes">
+        <Icon sf={{ default: "fork.knife", selected: "fork.knife" }} />
+        <Label>Recipes</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
         <Icon sf={{ default: "person", selected: "person.fill" }} />
         <Label>Profile</Label>
@@ -105,6 +109,18 @@ function ClassicTabLayout() {
               <SymbolView name="link" tintColor={color} size={24} />
             ) : (
               <Ionicons name="link-outline" size={22} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="recipes"
+        options={{
+          title: "Recipes",
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="fork.knife" tintColor={color} size={24} />
+            ) : (
+              <Ionicons name="restaurant-outline" size={22} color={color} />
             ),
         }}
       />

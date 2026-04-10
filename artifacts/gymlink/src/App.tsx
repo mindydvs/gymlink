@@ -12,6 +12,7 @@ import MemberDetail from "./pages/member-detail";
 import Connections from "./pages/connections";
 import Notifications from "./pages/notifications";
 import Profile from "./pages/profile";
+import Recipes from "./pages/recipes";
 import Layout from "./components/layout";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ function Router() {
         <Route path="/connections" component={Connections} />
         <Route path="/notifications" component={Notifications} />
         <Route path="/profile" component={Profile} />
+        <Route path="/recipes" component={Recipes} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
