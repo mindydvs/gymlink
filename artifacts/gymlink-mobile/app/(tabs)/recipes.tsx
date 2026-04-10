@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -166,6 +166,10 @@ export default function RecipesScreen() {
 
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [picking, setPicking] = useState(false);
+  const pendingPickRef = useRef<{
+    source: "library" | "camera";
+    mediaTypes: "images" | "videos";
+  } | null>(null);
 
   const handleDelete = (id: string) => {
     Alert.alert("Delete Recipe", "Remove this recipe?", [
@@ -186,25 +190,33 @@ export default function RecipesScreen() {
     ]);
   };
 
-  const pickMedia = async (source: "library" | "camera", mediaTypes: "images" | "videos") => {
-    console.log("[Recipes] pickMedia called", source, mediaTypes);
-    Alert.alert("Debug", `Tapped: ${source} / ${mediaTypes}`, [{ text: "OK" }]);
-    setPicking(true);
+  // Step 1: store the selection and close the sheet.
+  // The actual picker launches in onDismiss, after the modal is fully gone (iOS requirement).
+  const pickMedia = (source: "library" | "camera", mediaTypes: "images" | "videos") => {
+    pendingPickRef.current = { source, mediaTypes };
     setShowAddSheet(false);
+  };
+
+  // Step 2: called by Modal's onDismiss once the sheet has fully closed.
+  const handleSheetDismiss = async () => {
+    if (!pendingPickRef.current) return;
+    const { source, mediaTypes } = pendingPickRef.current;
+    pendingPickRef.current = null;
+    setPicking(true);
 
     try {
       let result: ImagePicker.ImagePickerResult;
 
       if (source === "camera") {
-        console.log("[Recipes] requesting camera permission");
         const perm = await ImagePicker.requestCameraPermissionsAsync();
-        console.log("[Recipes] camera perm granted:", perm.granted);
         if (!perm.granted) {
-          Alert.alert("Camera Access Needed", "Please allow camera access in Settings to take photos or videos.", [{ text: "OK" }]);
-          setPicking(false);
+          Alert.alert(
+            "Camera Access Needed",
+            "Open Settings and allow GymLink to access your camera.",
+            [{ text: "OK" }]
+          );
           return;
         }
-        console.log("[Recipes] launching camera for", mediaTypes);
         result = await ImagePicker.launchCameraAsync({
           mediaTypes,
           quality: 0.8,
@@ -212,15 +224,15 @@ export default function RecipesScreen() {
           allowsEditing: false,
         });
       } else {
-        console.log("[Recipes] requesting library permission");
         const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        console.log("[Recipes] library perm granted:", perm.granted);
         if (!perm.granted) {
-          Alert.alert("Photo Library Access Needed", "Please allow photo library access in Settings to pick photos or videos.", [{ text: "OK" }]);
-          setPicking(false);
+          Alert.alert(
+            "Photo Library Access Needed",
+            "Open Settings and allow GymLink to access your photo library.",
+            [{ text: "OK" }]
+          );
           return;
         }
-        console.log("[Recipes] launching library for", mediaTypes);
         result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes,
           quality: 1,
@@ -228,11 +240,7 @@ export default function RecipesScreen() {
         });
       }
 
-      console.log("[Recipes] result canceled:", result?.canceled, "assets:", result?.assets?.length);
-      if (!result || result.canceled || !result.assets?.[0]) {
-        setPicking(false);
-        return;
-      }
+      if (!result || result.canceled || !result.assets?.[0]) return;
 
       const asset = result.assets[0];
       const uri = asset.uri;
@@ -244,8 +252,7 @@ export default function RecipesScreen() {
       clearPendingRecipeMedia();
       setPendingRecipeMedia({ uri, mimeType, fileSize, fileName, mediaType: mediaTypes === "videos" ? "video" : "image" });
       router.push("/add-recipe");
-    } catch (err) {
-      console.log("[Recipes] picker error:", err);
+    } catch {
       Alert.alert("Error", "Could not open media picker. Please try again.");
     } finally {
       setPicking(false);
@@ -332,6 +339,7 @@ export default function RecipesScreen() {
         visible={showAddSheet}
         transparent
         animationType="slide"
+        onDismiss={handleSheetDismiss}
         onRequestClose={() => setShowAddSheet(false)}
       >
         <Pressable style={styles.sheetOverlay} onPress={() => setShowAddSheet(false)}>
