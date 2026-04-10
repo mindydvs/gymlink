@@ -31,7 +31,15 @@
         }
       ],
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "GymLink needs access to your photo library to add recipe photos and videos.",
+          "cameraPermission": "GymLink needs access to your camera to take photos and record videos for recipes.",
+          "microphonePermission": "GymLink needs microphone access to record videos for recipes."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -186,36 +186,44 @@ export default function RecipesScreen() {
     ]);
   };
 
-  const pickMedia = async (source: "library" | "camera", mediaTypes: "images" | "videos") => {
-    setPicking(true);
-    setShowAddSheet(false);
-
+  const launchPicker = async (source: "library" | "camera", mediaTypes: "images" | "videos") => {
     try {
-      let result;
+      let result: ImagePicker.ImagePickerResult;
+
       if (source === "camera") {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (!perm.granted) {
-          Alert.alert("Permission needed", "Camera access is required.");
+          Alert.alert(
+            "Camera Access Needed",
+            "Please allow camera access in Settings to take photos or videos.",
+            [{ text: "OK" }]
+          );
           return;
         }
         result = await ImagePicker.launchCameraAsync({
           mediaTypes,
           quality: 0.8,
           videoMaxDuration: 120,
+          allowsEditing: false,
         });
       } else {
         const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!perm.granted) {
-          Alert.alert("Permission needed", "Photo library access is required.");
+          Alert.alert(
+            "Photo Library Access Needed",
+            "Please allow photo library access in Settings to pick photos or videos.",
+            [{ text: "OK" }]
+          );
           return;
         }
         result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes,
           quality: 1,
+          allowsEditing: false,
         });
       }
 
-      if (result.canceled || !result.assets?.[0]) return;
+      if (!result || result.canceled || !result.assets?.[0]) return;
 
       const asset = result.assets[0];
       const uri = asset.uri;
@@ -224,6 +232,7 @@ export default function RecipesScreen() {
       const parts = uri.split("/");
       const fileName = parts[parts.length - 1] ?? `media-${Date.now()}`;
 
+      clearPendingRecipeMedia();
       setPendingRecipeMedia({
         uri,
         mimeType,
@@ -232,11 +241,18 @@ export default function RecipesScreen() {
         mediaType: mediaTypes === "videos" ? "video" : "image",
       });
       router.push("/add-recipe");
-    } catch {
-      Alert.alert("Error", "Could not open media picker.");
+    } catch (err) {
+      Alert.alert("Error", "Could not open media picker. Please try again.");
     } finally {
       setPicking(false);
     }
+  };
+
+  const pickMedia = (source: "library" | "camera", mediaTypes: "images" | "videos") => {
+    setShowAddSheet(false);
+    setPicking(true);
+    // Give the bottom sheet time to fully dismiss before launching the native picker
+    setTimeout(() => launchPicker(source, mediaTypes), 400);
   };
 
   const goToAddNoMedia = () => {
@@ -344,6 +360,20 @@ export default function RecipesScreen() {
 
             <Pressable
               style={({ pressed }) => [styles.sheetOption, { borderColor: colors.border, opacity: pressed ? 0.7 : 1 }]}
+              onPress={() => pickMedia("camera", "videos")}
+            >
+              <View style={[styles.sheetOptionIcon, { backgroundColor: `${colors.crush}18` }]}>
+                <Ionicons name="videocam-outline" size={26} color={colors.crush} />
+              </View>
+              <View style={styles.sheetOptionText}>
+                <Text style={[styles.sheetOptionTitle, { color: colors.foreground }]}>Record Video</Text>
+                <Text style={[styles.sheetOptionSub, { color: colors.mutedForeground }]}>Film how it's made</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.border} />
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [styles.sheetOption, { borderColor: colors.border, opacity: pressed ? 0.7 : 1 }]}
               onPress={() => pickMedia("library", "images")}
             >
               <View style={[styles.sheetOptionIcon, { backgroundColor: `${colors.advisor}18` }]}>
@@ -361,11 +391,11 @@ export default function RecipesScreen() {
               onPress={() => pickMedia("library", "videos")}
             >
               <View style={[styles.sheetOptionIcon, { backgroundColor: `${colors.buddy}18` }]}>
-                <Ionicons name="videocam-outline" size={26} color={colors.buddy} />
+                <Ionicons name="film-outline" size={26} color={colors.buddy} />
               </View>
               <View style={styles.sheetOptionText}>
-                <Text style={[styles.sheetOptionTitle, { color: colors.foreground }]}>Add Video</Text>
-                <Text style={[styles.sheetOptionSub, { color: colors.mutedForeground }]}>Show how it's made</Text>
+                <Text style={[styles.sheetOptionTitle, { color: colors.foreground }]}>Upload Video</Text>
+                <Text style={[styles.sheetOptionSub, { color: colors.mutedForeground }]}>Pick from your library</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.border} />
             </Pressable>
