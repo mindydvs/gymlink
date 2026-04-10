@@ -72,18 +72,21 @@ export default function MemberDetailScreen() {
 
   const isMe = id === userId;
 
-  // Accepted connection (either direction)
-  const existingConn = connections?.find(
+  // All accepted connections with this person (either direction), one per type
+  const acceptedConns = connections?.filter(
     (c) =>
       c.status === "accepted" &&
       ((c.fromUserId === userId && c.toUserId === id) ||
        (c.toUserId === userId && c.fromUserId === id))
-  );
+  ) ?? [];
 
-  // Pending request already sent FROM me TO this person
-  const sentConn = connections?.find(
+  // All pending requests sent FROM me TO this person
+  const sentConns = connections?.filter(
     (c) => c.fromUserId === userId && c.toUserId === id && c.status === "pending"
-  );
+  ) ?? [];
+
+  const sentConnOfType = (type: string) => sentConns.find((c) => c.type === type);
+  const acceptedConnOfType = (type: string) => acceptedConns.find((c) => c.type === type);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
@@ -142,12 +145,9 @@ export default function MemberDetailScreen() {
     Alert.alert("Cancelled", "Request cancelled — nothing was sent");
   };
 
-  const handleCancelSent = () => {
-    if (!sentConn) return;
-    const connId = sentConn.id;
+  const handleCancelSent = (connId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    // Optimistically remove from every cached connections list right away
     queryClient.setQueriesData<unknown[]>(
       { queryKey: getListConnectionsQueryKey() },
       (old) => (old ?? []).filter((c: { id: string }) => c.id !== connId)
@@ -200,12 +200,13 @@ export default function MemberDetailScreen() {
           <Text style={[styles.topBarTitle, { color: colors.foreground }]} numberOfLines={1}>
             {member.name}
           </Text>
-          {existingConn && (
+          {acceptedConns.map((c) => (
             <ConnectionBadge
-              type={existingConn.type as "crush" | "buddy" | "advisor" | "spotter"}
+              key={c.id}
+              type={c.type as "crush" | "buddy" | "advisor" | "spotter"}
               small
             />
-          )}
+          ))}
         </View>
         <View style={{ width: 32 }} />
       </View>
@@ -296,36 +297,42 @@ export default function MemberDetailScreen() {
               </View>
             )}
 
-            {!isMe && !existingConn && (
+            {!isMe && (
               <View style={styles.connectSection}>
                 <Text style={[styles.connectLabel, { color: colors.mutedForeground }]}>
                   Connect as...
                 </Text>
                 <View style={styles.connectGrid}>
                   {CONNECTION_TYPES.map((ct) => {
-                    const wasSent = (sentConn?.type === ct.type) || (undoPending?.type === ct.type);
-                    const anyLocked = !!(sentConn || undoPending);
+                    const sent = sentConnOfType(ct.type);
+                    const accepted = acceptedConnOfType(ct.type);
+                    const wasSent = !!sent || undoPending?.type === ct.type;
+                    const thisLocked = wasSent || !!accepted;
                     return (
                       <Pressable
                         key={ct.type}
                         onPress={() => {
-                          if (anyLocked) return;
+                          if (thisLocked) return;
                           if (ct.type === "crush") {
                             setCrushPanelOpen((v) => !v);
                           } else {
                             startUndo(ct.type, false, false);
                           }
                         }}
-                        disabled={connecting || anyLocked}
+                        disabled={connecting && !crushPanelOpen}
                         style={({ pressed }) => [
                           styles.connectTile,
                           {
-                            backgroundColor: wasSent
+                            backgroundColor: accepted
+                              ? `${colors[ct.type]}15`
+                              : wasSent
                               ? `${colors[ct.type]}25`
                               : ct.type === "crush" && crushPanelOpen
                               ? `${colors.crush}25`
                               : `${colors[ct.type]}18`,
-                            borderColor: wasSent
+                            borderColor: accepted
+                              ? `${colors[ct.type]}99`
+                              : wasSent
                               ? `${colors[ct.type]}99`
                               : ct.type === "crush" && crushPanelOpen
                               ? `${colors.crush}88`
@@ -338,7 +345,12 @@ export default function MemberDetailScreen() {
                         <Text style={[styles.connectTileLabel, { color: colors[ct.type] as string }]}>
                           {ct.label}
                         </Text>
-                        {wasSent ? (
+                        {accepted ? (
+                          <View style={styles.sentRow}>
+                            <Ionicons name="checkmark-circle-outline" size={11} color={colors[ct.type] as string} />
+                            <Text style={[styles.sentLabel, { color: colors[ct.type] as string }]}>Connected</Text>
+                          </View>
+                        ) : wasSent ? (
                           <View style={styles.sentRow}>
                             <Ionicons name="paper-plane-outline" size={11} color={colors[ct.type] as string} />
                             <Text style={[styles.sentLabel, { color: colors[ct.type] as string }]}>Sent</Text>
@@ -382,21 +394,24 @@ export default function MemberDetailScreen() {
                   );
                 })()}
 
-                {sentConn && !undoPending && (
-                  <View style={[styles.sentStatus, { borderColor: colors.border, backgroundColor: colors.secondary }]}>
+                {/* Per-type sent statuses */}
+                {sentConns.filter((sc) => undoPending?.type !== sc.type).map((sc) => (
+                  <View key={sc.id} style={[styles.sentStatus, { borderColor: colors.border, backgroundColor: colors.secondary }]}>
                     <View style={styles.sentStatusTop}>
                       <View style={[styles.sentStatusIcon, { backgroundColor: colors.muted }]}>
                         <Ionicons name="paper-plane-outline" size={15} color={colors.mutedForeground} />
                       </View>
                       <View style={{ flex: 1 }}>
-                        <Text style={[styles.sentStatusTitle, { color: colors.foreground }]}>Request sent</Text>
+                        <Text style={[styles.sentStatusTitle, { color: colors.foreground }]}>
+                          {CONNECTION_TYPES.find((c) => c.type === sc.type)?.label ?? sc.type} request sent
+                        </Text>
                         <Text style={[styles.sentStatusSub, { color: colors.mutedForeground }]}>
                           Waiting for their response. They may have already seen this.
                         </Text>
                       </View>
                     </View>
                     <Pressable
-                      onPress={handleCancelSent}
+                      onPress={() => handleCancelSent(sc.id)}
                       disabled={cancelling}
                       style={({ pressed }) => [
                         styles.cancelBtn,
@@ -409,10 +424,10 @@ export default function MemberDetailScreen() {
                       </Text>
                     </Pressable>
                   </View>
-                )}
+                ))}
 
-                {/* Crush options panel — only shown when no pending request */}
-                {crushPanelOpen && !sentConn && !undoPending && (
+                {/* Crush options panel — only shown when crush not yet sent */}
+                {crushPanelOpen && !sentConnOfType("crush") && undoPending?.type !== "crush" && (
                   <View style={[styles.crushPanel, { borderColor: `${colors.crush}44`, backgroundColor: `${colors.crush}08` }]}>
                     {/* Anonymous toggle */}
                     <Pressable
@@ -510,18 +525,18 @@ export default function MemberDetailScreen() {
               </View>
             )}
 
-            {existingConn && (
-              <View style={[styles.connectedRow, { borderColor: colors.border }]}>
+            {acceptedConns.map((conn) => (
+              <View key={conn.id} style={[styles.connectedRow, { borderColor: colors.border }]}>
                 <Ionicons name="checkmark-circle" size={16} color={colors.advisor} />
                 <Text style={[styles.connectedText, { color: colors.mutedForeground }]}>
                   Connected as
                 </Text>
                 <ConnectionBadge
-                  type={existingConn.type as "crush" | "buddy" | "advisor" | "spotter"}
+                  type={conn.type as "crush" | "buddy" | "advisor" | "spotter"}
                   small
                 />
               </View>
-            )}
+            ))}
 
             <View style={[styles.separator, { backgroundColor: colors.border }]} />
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>

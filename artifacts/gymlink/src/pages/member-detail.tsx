@@ -50,15 +50,17 @@ export default function MemberDetail() {
 
   const profileId = params?.id ?? "";
 
-  const sentConn = connections.find(
+  const sentConns = connections.filter(
     (c) => c.fromUserId === myId && c.toUserId === profileId && c.status === "pending"
   );
-  const acceptedConn = connections.find(
+  const acceptedConns = connections.filter(
     (c) =>
       c.status === "accepted" &&
       ((c.fromUserId === myId && c.toUserId === profileId) ||
        (c.toUserId === myId && c.fromUserId === profileId))
   );
+  const sentConnOfType = (type: string) => sentConns.find((c) => c.type === type);
+  const acceptedConnOfType = (type: string) => acceptedConns.find((c) => c.type === type);
 
   // Fire the actual API send
   const fireSend = useCallback((type: string, anon: boolean, mutual: boolean) => {
@@ -105,11 +107,7 @@ export default function MemberDetail() {
     toast({ title: "Request cancelled", description: "Nothing was sent" });
   };
 
-  const handleCancelSent = () => {
-    if (!sentConn) return;
-    const connId = sentConn.id;
-
-    // Optimistically remove from every cached connections list
+  const handleCancelSent = (connId: string) => {
     queryClient.setQueriesData<unknown[]>(
       { queryKey: getListConnectionsQueryKey() },
       (old) => (old ?? []).filter((c: { id: string }) => c.id !== connId)
@@ -123,7 +121,6 @@ export default function MemberDetail() {
           toast({ title: "Request withdrawn" });
         },
         onError: () => {
-          // Restore stale data so the user can retry
           queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() });
           toast({ title: "Failed to cancel", variant: "destructive" });
         },
@@ -207,63 +204,74 @@ export default function MemberDetail() {
       </div>
 
       {/* Connection section */}
-      {acceptedConn ? (
-        <div className="card-surface p-5 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#12B76A18" }}>
-            <CheckCircle2 className="w-5 h-5" style={{ color: "#12B76A" }} />
-          </div>
-          <div>
-            <p className="font-bold text-sm">Connected</p>
-            <p className="text-[12px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
-              You're connected as {CONN_TYPES.find(c => c.type === acceptedConn.type)?.label ?? acceptedConn.type}
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="card-surface p-5 space-y-4">
+      <div className="card-surface p-5 space-y-4">
+        <div className="flex items-center justify-between">
           <p className="section-label">Connect with {user.name.split(" ")[0]}</p>
+          {acceptedConns.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              {acceptedConns.map((c) => {
+                const cfg = CONN_TYPES.find((ct) => ct.type === c.type);
+                return cfg ? (
+                  <span key={c.id} className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full"
+                    style={{ background: cfg.color + "18", color: cfg.color }}>
+                    <CheckCircle2 className="w-3 h-3" /> {cfg.label}
+                  </span>
+                ) : null;
+              })}
+            </div>
+          )}
+        </div>
 
-          {/* Type grid */}
-          <div className="grid grid-cols-2 gap-2.5">
-            {CONN_TYPES.map(({ type, label, Icon, color, desc }) => {
-              const wasSent = sentConn?.type === type || undoPending?.type === type;
-              const locked = !!(sentConn || undoPending);
-              const isSelected = selectedType === type;
+        {/* Type grid */}
+        <div className="grid grid-cols-2 gap-2.5">
+          {CONN_TYPES.map(({ type, label, Icon, color, desc }) => {
+            const sentConn = sentConnOfType(type);
+            const acceptedConn = acceptedConnOfType(type);
+            const wasSent = !!sentConn || undoPending?.type === type;
+            const isAccepted = !!acceptedConn;
+            const thisLocked = wasSent || isAccepted;
+            const isSelected = selectedType === type;
 
-              return (
-                <button
-                  key={type}
-                  onClick={() => !locked && setSelectedType(type)}
-                  disabled={locked}
-                  className="p-4 rounded-lg border text-left transition-all duration-150 relative"
-                  style={
-                    wasSent
-                      ? { borderColor: color, background: color + "18" }
-                      : isSelected
-                      ? { borderColor: color, background: color + "12" }
-                      : { borderColor: "hsl(var(--border))", background: "transparent" }
-                  }
-                  data-testid={`btn-connection-type-${type}`}
-                >
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2.5"
-                    style={{ background: color + (isSelected || wasSent ? "22" : "15") }}>
-                    <Icon className="w-4 h-4" style={{ color }} />
-                  </div>
-                  <p className="font-bold text-[13px]" style={{ color: isSelected || wasSent ? color : undefined }}>{label}</p>
-                  {wasSent ? (
-                    <span className="flex items-center gap-1 text-[11px] font-bold mt-0.5" style={{ color }}>
-                      <Send className="w-3 h-3" /> Sent
-                    </span>
-                  ) : (
-                    <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>{desc}</p>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+            return (
+              <button
+                key={type}
+                onClick={() => !thisLocked && setSelectedType(type === selectedType ? null : type)}
+                disabled={thisLocked}
+                className="p-4 rounded-lg border text-left transition-all duration-150 relative"
+                style={
+                  isAccepted
+                    ? { borderColor: color, background: color + "12" }
+                    : wasSent
+                    ? { borderColor: color, background: color + "18" }
+                    : isSelected
+                    ? { borderColor: color, background: color + "12" }
+                    : { borderColor: "hsl(var(--border))", background: "transparent" }
+                }
+                data-testid={`btn-connection-type-${type}`}
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2.5"
+                  style={{ background: color + (isSelected || wasSent || isAccepted ? "22" : "15") }}>
+                  <Icon className="w-4 h-4" style={{ color }} />
+                </div>
+                <p className="font-bold text-[13px]" style={{ color: isSelected || wasSent || isAccepted ? color : undefined }}>{label}</p>
+                {isAccepted ? (
+                  <span className="flex items-center gap-1 text-[11px] font-bold mt-0.5" style={{ color }}>
+                    <CheckCircle2 className="w-3 h-3" /> Connected
+                  </span>
+                ) : wasSent ? (
+                  <span className="flex items-center gap-1 text-[11px] font-bold mt-0.5" style={{ color }}>
+                    <Send className="w-3 h-3" /> Sent
+                  </span>
+                ) : (
+                  <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>{desc}</p>
+                )}
+              </button>
+            );
+          })}
+        </div>
 
-          {/* Crush options — only when no lock and crush selected */}
-          {!sentConn && !undoPending && selectedType === "crush" && (
+        {/* Crush options — only when crush selected and not yet sent/accepted */}
+          {!sentConnOfType("crush") && !acceptedConnOfType("crush") && undoPending?.type !== "crush" && selectedType === "crush" && (
             <div className="space-y-2.5">
               <button
                 onClick={() => setAnonymous(!anonymous)}
@@ -317,64 +325,65 @@ export default function MemberDetail() {
             </div>
           )}
 
-          {/* Send button — only when no lock */}
-          {!sentConn && !undoPending && (
-            <button
-              onClick={() => selectedType && startUndo(selectedType, anonymous, mutualNotify)}
-              disabled={!selectedType || createConn.isPending}
-              className="w-full py-3 rounded-lg font-bold text-sm text-white transition-all disabled:opacity-50"
-              style={{ background: selected ? selected.color : "hsl(var(--muted))" }}
-              data-testid="btn-send-connection"
-            >
-              {createConn.isPending ? "Sending…" : selected ? `Send as ${selected.label}` : "Choose a connection type"}
-            </button>
-          )}
+        {/* Send button — only when a type is selected and not yet sent/accepted */}
+        {selectedType && !sentConnOfType(selectedType) && !acceptedConnOfType(selectedType) && !undoPending && (
+          <button
+            onClick={() => selectedType && startUndo(selectedType, anonymous, mutualNotify)}
+            disabled={!selectedType || createConn.isPending}
+            className="w-full py-3 rounded-lg font-bold text-sm text-white transition-all disabled:opacity-50"
+            style={{ background: selected ? selected.color : "hsl(var(--muted))" }}
+            data-testid="btn-send-connection"
+          >
+            {createConn.isPending ? "Sending…" : selected ? `Send as ${selected.label}` : "Choose a connection type"}
+          </button>
+        )}
 
-          {/* Undo countdown banner */}
-          {undoPending && (
-            <div className="rounded-lg overflow-hidden border" style={{ borderColor: undoColor + "44" }}>
-              {/* progress bar */}
-              <div className="h-1 transition-all duration-1000" style={{ width: `${progress}%`, background: undoColor }} />
-              <div className="flex items-center gap-3 px-4 py-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ background: undoColor + "18" }}>
-                  <Send className="w-4 h-4" style={{ color: undoColor }} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold">Sending in {undoPending.countdown}s…</p>
-                  <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
-                    Tap Undo to cancel before it goes
-                  </p>
-                </div>
-                <button
-                  onClick={handleUndo}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all"
-                  style={{ background: undoColor + "18", color: undoColor }}
-                  data-testid="btn-undo"
-                >
-                  <RotateCcw className="w-3 h-3" /> Undo
-                </button>
+        {/* Undo countdown banner */}
+        {undoPending && (
+          <div className="rounded-lg overflow-hidden border" style={{ borderColor: undoColor + "44" }}>
+            <div className="h-1 transition-all duration-1000" style={{ width: `${progress}%`, background: undoColor }} />
+            <div className="flex items-center gap-3 px-4 py-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: undoColor + "18" }}>
+                <Send className="w-4 h-4" style={{ color: undoColor }} />
               </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold">Sending in {undoPending.countdown}s…</p>
+                <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+                  Tap Undo to cancel before it goes
+                </p>
+              </div>
+              <button
+                onClick={handleUndo}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all"
+                style={{ background: undoColor + "18", color: undoColor }}
+                data-testid="btn-undo"
+              >
+                <RotateCcw className="w-3 h-3" /> Undo
+              </button>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Already-sent footer with cancel */}
-          {sentConn && !undoPending && (
-            <div className="rounded-lg p-3.5 space-y-3" style={{ background: "hsl(var(--secondary))", border: "1px solid hsl(var(--border))" }}>
+        {/* Per-type already-sent footers with cancel */}
+        {sentConns.filter((sc) => undoPending?.type !== sc.type).map((sc) => {
+          const cfg = CONN_TYPES.find((c) => c.type === sc.type);
+          return (
+            <div key={sc.id} className="rounded-lg p-3.5 space-y-3" style={{ background: "hsl(var(--secondary))", border: "1px solid hsl(var(--border))" }}>
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
                   style={{ background: "hsl(var(--muted))" }}>
                   <Send className="w-4 h-4" style={{ color: "hsl(var(--muted-foreground))" }} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold">Request sent</p>
+                  <p className="text-sm font-bold">{cfg?.label ?? sc.type} request sent</p>
                   <p className="text-[11px] mt-0.5 leading-snug" style={{ color: "hsl(var(--muted-foreground))" }}>
                     Waiting for their response. They may have already seen this.
                   </p>
                 </div>
               </div>
               <button
-                onClick={handleCancelSent}
+                onClick={() => handleCancelSent(sc.id)}
                 disabled={cancelConn.isPending}
                 className="w-full flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-bold transition-all"
                 style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}
@@ -384,9 +393,9 @@ export default function MemberDetail() {
                 {cancelConn.isPending ? "Cancelling…" : "Take Back Request"}
               </button>
             </div>
-          )}
-        </div>
-      )}
+          );
+        })}
+      </div>
 
       {/* Workout videos */}
       <div className="card-surface p-5">
