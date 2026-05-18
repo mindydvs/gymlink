@@ -15,7 +15,22 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.gymlink.mobile"
+      "bundleIdentifier": "com.gymlink.mobile",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "GymLink uses your photo library so you can add photos and videos to your recipes and profile.",
+        "NSCameraUsageDescription": "GymLink uses your camera so you can take profile photos and record workout videos.",
+        "NSMicrophoneUsageDescription": "GymLink uses your microphone to record video sound when filming workout videos.",
+        "NSPhotoLibraryAddUsageDescription": "GymLink saves photos and videos to your library."
+      },
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          }
+        ]
+      }
     },
     "android": {
       "package": "com.gymlink.mobile"
