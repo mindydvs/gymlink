@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "GymLink",
-    "slug": "gymlink-mobile",
+    "slug": "gymlink",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
