@@ -14,8 +14,8 @@ export default function Privacy() {
           </p>
           <p>
             If you have questions, contact us at{" "}
-            <a className="text-primary underline" href="mailto:mindydvs@yahoo.com">
-              mindydvs@yahoo.com
+            <a className="text-primary underline" href="mailto:hello@gymlink.fit">
+              hello@gymlink.fit
             </a>
             .
           </p>
@@ -80,8 +80,8 @@ export default function Privacy() {
             <li>Delete content you've uploaded</li>
             <li>
               Delete your account by emailing{" "}
-              <a className="text-primary underline" href="mailto:mindydvs@yahoo.com">
-                mindydvs@yahoo.com
+              <a className="text-primary underline" href="mailto:hello@gymlink.fit">
+                hello@gymlink.fit
               </a>{" "}
               — we'll remove your account and associated personal data within 30 days
             </li>
@@ -136,8 +136,8 @@ export default function Privacy() {
             <strong>Mindy Jenkins</strong>
             <br />
             Email:{" "}
-            <a className="text-primary underline" href="mailto:mindydvs@yahoo.com">
-              mindydvs@yahoo.com
+            <a className="text-primary underline" href="mailto:hello@gymlink.fit">
+              hello@gymlink.fit
             </a>
           </p>
         </div>

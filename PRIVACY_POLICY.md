@@ -4,7 +4,7 @@
 
 GymLink ("we," "us," or "our") operates the GymLink mobile and web applications (the "Service"). This Privacy Policy explains what information we collect, how we use it, and the choices you have. By using GymLink, you agree to the practices described below.
 
-If you have questions, contact us at **mindydvs@yahoo.com**.
+If you have questions, contact us at **hello@gymlink.fit**.
 
 ---
 
@@ -80,9 +80,9 @@ While we take reasonable steps to protect your data, no system is 100% secure. Y
 You can at any time:
 - **View and edit** your profile information in the app
 - **Delete content** you have uploaded (profile photos, workout videos)
-- **Delete your account** by emailing us at mindydvs@yahoo.com — we will remove your account and associated personal data within 30 days
+- **Delete your account** by emailing us at hello@gymlink.fit — we will remove your account and associated personal data within 30 days
 
-If you live in the EU, UK, or California, you also have the right to request a copy of the personal data we hold about you, to correct it, or to request its deletion. To exercise these rights, email us at mindydvs@yahoo.com.
+If you live in the EU, UK, or California, you also have the right to request a copy of the personal data we hold about you, to correct it, or to request its deletion. To exercise these rights, email us at hello@gymlink.fit.
 
 ---
 
@@ -127,7 +127,7 @@ We may update this Privacy Policy from time to time. When we do, we will update 
 For any privacy-related questions or requests, contact:
 
 **Mindy Jenkins**
-Email: mindydvs@yahoo.com
+Email: hello@gymlink.fit
 
 ---
 
