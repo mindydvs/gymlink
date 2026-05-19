@@ -59,6 +59,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "owner": "mindydvs",
+    "extra": {
+      "eas": {
+        "projectId": "52166b7a-81e8-4270-b32a-f7c7eb669880"
+      }
     }
   }
 }
