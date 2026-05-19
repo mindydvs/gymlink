@@ -3,27 +3,427 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GymLink</title>
+  <title>GymLink — Find your gym crew</title>
+  <meta name="description" content="The social app for people who actually go to the gym. Find a spotter, a workout buddy, or a coach who lifts." />
+  <meta property="og:title" content="GymLink — Find your gym crew" />
+  <meta property="og:description" content="The social app for people who actually go to the gym." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      max-width: 720px;
-      margin: 60px auto;
-      padding: 0 24px;
-      background: #0A0D1A;
-      color: #E5E7EB;
-      line-height: 1.6;
+    :root {
+      --bg: #0A0D1A;
+      --bg-2: #11172A;
+      --bg-3: #1A2138;
+      --text: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --red: #E8193C;
+      --cyan: #00C4E8;
+      --green: #12B76A;
+      --orange: #F79009;
+      --border: rgba(255,255,255,0.08);
     }
-    h1 { color: #E8193C; }
-    a { color: #00C4E8; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* Nav */
+    nav {
+      position: sticky; top: 0;
+      backdrop-filter: blur(20px);
+      background: rgba(10,13,26,0.75);
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto;
+      padding: 16px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 800; font-size: 20px;
+      letter-spacing: -0.02em;
+    }
+    .logo-mark {
+      width: 32px; height: 32px;
+      background: var(--red);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; color: white;
+    }
+    .nav-links { display: flex; gap: 28px; font-size: 14px; }
+    .nav-links a { color: var(--text-muted); transition: color .15s; }
+    .nav-links a:hover { color: var(--text); }
+    @media (max-width: 640px) { .nav-links { display: none; } }
+
+    /* Hero */
+    .hero {
+      max-width: 1200px; margin: 0 auto;
+      padding: 80px 24px 100px;
+      text-align: center;
+      position: relative;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(232,25,60,0.18), transparent 60%);
+      pointer-events: none;
+    }
+    .pill {
+      display: inline-block;
+      padding: 6px 14px;
+      background: rgba(232,25,60,0.12);
+      border: 1px solid rgba(232,25,60,0.3);
+      border-radius: 999px;
+      font-size: 12px; font-weight: 600;
+      color: var(--red);
+      margin-bottom: 24px;
+      letter-spacing: 0.02em;
+    }
+    h1 {
+      font-size: clamp(40px, 7vw, 84px);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1.02;
+      margin-bottom: 24px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #B8BCC8 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    h1 .accent { color: var(--red); -webkit-text-fill-color: var(--red); }
+    .hero p.lead {
+      font-size: clamp(17px, 2.2vw, 22px);
+      color: var(--text-muted);
+      max-width: 640px;
+      margin: 0 auto 40px;
+    }
+    .cta-row {
+      display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 48px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px;
+      font-weight: 600; font-size: 15px;
+      border-radius: 10px;
+      transition: transform .15s, background .15s;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-primary { background: var(--red); color: white; }
+    .btn-primary:hover { background: #c8132f; transform: translateY(-1px); }
+    .btn-ghost {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+    .coming-soon {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 12px;
+    }
+
+    /* Phone mockup */
+    .phone-wrap {
+      max-width: 320px; margin: 0 auto;
+      position: relative;
+    }
+    .phone {
+      background: linear-gradient(180deg, var(--bg-2), var(--bg-3));
+      border: 8px solid #1F2538;
+      border-radius: 44px;
+      padding: 24px 20px;
+      box-shadow: 0 30px 80px rgba(232,25,60,0.2), 0 10px 40px rgba(0,0,0,0.5);
+    }
+    .phone-stat {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px;
+      background: var(--bg-3);
+      border-radius: 12px;
+      margin-bottom: 10px;
+    }
+    .phone-stat .label { font-size: 12px; color: var(--text-muted); }
+    .phone-stat .value { font-weight: 700; font-size: 18px; }
+    .phone-stat .value.red { color: var(--red); }
+    .phone-stat .value.cyan { color: var(--cyan); }
+    .phone-card {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px;
+      background: var(--bg-3);
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+    .avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; color: white;
+      flex-shrink: 0;
+    }
+    .phone-card .name { font-size: 14px; font-weight: 600; }
+    .phone-card .status { font-size: 11px; color: var(--text-muted); }
+    .badge {
+      margin-left: auto;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 10px; font-weight: 700;
+      color: white;
+    }
+
+    /* Section base */
+    section.section {
+      max-width: 1200px; margin: 0 auto;
+      padding: 100px 24px;
+    }
+    .eyebrow {
+      color: var(--red);
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    h2 {
+      font-size: clamp(32px, 4.5vw, 52px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 18px;
+    }
+    .section-lead {
+      color: var(--text-muted);
+      font-size: 18px;
+      max-width: 580px;
+      margin-bottom: 60px;
+    }
+
+    /* Features grid */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .feature {
+      padding: 28px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      transition: transform .2s, border-color .2s;
+    }
+    .feature:hover {
+      transform: translateY(-3px);
+      border-color: rgba(232,25,60,0.4);
+    }
+    .feature-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      margin-bottom: 18px;
+    }
+    .feature h3 {
+      font-size: 18px; font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .feature p {
+      color: var(--text-muted); font-size: 14px;
+    }
+
+    /* Connection types */
+    .connect-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .connect-card {
+      padding: 24px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      border-top: 3px solid;
+    }
+    .connect-card h3 {
+      font-size: 16px; font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .connect-card p { color: var(--text-muted); font-size: 13px; }
+
+    /* CTA */
+    .cta-section {
+      max-width: 900px; margin: 0 auto;
+      padding: 80px 24px;
+      text-align: center;
+    }
+    .cta-box {
+      padding: 60px 40px;
+      background: linear-gradient(135deg, rgba(232,25,60,0.15), rgba(0,196,232,0.08));
+      border: 1px solid rgba(232,25,60,0.3);
+      border-radius: 24px;
+    }
+    .cta-box h2 { margin-bottom: 12px; }
+    .cta-box p { color: var(--text-muted); margin-bottom: 28px; }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    footer .footer-links {
+      display: flex; gap: 24px; justify-content: center;
+      margin-bottom: 16px;
+    }
+    footer a:hover { color: var(--text); }
   </style>
 </head>
 <body>
-  <h1>GymLink</h1>
-  <p>Find your gym crew. Connect with lifters at your gym.</p>
-  <ul>
-    <li><a href="./privacy.html">Privacy Policy</a></li>
-  </ul>
-  <p>Contact: <a href="mailto:mindydvs@yahoo.com">mindydvs@yahoo.com</a></p>
+  <nav>
+    <div class="nav-inner">
+      <a href="#" class="logo">
+        <span class="logo-mark">G</span>
+        <span>GymLink</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#connect">How it works</a>
+        <a href="./privacy.html">Privacy</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <span class="pill">Coming Soon to the App Store</span>
+    <h1>Find your <span class="accent">gym crew</span>.</h1>
+    <p class="lead">
+      The social app for people who actually go to the gym. Find a spotter, a workout buddy, or a coach who actually lifts.
+    </p>
+    <div class="cta-row">
+      <a href="#cta" class="btn btn-primary">Get notified at launch →</a>
+      <a href="#features" class="btn btn-ghost">See features</a>
+    </div>
+    <p class="coming-soon">iOS launching this season · Android coming next</p>
+
+    <div class="phone-wrap" style="margin-top: 80px;">
+      <div class="phone">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">CHECK-IN AT</div>
+          <div style="font-weight: 800; font-size: 17px;">Iron Forge Gym</div>
+        </div>
+        <div class="phone-stat">
+          <span class="label">People here now</span>
+          <span class="value cyan">14</span>
+        </div>
+        <div class="phone-stat" style="margin-bottom: 20px;">
+          <span class="label">Wants to connect</span>
+          <span class="value red">3</span>
+        </div>
+        <div class="phone-card">
+          <div class="avatar" style="background: linear-gradient(135deg, #E8193C, #c8132f);">M</div>
+          <div>
+            <div class="name">Marcus, 28</div>
+            <div class="status">Checked in · Push day</div>
+          </div>
+          <span class="badge" style="background: var(--red);">Spot</span>
+        </div>
+        <div class="phone-card">
+          <div class="avatar" style="background: linear-gradient(135deg, #0B9ED9, #0680b3);">S</div>
+          <div>
+            <div class="name">Sara, 25</div>
+            <div class="status">Lifts mornings</div>
+          </div>
+          <span class="badge" style="background: var(--cyan); color: #002b35;">Buddy</span>
+        </div>
+        <div class="phone-card">
+          <div class="avatar" style="background: linear-gradient(135deg, #12B76A, #0d9456);">J</div>
+          <div>
+            <div class="name">Jordan, 34</div>
+            <div class="status">Coach · 10 yrs lifting</div>
+          </div>
+          <span class="badge" style="background: var(--green);">Coach</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="section" id="features">
+    <div class="eyebrow">Why GymLink</div>
+    <h2>Built for people who train.</h2>
+    <p class="section-lead">No swipes, no games. Just the people already lifting at your gym, ready to connect for the reason that fits.</p>
+
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon" style="background: rgba(232,25,60,0.15); color: var(--red);">📍</div>
+        <h3>See who's at your gym</h3>
+        <p>Live check-ins show you exactly who's lifting right now at your location.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" style="background: rgba(0,196,232,0.15); color: var(--cyan);">🎯</div>
+        <h3>Connect with intent</h3>
+        <p>Pick what you want — a spotter, a buddy, a coach, or a crush. No ambiguity.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" style="background: rgba(18,183,106,0.15); color: var(--green);">🎥</div>
+        <h3>Form-check videos</h3>
+        <p>Upload short clips of your lifts. See how others train before reaching out.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" style="background: rgba(247,144,9,0.15); color: var(--orange);">🔔</div>
+        <h3>Get notified, stay private</h3>
+        <p>You only see connections you opt into. Profiles, not ads. Your data isn't for sale.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="connect">
+    <div class="eyebrow">Connection types</div>
+    <h2>Four ways to connect.</h2>
+    <p class="section-lead">Be clear about what you're looking for, and skip the awkward small talk.</p>
+
+    <div class="connect-grid">
+      <div class="connect-card" style="border-top-color: var(--red);">
+        <h3>💪 Spotter</h3>
+        <p>For the heavy sets when you need a hand.</p>
+      </div>
+      <div class="connect-card" style="border-top-color: var(--cyan);">
+        <h3>🤝 Buddy</h3>
+        <p>Someone who shows up on the same days as you.</p>
+      </div>
+      <div class="connect-card" style="border-top-color: var(--green);">
+        <h3>🎓 Advisor</h3>
+        <p>Someone further along who can mentor your training.</p>
+      </div>
+      <div class="connect-card" style="border-top-color: var(--orange);">
+        <h3>🔥 Crush</h3>
+        <p>When the vibe is just there.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section" id="cta">
+    <div class="cta-box">
+      <h2>Be first in line.</h2>
+      <p>GymLink launches on the App Store this season. Drop your email and we'll let you know the second it's live.</p>
+      <a href="mailto:mindydvs@yahoo.com?subject=GymLink%20launch%20list&body=Add%20me%20to%20the%20launch%20list!" class="btn btn-primary">Email us to join the list →</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-links">
+      <a href="./privacy.html">Privacy Policy</a>
+      <a href="mailto:mindydvs@yahoo.com">Contact</a>
+    </div>
+    <div>© 2026 GymLink. All rights reserved.</div>
+  </footer>
 </body>
 </html>
