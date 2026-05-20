@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>App Store Screenshot</title>
+<style>
+  :root {
+    --navy: #0a0d1a;
+    --navy-2: #131a2e;
+    --red: #e8193c;
+    --cyan: #00c4e8;
+    --text: #ffffff;
+    --muted: rgba(255,255,255,0.7);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1290px; height: 2796px; overflow: hidden; background: var(--navy); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--text);
+    position: relative;
+  }
+  .bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at top, rgba(232,25,60,0.18) 0%, transparent 55%),
+      radial-gradient(ellipse at bottom, rgba(0,196,232,0.18) 0%, transparent 55%),
+      linear-gradient(180deg, #0a0d1a 0%, #131a2e 100%);
+  }
+  .stage {
+    position: relative;
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    padding: 140px 100px 80px;
+  }
+  .headline {
+    font-size: 110px;
+    font-weight: 900;
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .headline .accent { color: var(--red); }
+  .headline .accent2 { color: var(--cyan); }
+  .subhead {
+    font-size: 44px;
+    font-weight: 500;
+    line-height: 1.3;
+    text-align: center;
+    color: var(--muted);
+    margin-bottom: 70px;
+  }
+  .phone-wrap {
+    flex: 1;
+    display: flex; justify-content: center; align-items: flex-start;
+  }
+  .phone {
+    width: 820px;
+    height: 1680px;
+    border-radius: 92px;
+    background: #000;
+    padding: 18px;
+    box-shadow:
+      0 60px 120px rgba(0,0,0,0.55),
+      0 0 0 6px #1c1c1c inset,
+      0 0 80px rgba(0,196,232,0.12);
+    position: relative;
+  }
+  .phone::before {
+    content: "";
+    position: absolute;
+    top: 28px; left: 50%;
+    transform: translateX(-50%);
+    width: 280px; height: 38px;
+    background: #000;
+    border-radius: 22px;
+    z-index: 3;
+  }
+  .screen {
+    width: 100%; height: 100%;
+    border-radius: 76px;
+    overflow: hidden;
+    background: var(--navy);
+  }
+  .screen img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+  }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="stage">
+  <h1 class="headline" id="h"></h1>
+  <p class="subhead" id="s"></p>
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="screen">
+        <img id="img" alt="" />
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const SLIDES = {
+    "1": {
+      h: 'Find your <span class="accent">gym crew</span>',
+      s: "Connect with the people training next to you.",
+      img: "/raw-shots/01-welcome.jpg",
+    },
+    "2": {
+      h: 'See who\'s <span class="accent2">at your gym</span>',
+      s: "Live check-ins and stats from your home gym.",
+      img: "/raw-shots/02-home.jpg",
+    },
+    "3": {
+      h: 'Discover real <span class="accent">members</span>',
+      s: "Filter by interests, schedule, and training style.",
+      img: "/raw-shots/03-members.jpg",
+    },
+    "4": {
+      h: 'Crushes. Buddies.<br/><span class="accent2">Spotters.</span>',
+      s: "Four ways to connect — your call, your comfort.",
+      img: "/raw-shots/04-connections.jpg",
+    },
+    "5": {
+      h: 'Show your <span class="accent">progress</span>',
+      s: "Share your gym, your interests, your form videos.",
+      img: "/raw-shots/05-profile.jpg",
+    },
+    "6": {
+      h: 'Stay in <span class="accent2">the loop</span>',
+      s: "Get notified the moment someone wants to connect.",
+      img: "/raw-shots/06-notifications.jpg",
+    },
+  };
+  const n = new URLSearchParams(location.search).get("n") || "1";
+  const slide = SLIDES[n] || SLIDES["1"];
+  document.getElementById("h").innerHTML = slide.h;
+  document.getElementById("s").textContent = slide.s;
+  document.getElementById("img").src = slide.img;
+</script>
+</body>
+</html>

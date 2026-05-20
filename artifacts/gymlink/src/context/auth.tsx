@@ -22,6 +22,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const demo = params.get("demo");
+    if (demo) {
+      localStorage.setItem(STORAGE_KEY, demo);
+      setUserId(demo);
+      setIsLoading(false);
+      return;
+    }
     const stored = localStorage.getItem(STORAGE_KEY);
     setUserId(stored ?? null);
     setIsLoading(false);
