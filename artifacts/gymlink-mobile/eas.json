@@ -16,6 +16,9 @@
     },
     "production": {
       "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_DOMAIN": "gym-tracker-mindydvs.replit.app"
+      },
       "ios": {
         "resourceClass": "m-medium",
         "image": "latest"
