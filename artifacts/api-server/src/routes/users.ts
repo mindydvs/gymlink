@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, ilike, and } from "drizzle-orm";
-import { db, usersTable } from "@workspace/db";
+import { eq, ilike, and, notInArray, or } from "drizzle-orm";
+import { db, usersTable, userBlocksTable } from "@workspace/db";
 import {
   ListUsersQueryParams,
   ListUsersResponse,
@@ -27,9 +27,34 @@ router.get("/users", async (req, res): Promise<void> => {
     }
   }
 
+  const hiddenIds = await getHiddenUserIds(req.userId);
+  if (hiddenIds.length > 0) {
+    conditions.push(notInArray(usersTable.id, hiddenIds) as ReturnType<typeof eq>);
+  }
+
   const users = await db.select().from(usersTable).where(and(...conditions));
   res.json(ListUsersResponse.parse(users));
 });
+
+async function getHiddenUserIds(meId: string): Promise<string[]> {
+  const rows = await db
+    .select({
+      blockerId: userBlocksTable.blockerId,
+      blockedId: userBlocksTable.blockedId,
+    })
+    .from(userBlocksTable)
+    .where(
+      or(eq(userBlocksTable.blockerId, meId), eq(userBlocksTable.blockedId, meId)),
+    );
+  const ids = new Set<string>();
+  for (const r of rows) {
+    if (r.blockerId === meId) ids.add(r.blockedId);
+    if (r.blockedId === meId) ids.add(r.blockerId);
+  }
+  return Array.from(ids);
+}
+
+export { getHiddenUserIds };
 
 router.get("/users/me", async (req, res): Promise<void> => {
   const [me] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId));

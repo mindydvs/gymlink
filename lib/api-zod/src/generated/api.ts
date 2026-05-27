@@ -178,7 +178,6 @@ export const ListConnectionsResponseItem = zod.object({
   type: zod.enum(["crush", "buddy", "advisor", "spotter"]),
   status: zod.enum(["pending", "accepted", "declined"]),
   anonymous: zod.boolean(),
-  mutualNotify: zod.boolean(),
   createdAt: zod.coerce.date(),
   fromUser: zod
     .object({
@@ -241,7 +240,6 @@ export const RespondToConnectionResponse = zod.object({
   type: zod.enum(["crush", "buddy", "advisor", "spotter"]),
   status: zod.enum(["pending", "accepted", "declined"]),
   anonymous: zod.boolean(),
-  mutualNotify: zod.boolean(),
   createdAt: zod.coerce.date(),
   fromUser: zod
     .object({
@@ -291,7 +289,7 @@ export const RespondToConnectionResponse = zod.object({
 export const ListNotificationsResponseItem = zod.object({
   id: zod.string(),
   connectionId: zod.string(),
-  type: zod.enum(["crush", "buddy", "advisor", "spotter", "mutual_crush"]),
+  type: zod.enum(["crush", "buddy", "advisor", "spotter"]),
   fromName: zod.string(),
   anonymous: zod.boolean(),
   read: zod.boolean(),
@@ -312,7 +310,7 @@ export const MarkNotificationReadParams = zod.object({
 export const MarkNotificationReadResponse = zod.object({
   id: zod.string(),
   connectionId: zod.string(),
-  type: zod.enum(["crush", "buddy", "advisor", "spotter", "mutual_crush"]),
+  type: zod.enum(["crush", "buddy", "advisor", "spotter"]),
   fromName: zod.string(),
   anonymous: zod.boolean(),
   read: zod.boolean(),
@@ -450,3 +448,61 @@ export const GetVideoLikesResponse = zod.object({
   likeCount: zod.number(),
   likedByMe: zod.boolean(),
 });
+
+/**
+ * @summary Block a user
+ */
+export const BlockUserParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+/**
+ * @summary Unblock a user
+ */
+export const UnblockUserParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+/**
+ * @summary Report a user for inappropriate content or behavior
+ */
+export const ReportUserParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const reportUserBodyReasonMax = 120;
+
+export const reportUserBodyDetailsMax = 2000;
+
+export const ReportUserBody = zod.object({
+  reason: zod.string().min(1).max(reportUserBodyReasonMax),
+  details: zod.string().max(reportUserBodyDetailsMax).optional(),
+});
+
+/**
+ * @summary Report a video for inappropriate content
+ */
+export const ReportVideoParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const reportVideoBodyReasonMax = 120;
+
+export const reportVideoBodyDetailsMax = 2000;
+
+export const ReportVideoBody = zod.object({
+  reason: zod.string().min(1).max(reportVideoBodyReasonMax),
+  details: zod.string().max(reportVideoBodyDetailsMax).optional(),
+});
+
+/**
+ * @summary List users the current user has blocked
+ */
+export const ListBlocksResponseItem = zod.object({
+  blockedId: zod.string(),
+  name: zod.string(),
+  avatar: zod.string(),
+  avatarUrl: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+export const ListBlocksResponse = zod.array(ListBlocksResponseItem);

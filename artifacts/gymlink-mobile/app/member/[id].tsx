@@ -8,6 +8,7 @@ import {
   Animated,
   FlatList,
   Image,
+  Modal,
   Platform,
   Pressable,
   RefreshControl,
@@ -19,6 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AvatarImage } from "@/components/AvatarImage";
 import { ConnectionBadge } from "@/components/ConnectionBadge";
 import { VideoCard } from "@/components/VideoCard";
+import { ReportSheet } from "@/components/ReportSheet";
 import { useColors } from "@/hooks/useColors";
 import { useUser } from "@/context/UserContext";
 import {
@@ -28,8 +30,11 @@ import {
   useCreateConnection,
   useCancelConnection,
   useListRecipes,
+  useBlockUser,
+  useReportUser,
   getListConnectionsQueryKey,
   getListUsersQueryKey,
+  getListBlocksQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -346,6 +351,59 @@ export default function MemberDetailScreen() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { mutate: cancelConnection, isPending: cancelling } = useCancelConnection();
+  const { mutate: blockUser, isPending: blocking } = useBlockUser();
+  const { mutate: reportUser, isPending: reporting } = useReportUser();
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showReportSheet, setShowReportSheet] = useState(false);
+
+  const handleBlock = () => {
+    if (!id || !member) return;
+    setShowMoreMenu(false);
+    Alert.alert(
+      `Block ${member.name}?`,
+      "They won't be able to see your profile, videos, or send you connection requests. You won't see them either. You can unblock them later from your profile.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Block",
+          style: "destructive",
+          onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            blockUser(
+              { id },
+              {
+                onSuccess: () => {
+                  queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
+                  queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() });
+                  queryClient.invalidateQueries({ queryKey: getListBlocksQueryKey() });
+                  router.back();
+                },
+                onError: () => Alert.alert("Error", "Could not block this user. Please try again."),
+              },
+            );
+          },
+        },
+      ],
+    );
+  };
+
+  const handleReport = (reason: string, details?: string) => {
+    if (!id) return;
+    reportUser(
+      { id, data: { reason, details } },
+      {
+        onSuccess: () => {
+          setShowReportSheet(false);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          Alert.alert(
+            "Report submitted",
+            "Thanks for letting us know. Our team will review this within 24 hours.",
+          );
+        },
+        onError: () => Alert.alert("Error", "Could not submit your report. Please try again."),
+      },
+    );
+  };
 
   const fireSend = (type: "crush" | "buddy" | "advisor" | "spotter", anon: boolean, mutual: boolean) => {
     if (!id) return;
@@ -450,8 +508,89 @@ export default function MemberDetailScreen() {
             />
           ))}
         </View>
-        <View style={{ width: 32 }} />
+        {isMe ? (
+          <View style={{ width: 32 }} />
+        ) : (
+          <Pressable
+            onPress={() => setShowMoreMenu(true)}
+            style={styles.backBtn}
+            hitSlop={12}
+          >
+            <Ionicons name="ellipsis-horizontal" size={22} color={colors.foreground} />
+          </Pressable>
+        )}
       </View>
+
+      <Modal
+        visible={showMoreMenu}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowMoreMenu(false)}
+      >
+        <Pressable
+          style={moreMenuStyles.overlay}
+          onPress={() => setShowMoreMenu(false)}
+        >
+          <Pressable
+            style={[
+              moreMenuStyles.sheet,
+              { backgroundColor: colors.card, paddingBottom: insets.bottom + 12 },
+            ]}
+          >
+            <View style={[moreMenuStyles.handle, { backgroundColor: colors.border }]} />
+            <Pressable
+              style={({ pressed }) => [
+                moreMenuStyles.item,
+                { borderBottomColor: colors.border, opacity: pressed ? 0.7 : 1 },
+              ]}
+              onPress={() => {
+                setShowMoreMenu(false);
+                setShowReportSheet(true);
+              }}
+            >
+              <View style={[moreMenuStyles.iconWrap, { backgroundColor: `${colors.spotter}22` }]}>
+                <Ionicons name="flag-outline" size={20} color={colors.spotter} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[moreMenuStyles.label, { color: colors.foreground }]}>
+                  Report
+                </Text>
+                <Text style={[moreMenuStyles.sub, { color: colors.mutedForeground }]}>
+                  Tell us about inappropriate content or behavior
+                </Text>
+              </View>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                moreMenuStyles.item,
+                { borderBottomColor: "transparent", opacity: pressed ? 0.7 : 1 },
+              ]}
+              onPress={handleBlock}
+              disabled={blocking}
+            >
+              <View style={[moreMenuStyles.iconWrap, { backgroundColor: "rgba(232,25,60,0.15)" }]}>
+                <Ionicons name="ban-outline" size={20} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[moreMenuStyles.label, { color: colors.primary }]}>
+                  Block {member.name}
+                </Text>
+                <Text style={[moreMenuStyles.sub, { color: colors.mutedForeground }]}>
+                  Stop seeing them and prevent contact
+                </Text>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <ReportSheet
+        visible={showReportSheet}
+        onClose={() => setShowReportSheet(false)}
+        onSubmit={handleReport}
+        isSubmitting={reporting}
+        targetLabel={member.name}
+      />
 
       <FlatList
         data={videos ?? []}
@@ -835,6 +974,7 @@ export default function MemberDetailScreen() {
             createdAt={item.createdAt}
             likeCount={item.likeCount}
             likedByMe={item.likedByMe}
+            canReport={!isMe}
           />
         )}
       />
@@ -842,6 +982,51 @@ export default function MemberDetailScreen() {
     </View>
   );
 }
+
+const moreMenuStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  sheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    gap: 4,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 12,
+  },
+  item: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+  },
+  iconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  label: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 16,
+  },
+  sub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    marginTop: 2,
+  },
+});
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

@@ -1,12 +1,38 @@
 import { Router, type IRouter } from "express";
 import { eq, and, count } from "drizzle-orm";
-import { db, workoutVideosTable, videoLikesTable } from "@workspace/db";
+import { db, workoutVideosTable, videoLikesTable, userBlocksTable } from "@workspace/db";
 import { nanoid } from "nanoid";
 
 const router: IRouter = Router();
 
 router.get("/videos", async (req, res): Promise<void> => {
   const userId = (req.query.userId as string) || req.userId;
+
+  if (userId !== req.userId) {
+    const [block] = await db
+      .select()
+      .from(userBlocksTable)
+      .where(
+        and(
+          eq(userBlocksTable.blockerId, req.userId),
+          eq(userBlocksTable.blockedId, userId),
+        ),
+      );
+    const [reverseBlock] = await db
+      .select()
+      .from(userBlocksTable)
+      .where(
+        and(
+          eq(userBlocksTable.blockerId, userId),
+          eq(userBlocksTable.blockedId, req.userId),
+        ),
+      );
+    if (block || reverseBlock) {
+      res.json([]);
+      return;
+    }
+  }
+
   const videos = await db
     .select()
     .from(workoutVideosTable)

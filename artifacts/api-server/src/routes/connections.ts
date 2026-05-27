@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, or, and } from "drizzle-orm";
 import { db, connectionsTable, usersTable, notificationsTable } from "@workspace/db";
+import { getHiddenUserIds } from "./users";
 import {
   CreateConnectionBody,
   ListConnectionsQueryParams,
@@ -21,6 +22,12 @@ router.post("/connections", async (req, res): Promise<void> => {
 
   const meId = req.userId;
   const { toUserId, type, anonymous, mutualNotify = false } = parsed.data;
+
+  const hiddenIds = new Set(await getHiddenUserIds(meId));
+  if (hiddenIds.has(toUserId)) {
+    res.status(403).json({ error: "You can't connect with this user" });
+    return;
+  }
 
   const id = randomUUID();
   const [connection] = await db
@@ -117,6 +124,13 @@ router.get("/connections", async (req, res): Promise<void> => {
     if (query.data.status) {
       rows = rows.filter((c) => c.status === query.data.status);
     }
+  }
+
+  const hiddenIds = new Set(await getHiddenUserIds(meId));
+  if (hiddenIds.size > 0) {
+    rows = rows.filter(
+      (c) => !hiddenIds.has(c.fromUserId) && !hiddenIds.has(c.toUserId),
+    );
   }
 
   const allUserIds = [...new Set(rows.flatMap((c) => [c.fromUserId, c.toUserId]))];

@@ -5,3 +5,5 @@ export * from "./gyms";
 export * from "./workout-videos";
 export * from "./video-likes";
 export * from "./recipes";
+export * from "./user-blocks";
+export * from "./user-reports";

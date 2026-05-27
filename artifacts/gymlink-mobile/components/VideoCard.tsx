@@ -19,8 +19,10 @@ import {
   useToggleVideoLike,
   useDeleteWorkoutVideo,
   useUpdateWorkoutVideo,
+  useReportVideo,
   getListWorkoutVideosQueryKey,
 } from "@workspace/api-client-react";
+import { ReportSheet } from "./ReportSheet";
 
 interface VideoCardProps {
   id: string;
@@ -31,6 +33,7 @@ interface VideoCardProps {
   likeCount?: number;
   likedByMe?: boolean;
   isOwner?: boolean;
+  canReport?: boolean;
   onPress?: () => void;
   onDeleted?: (id: string) => void;
 }
@@ -44,6 +47,7 @@ export function VideoCard({
   likeCount: initialLikeCount = 0,
   likedByMe: initialLikedByMe = false,
   isOwner = false,
+  canReport = false,
   onPress,
   onDeleted,
 }: VideoCardProps) {
@@ -57,11 +61,31 @@ export function VideoCard({
 
   const [showMenu, setShowMenu] = useState(false);
   const [showRenameModal, setShowRenameModal] = useState(false);
+  const [showReportSheet, setShowReportSheet] = useState(false);
   const [renameText, setRenameText] = useState(initialTitle);
 
   const { mutate: toggleLike, isPending: liking } = useToggleVideoLike();
   const { mutate: deleteVideo, isPending: deleting } = useDeleteWorkoutVideo();
   const { mutate: updateVideo, isPending: updating } = useUpdateWorkoutVideo();
+  const { mutate: reportVideo, isPending: reporting } = useReportVideo();
+
+  const showMenuButton = isOwner || canReport;
+
+  const handleReportSubmit = (reason: string, details?: string) => {
+    reportVideo(
+      { id, data: { reason, details } },
+      {
+        onSuccess: () => {
+          setShowReportSheet(false);
+          Alert.alert(
+            "Report submitted",
+            "Thanks for letting us know. Our team will review this within 24 hours.",
+          );
+        },
+        onError: () => Alert.alert("Error", "Could not submit your report. Please try again."),
+      },
+    );
+  };
 
   const liked = optimisticLiked ?? initialLikedByMe;
   const count = optimisticCount ?? initialLikeCount;
@@ -187,7 +211,7 @@ export function VideoCard({
         </View>
 
         <View style={styles.actions}>
-          {isOwner && (
+          {showMenuButton && (
             <Pressable
               onPress={() => setShowMenu(true)}
               style={styles.menuBtn}
@@ -251,40 +275,73 @@ export function VideoCard({
           >
             <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
 
-            <Pressable
-              style={({ pressed }) => [
-                styles.menuItem,
-                { borderBottomColor: colors.border, opacity: pressed ? 0.7 : 1 },
-              ]}
-              onPress={handleRenameOpen}
-            >
-              <View style={[styles.menuItemIcon, { backgroundColor: `${colors.buddy}18` }]}>
-                <Ionicons name="pencil-outline" size={22} color={colors.buddy} />
-              </View>
-              <Text style={[styles.menuItemText, { color: colors.foreground }]}>
-                Rename
-              </Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.border} />
-            </Pressable>
+            {isOwner && (
+              <>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.menuItem,
+                    { borderBottomColor: colors.border, opacity: pressed ? 0.7 : 1 },
+                  ]}
+                  onPress={handleRenameOpen}
+                >
+                  <View style={[styles.menuItemIcon, { backgroundColor: `${colors.buddy}18` }]}>
+                    <Ionicons name="pencil-outline" size={22} color={colors.buddy} />
+                  </View>
+                  <Text style={[styles.menuItemText, { color: colors.foreground }]}>
+                    Rename
+                  </Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.border} />
+                </Pressable>
 
-            <Pressable
-              style={({ pressed }) => [
-                styles.menuItem,
-                { borderBottomColor: "transparent", opacity: pressed ? 0.7 : 1 },
-              ]}
-              onPress={handleDelete}
-            >
-              <View style={[styles.menuItemIcon, { backgroundColor: "rgba(232,25,60,0.12)" }]}>
-                <Ionicons name="trash-outline" size={22} color={colors.primary} />
-              </View>
-              <Text style={[styles.menuItemText, { color: colors.primary }]}>
-                Delete
-              </Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.border} />
-            </Pressable>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.menuItem,
+                    { borderBottomColor: "transparent", opacity: pressed ? 0.7 : 1 },
+                  ]}
+                  onPress={handleDelete}
+                >
+                  <View style={[styles.menuItemIcon, { backgroundColor: "rgba(232,25,60,0.12)" }]}>
+                    <Ionicons name="trash-outline" size={22} color={colors.primary} />
+                  </View>
+                  <Text style={[styles.menuItemText, { color: colors.primary }]}>
+                    Delete
+                  </Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.border} />
+                </Pressable>
+              </>
+            )}
+
+            {!isOwner && canReport && (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.menuItem,
+                  { borderBottomColor: "transparent", opacity: pressed ? 0.7 : 1 },
+                ]}
+                onPress={() => {
+                  setShowMenu(false);
+                  setShowReportSheet(true);
+                }}
+              >
+                <View style={[styles.menuItemIcon, { backgroundColor: "rgba(247,144,9,0.18)" }]}>
+                  <Ionicons name="flag-outline" size={22} color="#F79009" />
+                </View>
+                <Text style={[styles.menuItemText, { color: colors.foreground }]}>
+                  Report
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.border} />
+              </Pressable>
+            )}
           </Pressable>
         </Pressable>
       </Modal>
+
+      <ReportSheet
+        visible={showReportSheet}
+        onClose={() => setShowReportSheet(false)}
+        onSubmit={handleReportSubmit}
+        isSubmitting={reporting}
+        targetLabel="this video"
+      />
 
       <Modal
         visible={showRenameModal}

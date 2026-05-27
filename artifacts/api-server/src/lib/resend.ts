@@ -22,16 +22,16 @@ async function getCredentials(): Promise<{ apiKey: string; fromEmail: string }> 
         "X-Replit-Token": xReplitToken,
       },
     }
-  ).then((r) => r.json());
+  ).then((r) => r.json()) as { items?: Array<{ settings?: { api_key?: string; from_email?: string } }> };
 
-  connectionSettings = data.items?.[0] ?? null;
-  if (!connectionSettings?.settings?.api_key) {
+  const item = data.items?.[0];
+  const apiKey = item?.settings?.api_key;
+  if (!apiKey) {
     throw new Error("Resend not connected");
   }
-  return {
-    apiKey: connectionSettings.settings.api_key,
-    fromEmail: connectionSettings.settings.from_email || "noreply@gymlink.app",
-  };
+  const fromEmail = item.settings?.from_email || "noreply@gymlink.app";
+  connectionSettings = { settings: { api_key: apiKey, from_email: fromEmail } };
+  return { apiKey, fromEmail };
 }
 
 export async function getResendClient() {

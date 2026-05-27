@@ -420,8 +420,143 @@ paths:
               schema:
                 $ref: "#/components/schemas/VideoLikeStatus"
 
+  /users/{id}/block:
+    post:
+      operationId: blockUser
+      tags: [users]
+      summary: Block a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Blocked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+    delete:
+      operationId: unblockUser
+      tags: [users]
+      summary: Unblock a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Unblocked
+
+  /users/{id}/report:
+    post:
+      operationId: reportUser
+      tags: [users]
+      summary: Report a user for inappropriate content or behavior
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportBody"
+      responses:
+        "201":
+          description: Reported
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+
+  /videos/{id}/report:
+    post:
+      operationId: reportVideo
+      tags: [videos]
+      summary: Report a video for inappropriate content
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportBody"
+      responses:
+        "201":
+          description: Reported
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+
+  /blocks:
+    get:
+      operationId: listBlocks
+      tags: [users]
+      summary: List users the current user has blocked
+      responses:
+        "200":
+          description: List of blocked users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BlockedUser"
+
 components:
   schemas:
+    ReportBody:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 120
+        details:
+          type: string
+          maxLength: 2000
+
+    BlockedUser:
+      type: object
+      required: [blockedId, name, avatar, createdAt]
+      properties:
+        blockedId:
+          type: string
+        name:
+          type: string
+        avatar:
+          type: string
+        avatarUrl:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
     HealthStatus:
       type: object
       properties:
@@ -584,6 +719,8 @@ components:
         type:
           $ref: "#/components/schemas/ConnectionType"
         anonymous:
+          type: boolean
+        mutualNotify:
           type: boolean
       required:
         - toUserId

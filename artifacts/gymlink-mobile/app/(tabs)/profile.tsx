@@ -279,6 +279,13 @@ export default function ProfileScreen() {
             <Text style={[styles.editBtnText, { color: colors.foreground }]}>Edit</Text>
           </Pressable>
           <Pressable
+            onPress={() => router.push("/blocked")}
+            style={[styles.logoutBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+            hitSlop={8}
+          >
+            <Ionicons name="shield-outline" size={16} color={colors.foreground} />
+          </Pressable>
+          <Pressable
             onPress={() => {
               Alert.alert("Sign out", "Are you sure you want to sign out?", [
                 { text: "Cancel", style: "cancel" },
