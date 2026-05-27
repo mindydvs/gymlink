@@ -5,6 +5,24 @@
  * GymLink API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface ReportBody {
+  /**
+   * @minLength 1
+   * @maxLength 120
+   */
+  reason: string;
+  /** @maxLength 2000 */
+  details?: string;
+}
+
+export interface BlockedUser {
+  blockedId: string;
+  name: string;
+  avatar: string;
+  avatarUrl?: string | null;
+  createdAt: string;
+}
+
 export interface HealthStatus {
   status: string;
 }
@@ -89,6 +107,7 @@ export interface CreateConnectionBody {
   toUserId: string;
   type: ConnectionType;
   anonymous: boolean;
+  mutualNotify?: boolean;
 }
 
 export type RespondConnectionBodyResponse =
@@ -177,6 +196,19 @@ export type ListWorkoutVideosParams = {
   userId?: string;
 };
 
+export type BlockUser201 = {
+  ok?: boolean;
+};
+
+export type ReportUser201 = {
+  ok?: boolean;
+};
+
+export type ReportVideo201 = {
+  ok?: boolean;
+};
+
+// ─── Recipes (manually added) ───────────────────────────────────────────────
 export interface RecipeUser {
   id: string;
   name: string;

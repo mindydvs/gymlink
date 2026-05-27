@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, and, desc, or } from "drizzle-orm";
 import { db, recipesTable, usersTable } from "@workspace/db";
 import { nanoid } from "nanoid";
+import { getHiddenUserIds } from "./users";
 
 const router: IRouter = Router();
 
@@ -13,7 +14,9 @@ router.get("/recipes", async (req, res): Promise<void> => {
     .from(recipesTable)
     .orderBy(desc(recipesTable.createdAt));
 
-  const filtered = userId ? rows.filter((r) => r.userId === userId) : rows;
+  const hiddenIds = new Set(await getHiddenUserIds(req.userId));
+  const visible = rows.filter((r) => !hiddenIds.has(r.userId));
+  const filtered = userId ? visible.filter((r) => r.userId === userId) : visible;
 
   const allUserIds = [...new Set(filtered.map((r) => r.userId))];
   const users =

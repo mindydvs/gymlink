@@ -305,7 +305,7 @@ export default function MemberDetailScreen() {
     query: {
       initialData: cachedMember as never,
       initialDataUpdatedAt: 0,
-    },
+    } as never,
   });
 
   const { data: videos, refetch: refetchVideos } = useListWorkoutVideos({
@@ -448,9 +448,9 @@ export default function MemberDetailScreen() {
   const handleCancelSent = (connId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    queryClient.setQueriesData<unknown[]>(
+    queryClient.setQueriesData<Array<{ id: string }>>(
       { queryKey: getListConnectionsQueryKey() },
-      (old) => (old ?? []).filter((c: { id: string }) => c.id !== connId)
+      (old) => (old ?? []).filter((c) => c.id !== connId)
     );
 
     cancelConnection(

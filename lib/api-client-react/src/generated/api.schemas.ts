@@ -35,6 +35,7 @@ export const ConnectionType = {
   buddy: "buddy",
   advisor: "advisor",
   spotter: "spotter",
+  mutual_crush: "mutual_crush",
 } as const;
 
 export type ConnectionStatus =

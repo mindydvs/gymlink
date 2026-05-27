@@ -567,7 +567,7 @@ components:
 
     ConnectionType:
       type: string
-      enum: [crush, buddy, advisor, spotter]
+      enum: [crush, buddy, advisor, spotter, mutual_crush]
 
     ConnectionStatus:
       type: string

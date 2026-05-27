@@ -158,7 +158,7 @@ export const GetUserResponse = zod.object({
  */
 export const CreateConnectionBody = zod.object({
   toUserId: zod.string(),
-  type: zod.enum(["crush", "buddy", "advisor", "spotter"]),
+  type: zod.enum(["crush", "buddy", "advisor", "spotter", "mutual_crush"]),
   anonymous: zod.boolean(),
   mutualNotify: zod.boolean().optional(),
 });
@@ -167,7 +167,9 @@ export const CreateConnectionBody = zod.object({
  * @summary List all connections for current user
  */
 export const ListConnectionsQueryParams = zod.object({
-  type: zod.enum(["crush", "buddy", "advisor", "spotter"]).optional(),
+  type: zod
+    .enum(["crush", "buddy", "advisor", "spotter", "mutual_crush"])
+    .optional(),
   status: zod.enum(["pending", "accepted", "declined"]).optional(),
 });
 
@@ -175,7 +177,7 @@ export const ListConnectionsResponseItem = zod.object({
   id: zod.string(),
   fromUserId: zod.string(),
   toUserId: zod.string(),
-  type: zod.enum(["crush", "buddy", "advisor", "spotter"]),
+  type: zod.enum(["crush", "buddy", "advisor", "spotter", "mutual_crush"]),
   status: zod.enum(["pending", "accepted", "declined"]),
   anonymous: zod.boolean(),
   createdAt: zod.coerce.date(),
@@ -237,7 +239,7 @@ export const RespondToConnectionResponse = zod.object({
   id: zod.string(),
   fromUserId: zod.string(),
   toUserId: zod.string(),
-  type: zod.enum(["crush", "buddy", "advisor", "spotter"]),
+  type: zod.enum(["crush", "buddy", "advisor", "spotter", "mutual_crush"]),
   status: zod.enum(["pending", "accepted", "declined"]),
   anonymous: zod.boolean(),
   createdAt: zod.coerce.date(),
@@ -289,7 +291,7 @@ export const RespondToConnectionResponse = zod.object({
 export const ListNotificationsResponseItem = zod.object({
   id: zod.string(),
   connectionId: zod.string(),
-  type: zod.enum(["crush", "buddy", "advisor", "spotter"]),
+  type: zod.enum(["crush", "buddy", "advisor", "spotter", "mutual_crush"]),
   fromName: zod.string(),
   anonymous: zod.boolean(),
   read: zod.boolean(),
@@ -310,7 +312,7 @@ export const MarkNotificationReadParams = zod.object({
 export const MarkNotificationReadResponse = zod.object({
   id: zod.string(),
   connectionId: zod.string(),
-  type: zod.enum(["crush", "buddy", "advisor", "spotter"]),
+  type: zod.enum(["crush", "buddy", "advisor", "spotter", "mutual_crush"]),
   fromName: zod.string(),
   anonymous: zod.boolean(),
   read: zod.boolean(),
