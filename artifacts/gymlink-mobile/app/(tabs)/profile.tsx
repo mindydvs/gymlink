@@ -10,6 +10,7 @@ import {
   Platform,
   Pressable,
   RefreshControl,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -38,6 +39,17 @@ export default function ProfileScreen() {
   const { data: connections } = useListConnections({ status: "accepted" });
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+
+  const onInvite = async () => {
+    try {
+      await Share.share({
+        message:
+          "Join me on GymLink — find your gym crew, connect with members at your gym, and stay motivated. Download: https://apps.apple.com/app/id6771101226",
+      });
+    } catch {
+      Alert.alert("Could not open share", "Please try again.");
+    }
+  };
   const connectionCount = connections?.length ?? 0;
 
   const pickVideo = async (source: "library" | "camera") => {
@@ -277,6 +289,13 @@ export default function ProfileScreen() {
           >
             <Feather name="edit-2" size={14} color={colors.foreground} />
             <Text style={[styles.editBtnText, { color: colors.foreground }]}>Edit</Text>
+          </Pressable>
+          <Pressable
+            onPress={onInvite}
+            style={[styles.logoutBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+            hitSlop={8}
+          >
+            <Ionicons name="person-add-outline" size={16} color={colors.foreground} />
           </Pressable>
           <Pressable
             onPress={() => router.push("/blocked")}
