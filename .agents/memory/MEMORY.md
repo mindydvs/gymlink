@@ -1,0 +1,1 @@
+- [Dev vs prod database](prod-vs-dev-database.md) — dev & prod DBs are separate; prod is read-only via tooling, so production data fixes must ship as idempotent app code + backend redeploy.
