@@ -17,6 +17,7 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AddGymBody,
   BlockUser201,
   BlockedUser,
   CheckInBody,
@@ -24,6 +25,7 @@ import type {
   CreateConnectionBody,
   CreateWorkoutVideoBody,
   Gym,
+  GymCandidate,
   GymStats,
   HealthStatus,
   ListConnectionsParams,
@@ -34,6 +36,7 @@ import type {
   ReportUser201,
   ReportVideo201,
   RespondConnectionBody,
+  SearchGymsParams,
   UpdateProfileBody,
   UpdateWorkoutVideoBody,
   UploadUrlRequest,
@@ -1169,6 +1172,186 @@ export function useListGyms<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getListGymsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Add a real gym (verified against OpenStreetMap)
+ */
+export const getAddGymUrl = () => {
+  return `/api/gyms`;
+};
+
+export const addGym = async (
+  addGymBody: AddGymBody,
+  options?: RequestInit,
+): Promise<Gym> => {
+  return customFetch<Gym>(getAddGymUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(addGymBody),
+  });
+};
+
+export const getAddGymMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addGym>>,
+    TError,
+    { data: BodyType<AddGymBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof addGym>>,
+  TError,
+  { data: BodyType<AddGymBody> },
+  TContext
+> => {
+  const mutationKey = ["addGym"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof addGym>>,
+    { data: BodyType<AddGymBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return addGym(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddGymMutationResult = NonNullable<
+  Awaited<ReturnType<typeof addGym>>
+>;
+export type AddGymMutationBody = BodyType<AddGymBody>;
+export type AddGymMutationError = ErrorType<void>;
+
+/**
+ * @summary Add a real gym (verified against OpenStreetMap)
+ */
+export const useAddGym = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addGym>>,
+    TError,
+    { data: BodyType<AddGymBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof addGym>>,
+  TError,
+  { data: BodyType<AddGymBody> },
+  TContext
+> => {
+  return useMutation(getAddGymMutationOptions(options));
+};
+
+/**
+ * @summary Search real-world gyms by name
+ */
+export const getSearchGymsUrl = (params: SearchGymsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/gyms/search?${stringifiedParams}`
+    : `/api/gyms/search`;
+};
+
+export const searchGyms = async (
+  params: SearchGymsParams,
+  options?: RequestInit,
+): Promise<GymCandidate[]> => {
+  return customFetch<GymCandidate[]>(getSearchGymsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getSearchGymsQueryKey = (params?: SearchGymsParams) => {
+  return [`/api/gyms/search`, ...(params ? [params] : [])] as const;
+};
+
+export const getSearchGymsQueryOptions = <
+  TData = Awaited<ReturnType<typeof searchGyms>>,
+  TError = ErrorType<unknown>,
+>(
+  params: SearchGymsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof searchGyms>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSearchGymsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof searchGyms>>> = ({
+    signal,
+  }) => searchGyms(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof searchGyms>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type SearchGymsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof searchGyms>>
+>;
+export type SearchGymsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Search real-world gyms by name
+ */
+
+export function useSearchGyms<
+  TData = Awaited<ReturnType<typeof searchGyms>>,
+  TError = ErrorType<unknown>,
+>(
+  params: SearchGymsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof searchGyms>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getSearchGymsQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

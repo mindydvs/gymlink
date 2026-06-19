@@ -1,1 +1,2 @@
-- [Dev vs prod database](prod-vs-dev-database.md) — dev & prod DBs are separate; prod is read-only via tooling, so production data fixes must ship as idempotent app code + backend redeploy.
+- [GymLink gym validation](gymlink-gym-validation.md) — add-a-gym validates against OpenStreetMap (not Google); POST /gyms re-validates by osmId, never free text.
+- [GymLink mobile API client](gymlink-mobile-api-client.md) — codegen does NOT write to mobile; hand-mirror new hooks into mobile lib/api-client/manual.ts.

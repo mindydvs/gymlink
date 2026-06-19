@@ -346,6 +346,40 @@ export const ListGymsResponseItem = zod.object({
 export const ListGymsResponse = zod.array(ListGymsResponseItem);
 
 /**
+ * @summary Add a real gym (verified against OpenStreetMap)
+ */
+export const AddGymBody = zod.object({
+  osmType: zod.string(),
+  osmId: zod.number(),
+});
+
+export const AddGymResponse = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  address: zod.string(),
+  city: zod.string(),
+  memberCount: zod.number(),
+});
+
+/**
+ * @summary Search real-world gyms by name
+ */
+export const SearchGymsQueryParams = zod.object({
+  q: zod.coerce.string(),
+});
+
+export const SearchGymsResponseItem = zod.object({
+  osmType: zod.string(),
+  osmId: zod.number(),
+  name: zod.string(),
+  address: zod.string(),
+  city: zod.string(),
+  lat: zod.string(),
+  lon: zod.string(),
+});
+export const SearchGymsResponse = zod.array(SearchGymsResponseItem);
+
+/**
  * @summary Request a presigned URL for file upload
  */
 export const RequestUploadUrlBody = zod.object({

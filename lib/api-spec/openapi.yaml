@@ -272,6 +272,52 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Gym"
+    post:
+      operationId: addGym
+      tags: [gyms]
+      summary: Add a real gym (verified against OpenStreetMap)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddGymBody"
+      responses:
+        "200":
+          description: Gym already existed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gym"
+        "201":
+          description: Gym created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gym"
+        "422":
+          description: Place could not be verified as a real gym
+
+  /gyms/search:
+    get:
+      operationId: searchGyms
+      tags: [gyms]
+      summary: Search real-world gyms by name
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Matching real gyms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GymCandidate"
 
   /storage/uploads/request-url:
     post:
@@ -592,6 +638,43 @@ components:
         - address
         - city
         - memberCount
+
+    GymCandidate:
+      type: object
+      properties:
+        osmType:
+          type: string
+        osmId:
+          type: integer
+        name:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        lat:
+          type: string
+        lon:
+          type: string
+      required:
+        - osmType
+        - osmId
+        - name
+        - address
+        - city
+        - lat
+        - lon
+
+    AddGymBody:
+      type: object
+      properties:
+        osmType:
+          type: string
+        osmId:
+          type: integer
+      required:
+        - osmType
+        - osmId
 
     User:
       type: object

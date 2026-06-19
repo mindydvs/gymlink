@@ -55,6 +55,21 @@ export interface Gym {
   memberCount: number;
 }
 
+export interface GymCandidate {
+  osmType: string;
+  osmId: number;
+  name: string;
+  address: string;
+  city: string;
+  lat: string;
+  lon: string;
+}
+
+export interface AddGymBody {
+  osmType: string;
+  osmId: number;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -191,6 +206,10 @@ export type ListUsersParams = {
 export type ListConnectionsParams = {
   type?: ConnectionType;
   status?: ConnectionStatus;
+};
+
+export type SearchGymsParams = {
+  q: string;
 };
 
 export type ListWorkoutVideosParams = {

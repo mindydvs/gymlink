@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AvatarImage } from "@/components/AvatarImage";
 import { MemberCard } from "@/components/MemberCard";
+import { CheckInSheet } from "@/components/CheckInSheet";
 import { useColors } from "@/hooks/useColors";
 import { useUser } from "@/context/UserContext";
 import {
@@ -23,6 +24,7 @@ import {
   useGetMe,
   useListConnections,
   useListUsers,
+  useCheckIn,
 } from "@workspace/api-client-react";
 import { router } from "expo-router";
 
@@ -41,9 +43,11 @@ export default function FeedScreen() {
   const { userId, logout } = useUser();
 
   const [activePanel, setActivePanel] = useState<PanelKey | null>(null);
+  const [checkInOpen, setCheckInOpen] = useState(false);
 
-  const { data: me } = useGetMe();
+  const { data: me, refetch: refetchMe } = useGetMe();
   const { data: stats, refetch: refetchStats } = useGetGymStats();
+  const { mutateAsync: checkIn, isPending: isCheckingOut } = useCheckIn();
   const {
     data: members,
     isLoading,
@@ -91,6 +95,20 @@ export default function FeedScreen() {
     : [];
 
   const meta = activePanel ? PANEL_META[activePanel] : null;
+
+  const refetchAfterCheckIn = async () => {
+    await Promise.all([refetchMe(), refetchMembers(), refetchStats()]);
+  };
+
+  const handleCheckOut = async () => {
+    if (!me?.gymId) return;
+    try {
+      await checkIn({ data: { gymId: me.gymId, gymName: me.gym ?? "" } });
+      await refetchAfterCheckIn();
+    } catch {
+      // surfaced via UI staying in checked-in state; no crash
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -214,6 +232,55 @@ export default function FeedScreen() {
               </>
             )}
 
+            {me?.checkedIn ? (
+              <Pressable
+                onPress={handleCheckOut}
+                disabled={isCheckingOut}
+                style={({ pressed }) => [
+                  styles.checkInBtn,
+                  {
+                    backgroundColor: `${colors.advisor}1A`,
+                    borderColor: colors.advisor,
+                    opacity: pressed ? 0.8 : 1,
+                  },
+                ]}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+                  <View style={[styles.liveDot, { backgroundColor: colors.advisor }]} />
+                  <Text style={[styles.checkInText, { color: colors.advisor }]} numberOfLines={1}>
+                    Here now{me?.gym ? ` · ${me.gym}` : ""}
+                  </Text>
+                </View>
+                {isCheckingOut ? (
+                  <ActivityIndicator color={colors.advisor} size="small" />
+                ) : (
+                  <Text style={[styles.checkOutLabel, { color: colors.advisor }]}>
+                    Check out
+                  </Text>
+                )}
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={() => setCheckInOpen(true)}
+                style={({ pressed }) => [
+                  styles.checkInBtn,
+                  {
+                    backgroundColor: colors.primary,
+                    borderColor: colors.primary,
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Ionicons name="location" size={16} color="#fff" />
+                  <Text style={[styles.checkInText, { color: "#fff" }]}>
+                    Check in at a gym
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color="#fff" />
+              </Pressable>
+            )}
+
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
               At Your Gym
             </Text>
@@ -293,6 +360,12 @@ export default function FeedScreen() {
           </Pressable>
         </View>
       </View>
+
+      <CheckInSheet
+        visible={checkInOpen}
+        onClose={() => setCheckInOpen(false)}
+        onCheckedIn={refetchAfterCheckIn}
+      />
     </View>
   );
 }
@@ -349,6 +422,30 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     fontSize: 10,
     textAlign: "center",
+  },
+  checkInBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginTop: 2,
+  },
+  checkInText: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 15,
+  },
+  checkOutLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    textDecorationLine: "underline",
+  },
+  liveDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
   },
   sectionTitle: {
     fontFamily: "Inter_700Bold",
